@@ -127,10 +127,31 @@
 
             <!-- VIEW: PANTAUAN LOGS -->
             <section id="v_logs" class="hidden space-y-4 max-w-2xl mx-auto">
-                <div class="card p-4 space-y-3 sticky top-[140px] z-30 shadow-xl border-slate-200">
-                    <div class="flex gap-2">
-                        <select id="flUser" onchange="renderLogs()" class="flex-1 p-3 border rounded-xl text-[11px] font-bold bg-slate-50 outline-none border-slate-200"></select>
-                        <select id="flProj" onchange="renderLogs()" class="flex-1 p-3 border rounded-xl text-[11px] font-bold bg-slate-50 outline-none border-slate-200"></select>
+                <div class="card p-5 space-y-4 sticky top-[140px] z-30 shadow-xl border-slate-200">
+                    <div class="flex flex-col gap-3">
+                        <!-- User & Project Filters -->
+                        <div class="flex gap-2">
+                            <select id="flUser" onchange="renderLogs()" class="flex-1 p-3 border rounded-xl text-[11px] font-bold bg-slate-50 outline-none border-slate-200"></select>
+                            <select id="flProj" onchange="renderLogs()" class="flex-1 p-3 border rounded-xl text-[11px] font-bold bg-slate-50 outline-none border-slate-200"></select>
+                        </div>
+                        
+                        <!-- Search Keyword -->
+                        <div class="relative">
+                            <input type="text" id="searchLog" oninput="renderLogs()" placeholder="Cari isi laporan kerja..." class="w-full p-3 pl-10 border rounded-xl text-xs outline-none bg-white border-slate-200 shadow-sm font-semibold">
+                            <svg class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+
+                        <!-- Date Range Filter -->
+                        <div class="grid grid-cols-2 gap-2 border-t pt-3 border-slate-100">
+                            <div>
+                                <label class="text-[8px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Dari Tanggal</label>
+                                <input type="date" id="flStartDate" onchange="renderLogs()" class="w-full p-2.5 border rounded-xl text-xs bg-slate-50 outline-none font-bold">
+                            </div>
+                            <div>
+                                <label class="text-[8px] font-bold text-slate-400 uppercase ml-1 tracking-widest">Sampai Tanggal</label>
+                                <input type="date" id="flEndDate" onchange="renderLogs()" class="w-full p-2.5 border rounded-xl text-xs bg-slate-50 outline-none font-bold">
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div id="logList" class="space-y-4 pt-2"></div>
@@ -617,15 +638,31 @@
         window.renderLogs = () => {
             const list = document.getElementById('logList');
             if(!list) return;
+            
+            // Get Filters
             const fP = document.getElementById('flProj').value;
             const fU = currentUser.role === 'ADMIN' ? document.getElementById('flUser').value : 'ALL';
+            const fK = document.getElementById('searchLog').value.toLowerCase();
+            const fS = document.getElementById('flStartDate').value;
+            const fE = document.getElementById('flEndDate').value;
+
             const filtered = logsData.filter(l => {
+                // Filter by Project & User
                 const matchProj = fP === 'ALL' || l.project_name === fP;
                 const matchUser = fU === 'ALL' || l.username === fU;
-                return matchProj && matchUser;
+                
+                // Filter by Keyword (Search)
+                const matchKey = l.pekerjaan.toLowerCase().includes(fK) || l.username.toLowerCase().includes(fK) || l.project_name.toLowerCase().includes(fK);
+                
+                // Filter by Date Range
+                let matchDate = true;
+                if (fS) matchDate = matchDate && l.tanggal >= fS;
+                if (fE) matchDate = matchDate && l.tanggal <= fE;
+                
+                return matchProj && matchUser && matchKey && matchDate;
             });
 
-            list.innerHTML = filtered.length ? '' : '<div class="text-center py-20 text-[10px] font-bold uppercase opacity-20 italic">Data Kosong</div>';
+            list.innerHTML = filtered.length ? '' : '<div class="text-center py-20 text-[10px] font-bold uppercase opacity-20 italic">Data Tidak Ditemukan</div>';
             
             let lastDate = "";
             let isAltRow = false; // Zebra stripping by date
@@ -634,26 +671,26 @@
                 const canEdit = l.username === currentUser.username || currentUser.role === 'ADMIN';
                 const colorClass = getUserColorClass(l.username);
                 
-                // Cek Perubahan Tanggal untuk Zebra Striping
+                // Cek Perubahan Tanggal untuk Zebra Striping (Putih & #b6fdbb)
                 if (l.tanggal !== lastDate) {
                     lastDate = l.tanggal;
                     isAltRow = !isAltRow;
                 }
 
-                const rowBg = isAltRow ? 'bg-blue-50/50' : 'bg-white';
+                const rowBg = isAltRow ? 'bg-[#b6fdbb]' : 'bg-white';
                 const dateDisplay = new Date(l.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 
                 list.innerHTML += `
                     <div class="${rowBg} p-6 rounded-[2rem] shadow-sm border border-slate-100 transition-colors relative">
                         <div class="flex justify-between items-start mb-4">
                             <div class="flex flex-col gap-2">
-                                <!-- Header Identitas User & Projek dengan Warna Berbeda -->
+                                <!-- Header Identitas User & Projek -->
                                 <div class="flex flex-wrap items-center gap-2">
                                     <span class="text-[10px] font-black border px-3 py-1.5 rounded-full uppercase tracking-widest ${colorClass}">
                                         ${l.username} &bull; ${l.project_name}
                                     </span>
                                 </div>
-                                <!-- Tanggal yang Dihighlight (Lebih Menonjol) -->
+                                <!-- Tanggal Highlight -->
                                 <div class="flex items-center gap-2">
                                     <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                                     <span class="text-sm font-extrabold text-slate-800 tracking-tight">${dateDisplay}</span>
