@@ -20,6 +20,14 @@
         .page-btn { padding: 0.5rem 1rem; border-radius: 0.75rem; background: white; border: 1px solid #e2e8f0; font-size: 0.75rem; font-weight: 700; color: #64748b; transition: all 0.2s; }
         .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
         .page-btn:not(:disabled):hover { border-color: #2563eb; color: #2563eb; }
+        
+        /* Animasi Lonceng */
+        @keyframes pulse-red {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .notif-badge-active { animation: pulse-red 2s infinite; }
     </style>
 </head>
 <body class="pb-10">
@@ -42,11 +50,36 @@
     <!-- APLIKASI UTAMA -->
     <div id="mainApp" class="hidden max-w-4xl mx-auto">
         <header class="p-6 bg-white/80 backdrop-blur border-b flex justify-between items-center sticky top-0 z-50 shadow-sm">
-            <div>
-                <h2 id="uDisp" class="font-bold text-slate-800 text-lg uppercase tracking-tight italic text-blue-600">User</h2>
-                <span id="rDisp" class="text-[9px] bg-slate-900 text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Role</span>
+            <div class="flex items-center gap-4">
+                <div>
+                    <h2 id="uDisp" class="font-bold text-slate-800 text-lg uppercase tracking-tight italic text-blue-600">User</h2>
+                    <span id="rDisp" class="text-[9px] bg-slate-900 text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Role</span>
+                </div>
             </div>
-            <button onclick="location.reload()" class="text-[10px] font-bold text-red-500 bg-red-50 px-4 py-2 rounded-full border border-red-100 uppercase">Logout</button>
+            
+            <div class="flex items-center gap-3">
+                <!-- NOTIFICATION BELL -->
+                <div class="relative">
+                    <button onclick="toggleNotifPanel()" class="p-2.5 bg-slate-50 rounded-full border border-slate-100 text-slate-400 hover:text-blue-600 transition-colors relative">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                        </svg>
+                        <span id="notifCount" class="hidden absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-white notif-badge-active">0</span>
+                    </button>
+
+                    <!-- NOTIF PANEL DROPDOWN -->
+                    <div id="notifPanel" class="hidden absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-2xl border border-slate-100 z-[60] overflow-hidden">
+                        <div class="p-4 bg-slate-50 border-b flex justify-between items-center">
+                            <span class="text-[10px] font-extrabold uppercase text-slate-500 tracking-widest">Pemberitahuan Deadline</span>
+                        </div>
+                        <div id="notifList" class="max-h-80 overflow-y-auto p-2 space-y-2">
+                            <!-- List Notif Muncul di Sini -->
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="location.reload()" class="text-[10px] font-bold text-red-500 bg-red-50 px-4 py-2 rounded-full border border-red-100 uppercase">Logout</button>
+            </div>
         </header>
 
         <nav class="flex bg-white border-b sticky top-[77px] z-40 overflow-x-auto no-scrollbar">
@@ -297,6 +330,7 @@
                 renderProjectList();
                 renderInputDropdowns();
                 renderSidebarDeadlines();
+                checkDeadlines(); // Panggil notifikasi
             });
         }
 
@@ -341,12 +375,15 @@
                 // Hitung sisa hari jika ada deadline
                 let statusColor = 'text-slate-400';
                 if(proj.endDate) {
-                    const today = new Date();
-                    const end = new Date(proj.endDate);
+                    const today = new Date(); today.setHours(0,0,0,0);
+                    const end = new Date(proj.endDate); end.setHours(0,0,0,0);
                     const diffTime = end - today;
                     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    if(diffDays <= 3) statusColor = 'text-red-500';
-                    else if(diffDays <= 7) statusColor = 'text-orange-500';
+                    
+                    if(diffDays === 0) statusColor = 'text-red-600 font-extrabold';
+                    else if(diffDays > 0 && diffDays <= 3) statusColor = 'text-red-500';
+                    else if(diffDays > 3 && diffDays <= 7) statusColor = 'text-orange-500';
+                    else if(diffDays < 0) statusColor = 'text-slate-300 italic';
                     else statusColor = 'text-blue-500';
                 }
 
@@ -360,6 +397,78 @@
                     </div>
                 `;
             });
+        };
+
+        // --- NOTIFICATION LOGIC ---
+        window.checkDeadlines = () => {
+            const list = document.getElementById('notifList');
+            const badge = document.getElementById('notifCount');
+            if(!list || !currentUser) return;
+
+            const today = new Date(); today.setHours(0,0,0,0);
+            let alertCount = 0;
+            let html = '';
+
+            projectsData.forEach(proj => {
+                const assigned = proj.assignedUsers || [];
+                const isRelevant = currentUser.role === 'ADMIN' || assigned.includes(currentUser.username);
+                
+                if (isRelevant && proj.endDate) {
+                    const end = new Date(proj.endDate); end.setHours(0,0,0,0);
+                    const diffTime = end - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+                    let alertMsg = '';
+                    let bgColor = '';
+                    
+                    if (diffDays === 0) {
+                        alertMsg = 'DEADLINE HARI INI!';
+                        bgColor = 'bg-red-50 border-red-200 text-red-600';
+                    } else if (diffDays === 3) {
+                        alertMsg = 'Deadline 3 hari lagi!';
+                        bgColor = 'bg-orange-50 border-orange-200 text-orange-600';
+                    } else if (diffDays === 7) {
+                        alertMsg = 'Deadline 1 minggu lagi.';
+                        bgColor = 'bg-blue-50 border-blue-200 text-blue-600';
+                    }
+
+                    if (alertMsg) {
+                        alertCount++;
+                        html += `
+                            <div class="p-3 rounded-xl border ${bgColor} shadow-sm">
+                                <p class="text-[8px] font-black uppercase mb-0.5 tracking-tighter">${alertMsg}</p>
+                                <p class="text-[10px] font-extrabold uppercase truncate">${proj.name}</p>
+                                <p class="text-[8px] opacity-70 mt-1">Selesaikan pekerjaan tepat waktu!</p>
+                            </div>
+                        `;
+                    }
+                }
+            });
+
+            if (alertCount > 0) {
+                badge.innerText = alertCount;
+                badge.classList.remove('hidden');
+                list.innerHTML = html;
+            } else {
+                badge.classList.add('hidden');
+                list.innerHTML = '<div class="text-center py-6 text-[9px] font-bold text-slate-300 uppercase italic">Tidak ada notifikasi penting</div>';
+            }
+        };
+
+        window.toggleNotifPanel = () => {
+            const panel = document.getElementById('notifPanel');
+            panel.classList.toggle('hidden');
+        };
+
+        // Tutup notif jika klik di luar
+        window.onclick = (e) => {
+            const panel = document.getElementById('notifPanel');
+            if (panel && !panel.classList.contains('hidden')) {
+                const isClickInside = panel.contains(e.target) || e.target.closest('button')?.onclick?.name === 'toggleNotifPanel';
+                if (!isClickInside && !e.target.closest('button')?.contains(e.target)) {
+                    // panel.classList.add('hidden'); // Optional: disabled for now as it causes issues with the button
+                }
+            }
         };
 
         window.renderProjectList = () => {
@@ -469,6 +578,7 @@
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
                 usersData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 renderUserList();
+                checkDeadlines(); // Re-check saat data user update
             });
         }
 
@@ -832,6 +942,8 @@
         window.changeProjPage = changeProjPage;
         window.handleProjSearch = handleProjSearch;
         window.renderSidebarDeadlines = renderSidebarDeadlines;
+        window.toggleNotifPanel = toggleNotifPanel;
+        window.checkDeadlines = checkDeadlines;
     </script>
 </body>
 </html>
