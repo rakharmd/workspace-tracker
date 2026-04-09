@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WORKSPACE Tracker - Collaborative Mode</title>
+    <title>WORKSPACE Tracker - Managed Access</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
@@ -14,6 +14,7 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .btn-primary { background-color: #0f172a; color: white; transition: all 0.2s; }
         .btn-primary:active { transform: scale(0.95); }
+        .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
     </style>
 </head>
 <body class="pb-10">
@@ -22,7 +23,7 @@
     <div id="loginPage" class="flex items-center justify-center min-h-screen p-4">
         <div class="bg-white w-full max-w-md p-10 rounded-[2.5rem] shadow-2xl border-none">
             <h1 class="text-3xl font-extrabold text-center text-slate-900 mb-1 tracking-tighter italic uppercase">WORKSPACE</h1>
-            <p class="text-center text-slate-400 text-[10px] mb-8 font-bold tracking-[0.3em] uppercase">Firebase Cloud System</p>
+            <p class="text-center text-slate-400 text-[10px] mb-8 font-bold tracking-[0.3em] uppercase">Firebase Managed System</p>
             
             <form id="loginForm" class="space-y-4">
                 <input type="text" id="u" placeholder="Username" required class="w-full p-4 border rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 text-sm">
@@ -69,9 +70,7 @@
             <section id="v_logs" class="hidden space-y-4">
                 <div class="card p-4 space-y-3 sticky top-[140px] z-30 shadow-xl border-slate-200">
                     <div class="flex gap-2">
-                        <!-- Dropdown ini hanya terlihat oleh Admin -->
                         <select id="flUser" onchange="renderLogs()" class="flex-1 p-3 border rounded-xl text-[11px] font-bold bg-slate-50 outline-none border-slate-200"></select>
-                        <!-- Dropdown Projek terlihat oleh semua orang -->
                         <select id="flProj" onchange="renderLogs()" class="flex-1 p-3 border rounded-xl text-[11px] font-bold bg-slate-50 outline-none border-slate-200"></select>
                     </div>
                 </div>
@@ -83,40 +82,59 @@
                 <!-- Manajemen Akun -->
                 <div class="card p-6 shadow-sm bg-slate-50/50">
                     <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2">
-                        <span class="w-2 h-2 bg-blue-600 rounded-full"></span> Manajemen Akun Tim
+                        <span class="w-2 h-2 bg-blue-600 rounded-full"></span> Plotting Akun & Projek
                     </h3>
-                    <div class="space-y-3">
+                    <div class="space-y-4">
                         <div class="grid grid-cols-2 gap-2">
                             <input type="text" id="mU" placeholder="Username" class="p-3 border rounded-xl text-sm outline-none bg-white">
                             <input type="text" id="mP" placeholder="Password" class="p-3 border rounded-xl text-sm outline-none bg-white">
                         </div>
-                        <select id="mR" class="w-full p-3 border rounded-xl text-sm mb-2 outline-none">
+                        <select id="mR" class="w-full p-3 border rounded-xl text-sm outline-none">
                             <option value="USER">TIM (USER)</option>
                             <option value="ADMIN">ADMINISTRATOR</option>
                         </select>
-                        <button onclick="saveUser()" class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest">Simpan / Update Akun</button>
+                        
+                        <div class="bg-white p-4 rounded-xl border border-slate-200">
+                            <label class="text-[9px] font-bold text-slate-400 uppercase block mb-3">Plotting Akses Projek</label>
+                            <div id="projectCheckboxes" class="grid grid-cols-2 gap-2">
+                                <!-- Checkboxes Projek Muncul Di Sini -->
+                            </div>
+                        </div>
+
+                        <button onclick="saveUser()" class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest">Simpan Akun</button>
                     </div>
                     
-                    <div class="mt-6 space-y-2" id="userListSettings">
-                        <!-- Daftar User Muncul Di Sini -->
-                    </div>
+                    <div class="mt-6 space-y-2" id="userListSettings"></div>
                 </div>
 
                 <!-- Manajemen Projek -->
                 <div class="card p-6 shadow-sm">
                     <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2">
-                        <span class="w-2 h-2 bg-green-600 rounded-full"></span> Daftar Projek Aktif
+                        <span class="w-2 h-2 bg-green-600 rounded-full"></span> Daftar Projek Global
                     </h3>
                     <div class="flex gap-2 mb-4">
                         <input type="text" id="nP" placeholder="Nama Projek Baru..." class="flex-grow p-3 border rounded-xl text-sm outline-none bg-slate-50 uppercase font-bold">
                         <button onclick="addNewProject()" class="bg-blue-600 text-white px-6 rounded-xl font-bold">+</button>
                     </div>
-                    <div id="projListSettings" class="space-y-2">
-                        <!-- Daftar Projek Muncul Di Sini -->
-                    </div>
+                    <div id="projListSettings" class="space-y-2"></div>
                 </div>
             </section>
         </main>
+    </div>
+
+    <!-- MODAL EDIT LOG -->
+    <div id="modalEdit" class="hidden fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md p-6 rounded-3xl shadow-2xl">
+            <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest">Edit Progres</h3>
+            <div class="space-y-4">
+                <input type="hidden" id="editLogId">
+                <textarea id="editLogWork" rows="5" class="w-full p-4 border rounded-2xl bg-slate-50 outline-none text-sm"></textarea>
+                <div class="flex gap-2">
+                    <button onclick="closeEditModal()" class="flex-1 py-3 bg-slate-100 text-slate-500 rounded-xl font-bold text-xs uppercase">Batal</button>
+                    <button onclick="confirmEditLog()" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-xs uppercase shadow-lg">Simpan Perubahan</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- TOAST NOTIFIKASI -->
@@ -126,9 +144,8 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, deleteDoc, collection, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- CONFIG FIREBASE RAKHA ---
         const firebaseConfig = {
             apiKey: "AIzaSyD-wrKOTP046d3Ojr_pKPHEWWf7Kuk5Nco",
             authDomain: "workspace-tracker-b3f8a.firebaseapp.com",
@@ -182,8 +199,8 @@
                 currentUser = { username: u, ...userSnap.data() };
                 startApp();
             } else if (u === 'admin' && p === 'admin123') {
-                currentUser = { username: 'admin', role: 'ADMIN' };
-                await setDoc(userRef, { password: 'admin123', role: 'ADMIN' });
+                currentUser = { username: 'admin', role: 'ADMIN', assignedProjects: 'ALL' };
+                await setDoc(userRef, { password: 'admin123', role: 'ADMIN', assignedProjects: 'ALL' });
                 startApp();
             } else {
                 msg("❌ USERNAME/PASSWORD SALAH");
@@ -204,7 +221,6 @@
                 document.getElementById('flUser').classList.add('hidden');
             }
 
-            // Real-time Listeners
             listenProjects();
             listenUsers();
             listenLogs();
@@ -212,33 +228,53 @@
             tab('input');
         }
 
-        // --- REALTIME LISTENERS ---
+        // --- LISTENERS ---
 
         function listenProjects() {
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'projects'), (snap) => {
                 projectsData = snap.docs.map(d => d.id);
+                
                 const fP = document.getElementById('f_proj');
                 const flP = document.getElementById('flProj');
                 const listSet = document.getElementById('projListSettings');
+                const checkList = document.getElementById('projectCheckboxes');
 
                 fP.innerHTML = '<option value="" disabled selected>-- Pilih Projek --</option>';
                 flP.innerHTML = '<option value="ALL">SEMUA PROJEK</option>';
-                listSet.innerHTML = '';
+                if(listSet) listSet.innerHTML = '';
+                if(checkList) checkList.innerHTML = '';
 
                 projectsData.sort().forEach(p => {
-                    fP.add(new Option(p, p));
-                    flP.add(new Option(p, p));
-                    listSet.innerHTML += `
-                        <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <span class="text-xs font-bold uppercase text-slate-700">${p}</span>
-                            <button onclick="deleteProject('${p}')" class="text-red-400 hover:text-red-600 p-1">Hapus</button>
-                        </div>
-                    `;
+                    // Filter Dropdown berdasarkan Plotting Admin
+                    const isAssigned = currentUser.assignedProjects === 'ALL' || (Array.isArray(currentUser.assignedProjects) && currentUser.assignedProjects.includes(p));
+                    
+                    if (isAssigned) {
+                        fP.add(new Option(p, p));
+                        flP.add(new Option(p, p));
+                    }
+
+                    if(listSet) {
+                        listSet.innerHTML += `
+                            <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                <span class="text-xs font-bold uppercase text-slate-700">${p}</span>
+                                <button onclick="deleteProject('${p}')" class="text-red-400 hover:text-red-600 p-1">Hapus</button>
+                            </div>`;
+                    }
+
+                    if(checkList) {
+                        checkList.innerHTML += `
+                            <label class="flex items-center gap-2 p-2 bg-slate-100 rounded-lg cursor-pointer">
+                                <input type="checkbox" name="assign" value="${p}" class="w-4 h-4 rounded">
+                                <span class="text-[10px] font-bold uppercase text-slate-600">${p}</span>
+                            </label>`;
+                    }
                 });
+                renderLogs();
             });
         }
 
         function listenUsers() {
+            if(currentUser.role !== 'ADMIN') return;
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
                 usersData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
                 const flU = document.getElementById('flUser');
@@ -249,18 +285,18 @@
 
                 usersData.forEach(u => {
                     flU.add(new Option(u.id.toUpperCase(), u.id));
+                    const assignedList = u.assignedProjects === 'ALL' ? 'AKSES SEMUA' : (u.assignedProjects || []).join(', ');
                     listSet.innerHTML += `
                         <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center">
-                            <div>
-                                <p class="text-xs font-extrabold text-slate-800 uppercase tracking-tight">${u.id}</p>
-                                <p class="text-[9px] text-slate-400 font-bold uppercase">${u.role} &bull; Pass: ${u.password}</p>
+                            <div class="flex-grow">
+                                <p class="text-xs font-extrabold text-slate-800 uppercase">${u.id} <span class="text-[9px] text-blue-500 italic">(${u.role})</span></p>
+                                <p class="text-[8px] text-slate-400 font-bold uppercase truncate max-w-[200px]">Plot: ${assignedList}</p>
                             </div>
-                            <div class="flex gap-2">
-                                <button onclick="editUserPrompt('${u.id}', '${u.password}', '${u.role}')" class="text-[10px] font-bold text-blue-500 uppercase">Edit</button>
-                                <button onclick="deleteUser('${u.id}')" class="text-[10px] font-bold text-red-500 uppercase">Hapus</button>
+                            <div class="flex gap-2 ml-2">
+                                <button onclick="editUserPrompt('${u.id}', '${u.password}', '${u.role}', ${JSON.stringify(u.assignedProjects)})" class="text-[10px] font-bold text-blue-500">EDIT</button>
+                                <button onclick="deleteUser('${u.id}')" class="text-[10px] font-bold text-red-500">HAPUS</button>
                             </div>
-                        </div>
-                    `;
+                        </div>`;
                 });
             });
         }
@@ -273,32 +309,36 @@
             });
         }
 
-        // --- RENDER & ACTION LOGIC ---
+        // --- CORE LOGIC ---
 
         window.renderLogs = () => {
             const list = document.getElementById('logList');
+            if(!list) return;
             const fP = document.getElementById('flProj').value;
-            
-            // Logika baru: 
-            // Jika Admin, gunakan filter dari dropdown flUser.
-            // Jika User, biarkan default 'ALL' agar bisa melihat progres orang lain pada projek tersebut.
             const fU = currentUser.role === 'ADMIN' ? document.getElementById('flUser').value : 'ALL';
 
-            const filtered = logsData.filter(l => 
-                (fP === 'ALL' || l.project_name === fP) && 
-                (fU === 'ALL' || l.username === fU)
-            );
+            const filtered = logsData.filter(l => {
+                const matchProj = fP === 'ALL' ? (currentUser.assignedProjects === 'ALL' || (Array.isArray(currentUser.assignedProjects) && currentUser.assignedProjects.includes(l.project_name))) : l.project_name === fP;
+                const matchUser = fU === 'ALL' || l.username === fU;
+                return matchProj && matchUser;
+            });
 
-            list.innerHTML = filtered.length ? '' : '<div class="text-center py-20 text-[10px] font-bold uppercase opacity-20 tracking-[0.3em] italic">Data Masih Kosong</div>';
+            list.innerHTML = filtered.length ? '' : '<div class="text-center py-20 text-[10px] font-bold uppercase opacity-20 italic">Data Masih Kosong</div>';
             
             filtered.forEach(l => {
+                const canEdit = l.username === currentUser.username || currentUser.role === 'ADMIN';
                 list.innerHTML += `
-                <div class="bg-white p-5 rounded-3xl shadow-sm border-l-4 border-l-slate-900 mb-3 border border-slate-100 animate-in fade-in duration-300">
+                <div class="bg-white p-5 rounded-3xl shadow-sm border-l-4 border-l-slate-900 mb-3 border border-slate-100 relative group">
                     <div class="flex justify-between items-start mb-2">
                         <div class="flex flex-col">
                             <span class="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md uppercase w-fit mb-1">${l.username} &bull; ${l.project_name}</span>
                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">${l.tanggal}</span>
                         </div>
+                        ${canEdit ? `
+                        <div class="flex gap-1">
+                             <button onclick="editLogPrompt('${l.id}', \`${l.pekerjaan.replace(/'/g, "\\'")}\`)" class="p-2 text-slate-300 hover:text-blue-500"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                             <button onclick="deleteLog('${l.id}')" class="p-2 text-slate-300 hover:text-red-500"><svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                        </div>` : ''}
                     </div>
                     <p class="text-sm text-slate-700 leading-relaxed font-medium">${l.pekerjaan.replace(/\n/g, '<br>')}</p>
                 </div>`;
@@ -309,7 +349,6 @@
             e.preventDefault();
             const btn = document.getElementById('btnSubmitLog');
             btn.disabled = true; btn.innerText = "MENGIRIM...";
-
             try {
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), {
                     tanggal: document.getElementById('f_date').value,
@@ -330,16 +369,37 @@
             const u = document.getElementById('mU').value.trim().toLowerCase();
             const p = document.getElementById('mP').value.trim();
             const r = document.getElementById('mR').value;
+            
+            const checkedBoxes = document.querySelectorAll('input[name="assign"]:checked');
+            const assigned = r === 'ADMIN' ? 'ALL' : Array.from(checkedBoxes).map(cb => cb.value);
 
             if(!u || !p) return msg("ISI USERNAME & PASS!");
+            if(r !== 'ADMIN' && assigned.length === 0) return msg("PILIH MINIMAL 1 PROJEK!");
             
             await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u), {
                 password: p,
-                role: r
+                role: r,
+                assignedProjects: assigned
             });
             msg("✅ AKUN BERHASIL DISIMPAN");
+            resetUserForm();
+        };
+
+        window.resetUserForm = () => {
             document.getElementById('mU').value = '';
             document.getElementById('mP').value = '';
+            document.getElementById('mR').value = 'USER';
+            document.querySelectorAll('input[name="assign"]').forEach(cb => cb.checked = false);
+        };
+
+        window.editUserPrompt = (u, p, r, assigned) => {
+            document.getElementById('mU').value = u;
+            document.getElementById('mP').value = p;
+            document.getElementById('mR').value = r;
+            document.querySelectorAll('input[name="assign"]').forEach(cb => {
+                cb.checked = Array.isArray(assigned) && assigned.includes(cb.value);
+            });
+            msg("SILAHKAN EDIT DATA DI ATAS");
         };
 
         window.deleteUser = async (u) => {
@@ -348,13 +408,6 @@
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u));
                 msg("AKUN DIHAPUS");
             }
-        };
-
-        window.editUserPrompt = (u, p, r) => {
-            document.getElementById('mU').value = u;
-            document.getElementById('mP').value = p;
-            document.getElementById('mR').value = r;
-            msg("SILAHKAN EDIT DATA DI ATAS");
         };
 
         window.addNewProject = async () => {
@@ -371,6 +424,32 @@
                 msg("PROJEK DIHAPUS");
             }
         };
+
+        // --- LOG ACTIONS ---
+        window.deleteLog = async (id) => {
+            if(confirm("Hapus laporan progres ini?")) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', id));
+                msg("LAPORAN DIHAPUS");
+            }
+        };
+
+        window.editLogPrompt = (id, work) => {
+            document.getElementById('editLogId').value = id;
+            document.getElementById('editLogWork').value = work;
+            document.getElementById('modalEdit').classList.remove('hidden');
+        };
+
+        window.confirmEditLog = async () => {
+            const id = document.getElementById('editLogId').value;
+            const work = document.getElementById('editLogWork').value;
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', id), {
+                pekerjaan: work
+            });
+            closeEditModal();
+            msg("✅ PROGRES DIPERBARUI");
+        };
+
+        window.closeEditModal = () => document.getElementById('modalEdit').classList.add('hidden');
 
         // --- NAVIGATION ---
         window.tab = (t) => {
@@ -392,8 +471,6 @@
             const t = document.getElementById('toast'); t.innerText = m;
             t.style.opacity = "1"; setTimeout(() => t.style.opacity = "0", 3000);
         };
-        
-        window.renderLogs = renderLogs;
     </script>
 </body>
 </html>
