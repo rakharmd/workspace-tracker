@@ -24,7 +24,7 @@
             <p class="text-center text-slate-400 text-[10px] mb-6 font-bold tracking-[0.3em] uppercase">SQL Cloud System</p>
             
             <div id="connectionStatus" class="mb-6 text-center text-[9px] font-bold p-2 rounded-xl bg-slate-100 text-slate-400 uppercase tracking-widest border border-slate-200">
-                Menghubungkan ke Database...
+                Mengecek Koneksi...
             </div>
 
             <form id="loginForm" class="space-y-4">
@@ -34,7 +34,7 @@
             </form>
             
             <p class="mt-8 text-[9px] text-center text-slate-400 leading-relaxed uppercase font-semibold">
-                Gunakan Browser Chrome dan Matikan AdBlock<br> jika terjadi kesalahan koneksi.
+                Matikan AdBlock jika banner merah muncul.
             </p>
         </div>
     </div>
@@ -42,7 +42,7 @@
     <div id="mainApp" class="hidden max-w-2xl mx-auto">
         <header class="p-6 bg-white/80 backdrop-blur border-b flex justify-between items-center sticky top-0 z-50 shadow-sm">
             <div>
-                <h2 id="uDisp" class="font-bold text-slate-800 text-lg leading-tight uppercase tracking-tight">User</h2>
+                <h2 id="uDisp" class="font-bold text-slate-800 text-lg uppercase tracking-tight">User</h2>
                 <span id="rDisp" class="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Role</span>
             </div>
             <button onclick="location.reload()" class="text-[10px] font-bold text-red-500 bg-red-50 px-4 py-2 rounded-full border border-red-100 uppercase tracking-wider">Logout</button>
@@ -58,13 +58,13 @@
             <section id="v_input" class="space-y-4">
                 <div class="card p-6 shadow-sm border-blue-50">
                     <form id="progressForm" class="space-y-4">
-                        <label class="text-[9px] font-bold text-slate-400 uppercase ml-1">Tanggal Kerja</label>
+                        <label class="text-[9px] font-bold text-slate-400 uppercase ml-1">Tanggal</label>
                         <input type="date" id="f_date" required class="w-full p-3 border rounded-xl bg-slate-50 outline-none text-sm">
-                        <label class="text-[9px] font-bold text-slate-400 uppercase ml-1">Nama Projek</label>
+                        <label class="text-[9px] font-bold text-slate-400 uppercase ml-1">Projek</label>
                         <select id="f_proj" required class="w-full p-3 border rounded-xl bg-white font-bold text-slate-700 text-sm outline-none"></select>
-                        <label class="text-[9px] font-bold text-slate-400 uppercase ml-1">Detail Progress</label>
-                        <textarea id="f_work" rows="5" placeholder="Tuliskan pekerjaan Anda hari ini..." required class="w-full p-3 border rounded-xl bg-slate-50 outline-none text-sm"></textarea>
-                        <button type="submit" id="btnSubmitLog" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg uppercase text-[10px] tracking-widest">Simpan ke SQL</button>
+                        <label class="text-[9px] font-bold text-slate-400 uppercase ml-1">Progress</label>
+                        <textarea id="f_work" rows="5" placeholder="Detail pekerjaan..." required class="w-full p-3 border rounded-xl bg-slate-50 outline-none text-sm"></textarea>
+                        <button type="submit" id="btnSubmitLog" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg uppercase text-[10px] tracking-widest">Simpan</button>
                     </form>
                 </div>
             </section>
@@ -75,88 +75,35 @@
                         <select id="flUser" class="flex-1 p-3 border rounded-xl text-[11px] font-bold bg-slate-50 outline-none"></select>
                         <select id="flProj" class="flex-1 p-3 border rounded-xl text-[11px] font-bold bg-slate-50 outline-none"></select>
                     </div>
-                    <button onclick="loadLogs()" id="btnDraw" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl text-[10px] tracking-[0.2em] shadow-lg uppercase active:scale-95 transition-all">Tampilkan Data</button>
+                    <button onclick="loadLogs()" id="btnDraw" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl text-[10px] tracking-widest shadow-lg uppercase">Tampilkan Data</button>
                 </div>
                 <div id="logList" class="space-y-3 pt-2"></div>
-            </section>
-
-            <section id="v_settings" class="hidden space-y-6">
-                <div class="card p-6 bg-slate-50 shadow-inner">
-                    <h3 class="text-xs font-bold text-slate-500 uppercase mb-4 tracking-widest">Manajemen Akun</h3>
-                    <div class="grid grid-cols-2 gap-2 mb-2">
-                        <input type="text" id="mU" placeholder="User" class="p-3 border rounded-xl text-sm outline-none bg-white">
-                        <input type="text" id="mP" placeholder="Pass" class="p-3 border rounded-xl text-sm outline-none bg-white">
-                    </div>
-                    <select id="mR" class="w-full p-3 border rounded-xl text-sm mb-4">
-                        <option value="USER">TEAM MEMBER</option>
-                        <option value="ADMIN">ADMINISTRATOR</option>
-                    </select>
-                    <button onclick="saveUser()" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest">Simpan Akun</button>
-                    <div id="userListAdmin" class="mt-4 space-y-2"></div>
-                </div>
-
-                <div class="card p-6">
-                    <h3 class="text-xs font-bold text-slate-500 uppercase mb-4 tracking-widest">Manajemen Projek</h3>
-                    <div class="flex gap-2 mb-4">
-                        <input type="text" id="nP" placeholder="Projek Baru..." class="flex-grow p-3 border rounded-xl text-sm outline-none bg-slate-50">
-                        <button onclick="addNewProject()" class="bg-blue-600 text-white px-6 rounded-xl font-bold">+</button>
-                    </div>
-                    <div id="projListAdmin" class="space-y-2"></div>
-                </div>
             </section>
         </main>
     </div>
 
-    <div id="editModal" class="hidden fixed inset-0 z-[60] flex items-center justify-center p-4 modal-overlay">
-        <div class="bg-white w-full max-w-md p-6 rounded-[2rem] shadow-2xl border-none">
-            <h3 class="text-sm font-bold text-slate-800 uppercase mb-4 tracking-widest">Koreksi Data</h3>
-            <div class="space-y-4">
-                <input type="hidden" id="editId">
-                <div>
-                    <label class="text-[9px] font-bold text-slate-400 uppercase ml-1">Nama Projek</label>
-                    <select id="editProj" class="w-full mt-1 p-3 border rounded-xl bg-white font-bold text-sm outline-none focus:ring-2 focus:ring-blue-500"></select>
-                </div>
-                <div>
-                    <label class="text-[9px] font-bold text-slate-400 uppercase ml-1">Keterangan Pekerjaan</label>
-                    <textarea id="editWork" rows="5" class="w-full mt-1 p-3 border rounded-xl bg-slate-50 text-sm outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-                </div>
-                <div class="flex gap-2 pt-2">
-                    <button onclick="closeEdit()" class="flex-1 bg-slate-100 text-slate-500 font-bold py-3 rounded-xl text-[10px] uppercase">Batal</button>
-                    <button onclick="confirmEdit()" class="flex-[2] bg-blue-600 text-white font-bold py-3 rounded-xl text-[10px] uppercase shadow-lg shadow-blue-100 tracking-widest">Simpan Perubahan</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl opacity-0 z-[100] text-[10px] font-bold uppercase tracking-widest text-center"></div>
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl opacity-0 z-[100] text-[10px] font-bold uppercase text-center"></div>
 
     <script>
-        // --- DATA SUPABASE ---
         const SB_URL = 'https://rcrjmrpgyuyzpzceexb.supabase.co'; 
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjcmptcnBndXJ5dXpwemNlZXhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDU2NzcsImV4cCI6MjA5MTIyMTY3N30.A4TeDYxayj2ln0Y0CLzdfUcXCgJVilL-O1kB-LY5hY4';
         
         const sbClient = supabase.createClient(SB_URL, SB_KEY);
-
         let currentUser = null;
-        let globalProjs = [];
 
-        // CEK KONEKSI OTOMATIS SAAT HALAMAN DIBUKA
         window.addEventListener('load', async () => {
             const statusDiv = document.getElementById('connectionStatus');
             try {
-                // Mencoba mengambil data users hanya untuk cek koneksi
                 const { error } = await sbClient.from('users').select('count', { count: 'exact', head: true });
                 if (error) throw error;
                 statusDiv.innerText = "✅ Database Terhubung";
                 statusDiv.className = "mb-6 text-center text-[9px] font-bold p-2 rounded-xl bg-green-100 text-green-600 uppercase tracking-widest border border-green-200";
             } catch (err) {
-                console.error("DB Connection Failed:", err);
-                statusDiv.innerText = "⚠️ Gagal Terhubung ke Database";
+                statusDiv.innerText = "⚠️ GAGAL TERHUBUNG KE DATABASE";
                 statusDiv.className = "mb-6 text-center text-[9px] font-bold p-2 rounded-xl bg-red-100 text-red-600 uppercase tracking-widest border border-red-200";
             }
         });
 
-        // --- SISTEM LOGIN ---
         document.getElementById('loginForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnLogin');
@@ -166,25 +113,12 @@
             const p = document.getElementById('p').value.trim();
             
             try {
-                const { data, error } = await sbClient
-                    .from('users')
-                    .select('*')
-                    .eq('username', u)
-                    .eq('password', p)
-                    .maybeSingle();
-                
+                const { data, error } = await sbClient.from('users').select('*').eq('username', u).eq('password', p).maybeSingle();
                 if (error) throw error;
-
-                if (data) {
-                    currentUser = data;
-                    initApp();
-                } else {
-                    msg("❌ USERNAME/PASSWORD SALAH");
-                    btn.disabled = false; btn.innerText = "MASUK";
-                }
+                if (data) { currentUser = data; initApp(); } 
+                else { msg("❌ USER TIDAK DITEMUKAN"); btn.disabled = false; btn.innerText = "MASUK"; }
             } catch (err) {
-                console.error("Login System Error:", err);
-                msg("❌ " + (err.message === 'Failed to fetch' ? 'FAILED TO FETCH (BLOKIR KONEKSI)' : err.message));
+                msg("❌ KONEKSI DIBLOKIR BROWSER");
                 btn.disabled = false; btn.innerText = "MASUK";
             }
         };
@@ -196,205 +130,60 @@
             document.getElementById('rDisp').innerText = currentUser.role;
             document.getElementById('f_date').valueAsDate = new Date();
 
-            if(currentUser.role === 'ADMIN') {
-                document.getElementById('t_settings').classList.remove('hidden');
-                document.getElementById('flUser').classList.remove('hidden');
-            } else {
-                document.getElementById('flUser').classList.add('hidden');
-            }
+            const { data: projs } = await sbClient.from('projects').select('name').order('name');
+            const { data: users } = await sbClient.from('users').select('username').order('username');
+            
+            const fP = document.getElementById('f_proj'), flP = document.getElementById('flProj'), flU = document.getElementById('flUser');
+            fP.innerHTML = '<option value="" disabled selected>-- Pilih Projek --</option>';
+            flP.innerHTML = '<option value="ALL">SEMUA PROJEK</option>';
+            flU.innerHTML = '<option value="ALL">SEMUA USER</option>';
 
-            syncData();
+            if(projs) projs.forEach(p => { fP.add(new Option(p.name, p.name)); flP.add(new Option(p.name, p.name)); });
+            if(users) users.forEach(u => flU.add(new Option(u.username, u.username)));
+            if(currentUser.role === 'USER') flU.classList.add('hidden');
             tab('input');
         }
 
-        async function syncData() {
-            try {
-                const { data: projs } = await sbClient.from('projects').select('name').order('name');
-                const { data: users } = await sbClient.from('users').select('username').order('username');
-                
-                globalProjs = projs ? projs.map(p => p.name) : [];
-                const fP = document.getElementById('f_proj');
-                const flP = document.getElementById('flProj');
-                const flU = document.getElementById('flUser');
-                const edP = document.getElementById('editProj');
-
-                fP.innerHTML = '<option value="" disabled selected>-- Pilih Projek --</option>';
-                flP.innerHTML = '<option value="ALL">SEMUA PROJEK</option>';
-                flU.innerHTML = '<option value="ALL">SEMUA USER</option>';
-                edP.innerHTML = '';
-
-                globalProjs.forEach(p => {
-                    fP.add(new Option(p,p));
-                    flP.add(new Option(p,p));
-                    edP.add(new Option(p,p));
-                });
-
-                if(users) users.forEach(u => flU.add(new Option(u.username, u.username)));
-                if(currentUser.role === 'ADMIN') renderAdminSettings();
-            } catch (e) {
-                console.error("Sync Data Error:", e);
-            }
-        }
-
         async function loadLogs() {
-            const btn = document.getElementById('btnDraw');
-            btn.innerText = "MEMPROSES..."; btn.disabled = true;
-            
             const list = document.getElementById('logList');
-            list.innerHTML = '';
-
+            list.innerHTML = '<div class="text-center py-10 text-xs animate-pulse text-slate-400">MEMUAT...</div>';
             const fP = document.getElementById('flProj').value;
             const fU = currentUser.role === 'ADMIN' ? document.getElementById('flUser').value : currentUser.username;
 
-            try {
-                let query = sbClient.from('logs').select('*');
-                if(fP !== 'ALL') query = query.eq('project_name', fP);
-                if(fU !== 'ALL') query = query.eq('username', fU);
-                
-                const { data, error } = await query.order('tanggal', { ascending: false });
-                if(error) throw error;
-
-                if(!data || data.length === 0) {
-                    list.innerHTML = '<div class="text-center py-20 text-slate-300 text-[10px] font-bold uppercase tracking-widest italic">Belum ada laporan</div>';
-                } else {
-                    data.forEach(l => {
-                        const isOwner = l.username === currentUser.username || currentUser.role === 'ADMIN';
-                        list.innerHTML += `
-                        <div class="bg-white p-5 rounded-3xl shadow-sm border-l-4 border-l-slate-900 mb-3 border border-slate-100">
-                            <div class="flex justify-between items-start mb-3">
-                                <div class="flex flex-col">
-                                    <span class="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md uppercase w-fit mb-1">${l.username} &bull; ${l.project_name}</span>
-                                    <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">${l.tanggal}</span>
-                                </div>
-                                ${isOwner ? `
-                                <div class="flex gap-1">
-                                    <button onclick="openEdit('${l.id}', '${l.project_name}', \`${l.pekerjaan.replace(/'/g, "\\'")}\`)" class="p-2 text-blue-500 hover:bg-blue-50 rounded-xl text-[10px] font-bold uppercase tracking-wider">Edit</button>
-                                    <button onclick="delLog('${l.id}')" class="p-2 text-red-500 hover:bg-red-50 rounded-xl text-[10px] font-bold uppercase tracking-wider">Del</button>
-                                </div>` : ''}
-                            </div>
-                            <p class="text-sm text-slate-700 leading-relaxed font-medium">${l.pekerjaan.replace(/\n/g, '<br>')}</p>
-                        </div>`;
-                    });
-                }
-            } catch (err) {
-                console.error("Load Logs Error:", err);
-                msg("❌ GAGAL MEMUAT DATA");
-            }
-            btn.innerText = "Tampilkan Data"; btn.disabled = false;
+            let q = sbClient.from('logs').select('*');
+            if(fP !== 'ALL') q = q.eq('project_name', fP);
+            if(fU !== 'ALL') q = q.eq('username', fU);
+            
+            const { data } = await q.order('tanggal', { ascending: false });
+            list.innerHTML = '';
+            if(!data || data.length === 0) return list.innerHTML = '<div class="text-center py-20 text-[10px] font-bold uppercase opacity-30 tracking-widest">Kosong</div>';
+            
+            data.forEach(l => {
+                list.innerHTML += `<div class="bg-white p-5 rounded-3xl shadow-sm border-l-4 border-l-slate-900 mb-3 border border-slate-100"><div class="flex justify-between items-start mb-2"><div class="flex flex-col"><span class="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md uppercase w-fit">${l.username} &bull; ${l.project_name}</span><span class="text-[9px] font-bold text-slate-400 mt-1 uppercase">${l.tanggal}</span></div></div><p class="text-sm text-slate-700 leading-relaxed font-medium">${l.pekerjaan.replace(/\n/g, '<br>')}</p></div>`;
+            });
         }
 
         document.getElementById('progressForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnSubmitLog');
             btn.disabled = true; btn.innerText = "MENYIMPAN...";
-
-            const payload = {
-                tanggal: document.getElementById('f_date').value,
-                username: currentUser.username,
-                project_name: document.getElementById('f_proj').value,
-                pekerjaan: document.getElementById('f_work').value
-            };
-
-            try {
-                const { error } = await sbClient.from('logs').insert([payload]);
-                if(error) throw error;
-                msg("✅ DATA BERHASIL DISIMPAN");
-                document.getElementById('f_work').value = '';
-            } catch (err) {
-                console.error("Submit Log Error:", err);
-                msg("❌ GAGAL MENYIMPAN");
-            }
-            btn.disabled = false; btn.innerText = "Simpan ke SQL";
+            const payload = { tanggal: document.getElementById('f_date').value, username: currentUser.username, project_name: document.getElementById('f_proj').value, pekerjaan: document.getElementById('f_work').value };
+            const { error } = await sbClient.from('logs').insert([payload]);
+            if(!error) { msg("✅ TERSIMPAN"); document.getElementById('f_work').value = ''; }
+            btn.disabled = false; btn.innerText = "SIMPAN";
         };
 
-        // --- TOOLS ADMIN ---
-        async function renderAdminSettings() {
-            try {
-                const { data: users } = await sbClient.from('users').select('*').order('username');
-                const uL = document.getElementById('userListAdmin');
-                const pL = document.getElementById('projListAdmin');
-                
-                uL.innerHTML = '';
-                if (users) {
-                    users.forEach(u => {
-                        uL.innerHTML += `
-                        <div class="flex justify-between items-center bg-white p-3 rounded-xl border text-[10px] font-bold">
-                            <span>${u.username} <span class="text-blue-500 italic uppercase text-[8px]">(${u.role})</span></span>
-                            <div class="flex gap-3">
-                                <button onclick="editU('${u.username}', '${u.password}', '${u.role}')" class="text-blue-600">Edit</button>
-                                <button onclick="delU('${u.username}')" class="text-red-500">Hapus</button>
-                            </div>
-                        </div>`;
-                    });
-                }
-
-                pL.innerHTML = '';
-                globalProjs.forEach(p => {
-                    pL.innerHTML += `
-                    <div class="flex justify-between items-center bg-white p-3 rounded-xl border text-[10px] font-bold uppercase">
-                        <span>${p}</span>
-                        <button onclick="delP('${p}')" class="text-red-500">Hapus</button>
-                    </div>`;
-                });
-            } catch (e) { console.error(e); }
-        }
-
-        async function saveUser() {
-            const u = document.getElementById('mU').value, p = document.getElementById('mP').value, r = document.getElementById('mR').value;
-            if(!u || !p) return msg("Username/Pass harus diisi!");
-            const { error } = await sbClient.from('users').upsert({ username: u, password: p, role: r }, { onConflict: 'username' });
-            if (error) msg("❌ GAGAL UPDATE USER");
-            else { msg("✅ AKUN TIM BERHASIL DIUPDATE"); syncData(); }
-        }
-
-        async function addNewProject() {
-            const name = document.getElementById('nP').value.toUpperCase().trim();
-            if(!name) return;
-            const { error } = await sbClient.from('projects').insert([{ name }]);
-            if(error) msg("❌ PROJEK SUDAH ADA");
-            else msg("✅ PROJEK BARU DITAMBAH");
-            document.getElementById('nP').value = '';
-            syncData();
-        }
-
-        async function delU(u) { if(confirm("Hapus "+u+"?")) { await sbClient.from('users').delete().eq('username', u); syncData(); } }
-        async function delP(p) { if(confirm("Hapus "+p+"?")) { await sbClient.from('projects').delete().eq('name', p); syncData(); } }
-
-        function openEdit(id, proj, work) {
-            document.getElementById('editId').value = id;
-            document.getElementById('editProj').value = proj;
-            document.getElementById('editWork').value = work;
-            document.getElementById('editModal').classList.remove('hidden');
-        }
-        function closeEdit() { document.getElementById('editModal').classList.add('hidden'); }
-        async function confirmEdit() {
-            const id = document.getElementById('editId').value, proj = document.getElementById('editProj').value, work = document.getElementById('editWork').value;
-            const { error } = await sbClient.from('logs').update({ project_name: proj, pekerjaan: work }).eq('id', id);
-            if(!error) { msg("✅ DATA BERHASIL DIUPDATE"); closeEdit(); loadLogs(); }
-            else { msg("❌ GAGAL UPDATE DATA"); }
-        }
-        async function delLog(id) { if(confirm("Hapus laporan ini permanen?")) { await sbClient.from('logs').delete().eq('id', id); loadLogs(); } }
-
         function tab(t) {
-            ['input','logs','settings'].forEach(k => {
-                const view = document.getElementById('v_'+k);
-                const btn = document.getElementById('t_'+k);
-                if(view) view.classList.toggle('hidden', k !== t);
-                if(btn) { btn.classList.toggle('tab-active', k === t); btn.classList.toggle('text-slate-400', k !== t); }
-            });
+            document.getElementById('v_input').classList.toggle('hidden', t !== 'input');
+            document.getElementById('v_logs').classList.toggle('hidden', t !== 'logs');
+            document.getElementById('t_input').classList.toggle('tab-active', t === 'input');
+            document.getElementById('t_logs').classList.toggle('tab-active', t === 'logs');
             if(t === 'logs') loadLogs();
         }
 
         function msg(m) {
             const t = document.getElementById('toast'); t.innerText = m;
-            t.style.opacity = "1";
-            setTimeout(() => t.style.opacity = "0", 3000);
-        }
-        function editU(u, p, r) {
-            document.getElementById('mU').value = u;
-            document.getElementById('mP').value = p;
-            document.getElementById('mR').value = r;
-            msg("SIAP EDIT AKUN TIM");
+            t.style.opacity = "1"; setTimeout(() => t.style.opacity = "0", 3000);
         }
     </script>
 </body>
