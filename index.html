@@ -39,6 +39,10 @@
         .checkbox-readonly { filter: grayscale(1); opacity: 0.5; cursor: not-allowed; }
         .label-readonly { color: #94a3b8; font-size: 8px; font-weight: 700; text-transform: uppercase; }
         .label-readonly.checked { color: #64748b; text-decoration: line-through; }
+
+        /* Sticky Note Style */
+        .sticky-note { background-color: #fef9c3; border-left: 4px solid #facc15; border-radius: 0.75rem; padding: 0.75rem; }
+        .sticky-note-textarea { background: transparent; border: none; outline: none; width: 100%; font-size: 11px; font-weight: 600; color: #854d0e; resize: none; line-height: 1.4; }
     </style>
 </head>
 <body class="pb-10">
@@ -69,7 +73,6 @@
             </div>
             
             <div class="flex items-center gap-3">
-                <!-- NOTIFICATION BELL -->
                 <div class="relative">
                     <button onclick="toggleNotifPanel()" class="p-2.5 bg-slate-50 rounded-full border border-slate-100 text-slate-400 hover:text-blue-600 transition-colors relative">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -77,18 +80,13 @@
                         </svg>
                         <span id="notifCount" class="hidden absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-white notif-badge-active">0</span>
                     </button>
-
-                    <!-- NOTIF PANEL DROPDOWN -->
                     <div id="notifPanel" class="hidden absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-2xl border border-slate-100 z-[60] overflow-hidden">
                         <div class="p-4 bg-slate-50 border-b flex justify-between items-center">
                             <span class="text-[10px] font-extrabold uppercase text-slate-500 tracking-widest">Pemberitahuan Deadline</span>
                         </div>
-                        <div id="notifList" class="max-h-80 overflow-y-auto p-2 space-y-2">
-                            <!-- List Notif Muncul di Sini -->
-                        </div>
+                        <div id="notifList" class="max-h-80 overflow-y-auto p-2 space-y-2"></div>
                     </div>
                 </div>
-
                 <button onclick="location.reload()" class="text-[10px] font-bold text-red-500 bg-red-50 px-4 py-2 rounded-full border border-red-100 uppercase">Logout</button>
             </div>
         </header>
@@ -103,7 +101,6 @@
         <main class="p-4">
             <!-- VIEW: INPUT PROGRES -->
             <section id="v_input" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Form Utama -->
                 <div class="md:col-span-2 space-y-4">
                     <div class="card p-6 shadow-sm border-blue-50">
                         <form id="progressForm" class="space-y-4">
@@ -118,15 +115,12 @@
                     </div>
                 </div>
 
-                <!-- Sidebar Info Projek (Accordion Mode) -->
                 <div class="md:col-span-1 space-y-4">
                     <div class="card p-5 shadow-sm bg-slate-50/50 border-slate-100 h-fit">
                         <h3 class="text-[10px] font-extrabold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2">
                             <span class="w-2 h-2 bg-blue-600 rounded-full"></span> Detail Progres Projek
                         </h3>
-                        <div id="sideProjList" class="space-y-4">
-                            <!-- Daftar Projek Accordion Muncul di Sini -->
-                        </div>
+                        <div id="sideProjList" class="space-y-4"></div>
                     </div>
                 </div>
             </section>
@@ -151,7 +145,6 @@
                         </h3>
                     </div>
                     
-                    <!-- Form Tambah & Search -->
                     <div class="space-y-3 mb-6">
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
                             <p id="projFormTitle" class="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Tambah Projek Baru</p>
@@ -171,26 +164,19 @@
                                 <button id="btnAddNewProject" onclick="addNewProject()" class="flex-[2] bg-blue-600 text-white py-3 rounded-xl font-bold active:scale-95 text-xs uppercase tracking-widest shadow-lg shadow-blue-100">+ Tambahkan Projek</button>
                             </div>
                         </div>
-
                         <div class="relative">
                             <input type="text" id="searchProj" oninput="handleProjSearch()" placeholder="Cari nama projek..." class="w-full p-3 pl-10 border rounded-xl text-xs outline-none bg-white border-slate-200 shadow-sm">
                             <svg class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </div>
                     </div>
 
-                    <div id="projListSettings" class="space-y-5 mb-4">
-                        <!-- Daftar Projek dengan dropdown tim akan muncul di sini -->
-                    </div>
-                    
-                    <div id="projPagination" class="flex justify-between items-center px-1">
-                        <!-- Pagination Projek -->
-                    </div>
+                    <div id="projListSettings" class="space-y-4 mb-4"></div>
+                    <div id="projPagination" class="flex justify-between items-center px-1"></div>
                 </div>
             </section>
 
-            <!-- VIEW: SETTINGS (ADMIN ONLY) -->
+            <!-- VIEW: SETTINGS -->
             <section id="v_settings" class="hidden space-y-8 max-w-2xl mx-auto">
-                <!-- Manajemen Akun -->
                 <div class="card p-6 shadow-sm bg-slate-50/50 border-slate-100">
                     <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2">
                         <span class="w-2 h-2 bg-blue-600 rounded-full"></span> Manajemen Akun
@@ -204,17 +190,13 @@
                             <option value="USER">TIM (USER)</option>
                             <option value="ADMIN">ADMINISTRATOR</option>
                         </select>
-                        
                         <div class="flex gap-2">
                             <button id="btnCancelEdit" onclick="resetUserForm()" class="hidden flex-1 bg-slate-200 text-slate-600 font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest">Batal</button>
                             <button id="btnSaveUser" onclick="saveUser()" class="flex-[2] bg-slate-900 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest">Simpan Akun</button>
                         </div>
                     </div>
-                    
                     <div class="space-y-2 mb-4" id="userListSettings"></div>
-                    <div id="userPagination" class="flex justify-between items-center px-1">
-                        <!-- Pagination Akun -->
-                    </div>
+                    <div id="userPagination" class="flex justify-between items-center px-1"></div>
                 </div>
             </section>
         </main>
@@ -235,10 +217,9 @@
         </div>
     </div>
 
-    <!-- TOAST NOTIFIKASI -->
+    <!-- TOAST -->
     <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl opacity-0 z-[100] text-[10px] font-bold uppercase tracking-widest text-center"></div>
 
-    <!-- FIREBASE SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
@@ -267,7 +248,6 @@
         let isEditingProject = false;
         let editingProjectOldName = "";
 
-        // Tahap Progress (8 Bagian @12.5%)
         const PROGRESS_TASKS = [
             { key: "drafting", label: "Drafting" },
             { key: "layouting", label: "Layouting" },
@@ -279,14 +259,12 @@
             { key: "gambar_int", label: "Gmbr Kerja INT" }
         ];
 
-        // Pagination State
         let usersCurrentPage = 1;
         const usersPerPage = 5;
         let projsCurrentPage = 1;
         const projsPerPage = 3;
         let projSearchQuery = "";
 
-        // 1. Initial Connection
         const init = async () => {
             try {
                 await signInAnonymously(auth);
@@ -298,23 +276,18 @@
                 });
             } catch (e) {
                 document.getElementById('statusDB').innerText = "⚠️ Connection Error";
-                document.getElementById('statusDB').classList.replace('text-slate-400', 'text-red-600');
             }
         };
         init();
 
-        // 2. Sistem Login
         document.getElementById('loginForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnLogin');
             btn.disabled = true; btn.innerText = "MENGECEK...";
-            
             const u = document.getElementById('u').value.trim().toLowerCase();
             const p = document.getElementById('p').value.trim();
-            
             const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', u);
             const userSnap = await getDoc(userRef);
-
             if (userSnap.exists() && userSnap.data().password === p) {
                 currentUser = { username: u, ...userSnap.data() };
                 startApp();
@@ -334,22 +307,17 @@
             document.getElementById('uDisp').innerText = currentUser.username.toUpperCase();
             document.getElementById('rDisp').innerText = currentUser.role;
             document.getElementById('f_date').valueAsDate = new Date();
-
             if (currentUser.role === 'ADMIN') {
                 document.getElementById('t_projek').classList.remove('hidden');
                 document.getElementById('t_settings').classList.remove('hidden');
             } else {
                 document.getElementById('flUser').classList.add('hidden');
             }
-
             listenUsers();
             listenProjects();
             listenLogs();
-
             tab('input');
         }
-
-        // --- LISTENERS ---
 
         function listenProjects() {
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'projects'), (snap) => {
@@ -370,23 +338,17 @@
             const fP = document.getElementById('f_proj');
             const flP = document.getElementById('flProj');
             if(!fP || !flP) return;
-            
             const currentFpVal = fP.value;
             const currentFlpVal = flP.value;
-
             fP.innerHTML = '<option value="" disabled selected>-- Pilih Projek --</option>';
             flP.innerHTML = '<option value="ALL">SEMUA PROJEK</option>';
-
             projectsData.sort((a,b) => a.name.localeCompare(b.name)).forEach(proj => {
                 const assignedUsers = proj.assignedUsers || [];
-                const isAssigned = currentUser.role === 'ADMIN' || assignedUsers.includes(currentUser.username);
-                
-                if (isAssigned) {
+                if (currentUser.role === 'ADMIN' || assignedUsers.includes(currentUser.username)) {
                     fP.add(new Option(proj.name, proj.name));
                     flP.add(new Option(proj.name, proj.name));
                 }
             });
-
             if(currentFpVal) fP.value = currentFpVal;
             if(currentFlpVal) flP.value = currentFlpVal;
         }
@@ -394,18 +356,16 @@
         window.renderSidebarDeadlines = () => {
             const sideList = document.getElementById('sideProjList');
             if(!sideList) return;
-
             const userProjects = projectsData.filter(proj => {
                 const assigned = proj.assignedUsers || [];
                 return currentUser.role === 'ADMIN' || assigned.includes(currentUser.username);
             }).sort((a,b) => a.name.localeCompare(b.name));
-
             sideList.innerHTML = userProjects.length ? '' : '<p class="text-[9px] text-slate-400 italic py-2 text-center">Belum ada projek aktif</p>';
-
             userProjects.forEach(proj => {
                 const startDate = proj.startDate ? new Date(proj.startDate).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) : '-';
                 const deadline = proj.endDate ? new Date(proj.endDate).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) : 'No Deadline';
                 const progress = calculateProgress(proj.tasks);
+                const notes = proj.notes || "";
                 
                 let checklistHtml = '';
                 PROGRESS_TASKS.forEach(t => {
@@ -413,19 +373,15 @@
                     checklistHtml += `
                         <div class="flex items-center gap-2 py-0.5">
                             <input type="checkbox" id="task_${proj.name.replace(/\s+/g, '_')}_${t.key}" class="task-checkbox w-3 h-3 rounded border-slate-300" 
-                                ${isChecked ? 'checked' : ''} 
-                                onchange="toggleTask('${proj.name}', '${t.key}', this.checked)">
-                            <label for="task_${proj.name.replace(/\s+/g, '_')}_${t.key}" class="text-[8px] font-bold uppercase tracking-tight text-slate-500 cursor-pointer select-none">
-                                ${t.label}
-                            </label>
+                                ${isChecked ? 'checked' : ''} onchange="toggleTask('${proj.name}', '${t.key}', this.checked)">
+                            <label for="task_${proj.name.replace(/\s+/g, '_')}_${t.key}" class="text-[8px] font-bold uppercase tracking-tight text-slate-500 cursor-pointer select-none">${t.label}</label>
                         </div>
                     `;
                 });
 
                 sideList.innerHTML += `
-                    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden transition-all duration-300">
-                        <!-- Accordion Header -->
-                        <div class="p-4 cursor-pointer hover:bg-slate-50 transition-colors" onclick="toggleAccordion(this)">
+                    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden transition-all">
+                        <div class="p-4 cursor-pointer hover:bg-slate-50" onclick="toggleAccordion(this)">
                             <div class="flex justify-between items-center mb-2">
                                 <span class="text-[10px] font-extrabold text-slate-800 uppercase truncate pr-2">${proj.name}</span>
                                 <div class="flex items-center gap-2">
@@ -433,23 +389,27 @@
                                     <svg class="w-3 h-3 text-slate-400 transition-transform arrow-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                                 </div>
                             </div>
-                            
-                            <!-- Progress Bar Ringkas -->
                             <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mb-2">
                                 <div class="bg-blue-600 h-full transition-all duration-500" style="width: ${progress}%"></div>
                             </div>
-
                             <div class="flex items-center gap-1.5">
                                 <span class="text-[8px] font-bold text-slate-400 uppercase tracking-tighter">Timeline:</span>
                                 <span class="text-[9px] font-extrabold text-slate-600">${startDate} - ${deadline}</span>
                             </div>
                         </div>
-
-                        <!-- Accordion Content (Checklist) -->
                         <div class="hidden px-4 pb-4 border-t border-slate-50 mt-1 accordion-body">
+                             <!-- Checklist -->
                              <p class="text-[7px] font-black text-slate-300 uppercase mb-2 mt-3 tracking-widest">Daftar Checklist Progress:</p>
-                             <div class="grid grid-cols-2 gap-x-2 bg-slate-50/50 p-2 rounded-xl">
+                             <div class="grid grid-cols-2 gap-x-2 bg-slate-50/50 p-2 rounded-xl mb-4">
                                 ${checklistHtml}
+                             </div>
+                             <!-- Sticky Note Feature -->
+                             <p class="text-[7px] font-black text-slate-300 uppercase mb-2 tracking-widest">Sticky Note (Catatan Projek):</p>
+                             <div class="sticky-note">
+                                <textarea id="note_${proj.name.replace(/\s+/g, '_')}" class="sticky-note-textarea" rows="4" placeholder="Tulis catatan penting di sini...">${notes}</textarea>
+                                <div class="flex justify-end mt-2">
+                                    <button onclick="saveProjectNote('${proj.name}', 'note_${proj.name.replace(/\s+/g, '_')}')" class="text-[8px] font-bold bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full uppercase tracking-widest shadow-sm active:scale-95 transition-all">Simpan Catatan</button>
+                                </div>
                              </div>
                         </div>
                     </div>
@@ -461,10 +421,6 @@
             const body = header.nextElementSibling;
             const arrow = header.querySelector('.arrow-icon');
             const isHidden = body.classList.contains('hidden');
-            
-            // Tutup accordion lain jika ingin mode single-open (opsional)
-            // document.querySelectorAll('.accordion-body').forEach(b => b.classList.add('hidden'));
-            
             if (isHidden) {
                 body.classList.remove('hidden');
                 arrow.style.transform = 'rotate(180deg)';
@@ -474,52 +430,46 @@
             }
         };
 
+        window.saveProjectNote = async (projName, textareaId) => {
+            const noteContent = document.getElementById(textareaId).value;
+            const projRef = doc(db, 'artifacts', appId, 'public', 'data', 'projects', projName);
+            try {
+                await updateDoc(projRef, { notes: noteContent });
+                msg("✅ CATATAN DISIMPAN");
+            } catch (e) {
+                msg("❌ GAGAL MENYIMPAN");
+            }
+        };
+
         window.toggleTask = async (projName, taskKey, isChecked) => {
             const projRef = doc(db, 'artifacts', appId, 'public', 'data', 'projects', projName);
             const proj = projectsData.find(p => p.name === projName);
             const updatedTasks = { ...(proj.tasks || {}) };
             updatedTasks[taskKey] = isChecked;
-
-            try {
-                await updateDoc(projRef, { tasks: updatedTasks });
-                msg(`UPDATE PROGRES: ${projName}`);
-            } catch (e) {
-                msg("❌ GAGAL UPDATE");
-            }
+            try { await updateDoc(projRef, { tasks: updatedTasks }); msg(`UPDATE PROGRES: ${projName}`); } catch (e) { msg("❌ GAGAL UPDATE"); }
         };
 
         window.checkDeadlines = () => {
             const list = document.getElementById('notifList');
             const badge = document.getElementById('notifCount');
             if(!list || !currentUser) return;
-
             const today = new Date(); today.setHours(0,0,0,0);
-            let alertCount = 0;
-            let html = '';
-
+            let alertCount = 0; let html = '';
             projectsData.forEach(proj => {
                 const assigned = proj.assignedUsers || [];
-                const isRelevant = currentUser.role === 'ADMIN' || assigned.includes(currentUser.username);
-                
-                if (isRelevant && proj.endDate) {
+                if ((currentUser.role === 'ADMIN' || assigned.includes(currentUser.username)) && proj.endDate) {
                     const end = new Date(proj.endDate); end.setHours(0,0,0,0);
-                    const diffTime = end - today;
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-                    let alertMsg = '';
-                    let bgColor = '';
-                    
+                    const diffDays = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+                    let alertMsg = '', bgColor = '';
                     if (diffDays === 0) { alertMsg = 'DEADLINE HARI INI!'; bgColor = 'bg-red-50 border-red-200 text-red-600'; } 
                     else if (diffDays === 3) { alertMsg = 'Deadline 3 hari lagi!'; bgColor = 'bg-orange-50 border-orange-200 text-orange-600'; } 
                     else if (diffDays === 7) { alertMsg = 'Deadline 1 minggu lagi.'; bgColor = 'bg-blue-50 border-blue-200 text-blue-600'; }
-
                     if (alertMsg) {
                         alertCount++;
                         html += `<div class="p-3 rounded-xl border ${bgColor} shadow-sm"><p class="text-[8px] font-black uppercase mb-0.5 tracking-tighter">${alertMsg}</p><p class="text-[10px] font-extrabold uppercase truncate">${proj.name}</p></div>`;
                     }
                 }
             });
-
             if (alertCount > 0) { badge.innerText = alertCount; badge.classList.remove('hidden'); list.innerHTML = html; } 
             else { badge.classList.add('hidden'); list.innerHTML = '<div class="text-center py-6 text-[9px] font-bold text-slate-300 uppercase italic">Tidak ada notifikasi penting</div>'; }
         };
@@ -530,13 +480,11 @@
             const listSet = document.getElementById('projListSettings');
             const pagSet = document.getElementById('projPagination');
             if(!listSet) return;
-
             const filtered = projectsData.filter(p => p.name.includes(projSearchQuery.toUpperCase())).sort((a,b) => a.name.localeCompare(b.name));
             const totalPages = Math.ceil(filtered.length / projsPerPage) || 1;
             if (projsCurrentPage > totalPages) projsCurrentPage = totalPages;
             const startIndex = (projsCurrentPage - 1) * projsPerPage;
             const paginated = filtered.slice(startIndex, startIndex + projsPerPage);
-
             listSet.innerHTML = '';
             paginated.forEach(proj => {
                 const assignedUsers = proj.assignedUsers || [];
@@ -546,23 +494,13 @@
                 
                 let assignedPills = '';
                 assignedUsers.sort().forEach(uid => {
-                    assignedPills += `
-                        <div class="user-pill flex items-center gap-1 px-2 py-1 rounded-xl text-[9px] font-bold uppercase">
-                            <span>${uid}</span>
-                            <button onclick="toggleUserAssignment('${proj.name}', '${uid}', false)" class="hover:text-red-500">×</button>
-                        </div>
-                    `;
+                    assignedPills += `<div class="user-pill flex items-center gap-1 px-2 py-1 rounded-xl text-[9px] font-bold uppercase"><span>${uid}</span><button onclick="toggleUserAssignment('${proj.name}', '${uid}', false)" class="hover:text-red-500">×</button></div>`;
                 });
 
                 let adminProgressList = '';
                 PROGRESS_TASKS.forEach(t => {
                     const isDone = proj.tasks && proj.tasks[t.key];
-                    adminProgressList += `
-                        <div class="flex items-center gap-2 py-0.5">
-                            <input type="checkbox" ${isDone ? 'checked' : ''} disabled class="checkbox-readonly w-3 h-3 rounded border-slate-200">
-                            <span class="label-readonly ${isDone ? 'checked' : ''}">${t.label}</span>
-                        </div>
-                    `;
+                    adminProgressList += `<div class="flex items-center gap-2 py-0.5"><input type="checkbox" ${isDone ? 'checked' : ''} disabled class="checkbox-readonly w-3 h-3 rounded border-slate-200"><span class="label-readonly ${isDone ? 'checked' : ''}">${t.label}</span></div>`;
                 });
 
                 const availableUsers = usersData.filter(u => !assignedUsers.includes(u.id)).sort((a,b) => a.id.localeCompare(b.id));
@@ -570,52 +508,50 @@
                 availableUsers.forEach(u => userOptions += `<option value="${u.id}">${u.id.toUpperCase()}</option>`);
 
                 listSet.innerHTML += `
-                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                        <div class="flex justify-between items-start">
-                            <div class="space-y-1 flex-grow pr-4">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-xs font-extrabold uppercase text-slate-800">${proj.name}</span>
-                                    <span class="text-[9px] font-black text-blue-600">${progress}%</span>
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all">
+                        <!-- Admin Accordion Header -->
+                        <div class="p-5 cursor-pointer hover:bg-slate-50 transition-colors" onclick="toggleAccordion(this)">
+                            <div class="flex justify-between items-start mb-2">
+                                <div class="space-y-1 flex-grow pr-4">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs font-extrabold uppercase text-slate-800">${proj.name}</span>
+                                        <span class="text-[9px] font-black text-blue-600">${progress}%</span>
+                                    </div>
+                                    <div class="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase">
+                                        <span>${startDateStr}</span><span>&rarr;</span><span class="${proj.endDate ? 'text-red-500' : ''}">${endDateStr}</span>
+                                    </div>
+                                    <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-1.5">
+                                        <div class="bg-blue-600 h-full transition-all duration-500" style="width: ${progress}%"></div>
+                                    </div>
                                 </div>
-                                <div class="flex items-center gap-2 text-[10px] text-slate-400 font-bold uppercase">
-                                    <span>${startDateStr}</span>
-                                    <span>&rarr;</span>
-                                    <span class="${proj.endDate ? 'text-red-500' : ''}">${endDateStr}</span>
-                                </div>
-                                <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mt-1.5">
-                                    <div class="bg-blue-600 h-full" style="width: ${progress}%"></div>
-                                </div>
-                            </div>
-                            <div class="flex gap-2">
-                                <button onclick="editProjectPrompt('${proj.name}', '${proj.startDate}', '${proj.endDate}')" class="text-blue-500 font-bold text-[9px] uppercase hover:underline">Edit</button>
-                                <button onclick="deleteProject('${proj.name}')" class="text-red-400 font-bold text-[9px] uppercase hover:underline">Hapus</button>
+                                <svg class="w-4 h-4 text-slate-400 transition-transform arrow-icon mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
                             </div>
                         </div>
 
-                        <!-- Progress Stages (Read-Only for Admin) -->
-                        <div class="bg-slate-50/50 p-4 rounded-xl border border-slate-100">
-                            <p class="text-[7px] font-black text-slate-300 uppercase mb-2 tracking-widest">Daftar Progress (Read-Only):</p>
-                            <div class="grid grid-cols-2 gap-x-4 gap-y-1">
-                                ${adminProgressList}
+                        <!-- Admin Accordion Body -->
+                        <div class="hidden px-5 pb-5 border-t border-slate-50 bg-slate-50/30">
+                            <div class="flex justify-end gap-2 my-3">
+                                <button onclick="editProjectPrompt('${proj.name}', '${proj.startDate}', '${proj.endDate}')" class="text-blue-500 font-bold text-[9px] uppercase hover:underline">Edit Info</button>
+                                <button onclick="deleteProject('${proj.name}')" class="text-red-400 font-bold text-[9px] uppercase hover:underline">Hapus Projek</button>
                             </div>
-                        </div>
-
-                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <p class="text-[9px] font-extrabold text-slate-400 uppercase mb-2">Tim Penanggung Jawab:</p>
-                            <div class="flex flex-wrap gap-1.5 mb-3">${assignedPills || '<p class="text-[8px] italic text-slate-300">Belum ada tim penanggung jawab</p>'}</div>
-                            <div class="flex gap-2">
-                                <select id="selAddUser_${proj.name.replace(/\s+/g, '_')}" class="flex-grow p-2 border rounded-xl text-[10px] font-bold bg-white">${userOptions}</select>
-                                <button onclick="addUserToProject('${proj.name}')" class="bg-blue-600 text-white px-4 rounded-xl font-bold active:scale-90 transition-transform">+</button>
+                            <!-- Detail Progress -->
+                            <div class="bg-white p-4 rounded-xl border border-slate-100 mb-4 shadow-sm">
+                                <p class="text-[7px] font-black text-slate-300 uppercase mb-2 tracking-widest">Daftar Progress (Read-Only):</p>
+                                <div class="grid grid-cols-2 gap-x-4 gap-y-1">${adminProgressList}</div>
+                            </div>
+                            <!-- Manajemen Tim -->
+                            <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                                <p class="text-[9px] font-extrabold text-slate-400 uppercase mb-2">Tim Penanggung Jawab:</p>
+                                <div class="flex flex-wrap gap-1.5 mb-3">${assignedPills || '<p class="text-[8px] italic text-slate-300">Belum ada tim penanggung jawab</p>'}</div>
+                                <div class="flex gap-2">
+                                    <select id="selAddUser_${proj.name.replace(/\s+/g, '_')}" class="flex-grow p-2 border rounded-xl text-[10px] font-bold bg-white outline-none">${userOptions}</select>
+                                    <button onclick="addUserToProject('${proj.name}')" class="bg-blue-600 text-white px-4 rounded-xl font-bold active:scale-90 transition-transform">+</button>
+                                </div>
                             </div>
                         </div>
                     </div>`;
             });
-
-            pagSet.innerHTML = `
-                <button onclick="changeProjPage(-1)" ${projsCurrentPage === 1 ? 'disabled' : ''} class="page-btn">Sebelumnya</button>
-                <span class="text-[10px] font-bold text-slate-400 uppercase">Hal ${projsCurrentPage} dari ${totalPages}</span>
-                <button onclick="changeProjPage(1)" ${projsCurrentPage === totalPages ? 'disabled' : ''} class="page-btn">Selanjutnya</button>
-            `;
+            pagSet.innerHTML = `<button onclick="changeProjPage(-1)" ${projsCurrentPage === 1 ? 'disabled' : ''} class="page-btn">Sebelumnya</button><span class="text-[10px] font-bold text-slate-400 uppercase">Hal ${projsCurrentPage} dari ${totalPages}</span><button onclick="changeProjPage(1)" ${projsCurrentPage === totalPages ? 'disabled' : ''} class="page-btn">Selanjutnya</button>`;
         };
 
         window.handleProjSearch = () => { projSearchQuery = document.getElementById('searchProj').value; projsCurrentPage = 1; renderProjectList(); };
@@ -668,17 +604,11 @@
             if(!list) return;
             const fP = document.getElementById('flProj').value;
             const fU = currentUser.role === 'ADMIN' ? document.getElementById('flUser').value : 'ALL';
-
             const filtered = logsData.filter(l => {
-                const project = projectsData.find(p => p.name === l.project_name);
-                const assignedUsers = project ? (project.assignedUsers || []) : [];
-                const isAssigned = currentUser.role === 'ADMIN' || assignedUsers.includes(currentUser.username);
-                if (!isAssigned) return false;
                 const matchProj = fP === 'ALL' || l.project_name === fP;
                 const matchUser = fU === 'ALL' || l.username === fU;
                 return matchProj && matchUser;
             });
-
             list.innerHTML = filtered.length ? '' : '<div class="text-center py-20 text-[10px] font-bold uppercase opacity-20 italic">Data Kosong</div>';
             filtered.forEach(l => {
                 const canEdit = l.username === currentUser.username || currentUser.role === 'ADMIN';
@@ -708,13 +638,12 @@
         };
 
         window.saveUser = async () => {
-            const uInput = document.getElementById('mU');
-            const u = uInput.value.trim().toLowerCase();
+            const u = document.getElementById('mU').value.trim().toLowerCase();
             const p = document.getElementById('mP').value.trim();
             const r = document.getElementById('mR').value;
             if(!u || !p) return msg("ISI USERNAME & PASS!");
             await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u), { password: p, role: r }, { merge: true });
-            msg(isEditingUser ? "✅ DATA AKUN DIPERBARUI" : "✅ AKUN BERHASIL DISIMPAN");
+            msg("✅ AKUN BERHASIL DISIMPAN");
             resetUserForm();
         };
 
@@ -730,7 +659,6 @@
             const uInput = document.getElementById('mU'); uInput.value = u; uInput.disabled = true; uInput.classList.add('input-disabled');
             document.getElementById('mP').value = p; document.getElementById('mR').value = r;
             document.getElementById('btnSaveUser').innerText = "Update Data Akun"; document.getElementById('btnCancelEdit').classList.remove('hidden');
-            msg("MODE EDIT: " + u.toUpperCase());
         };
 
         window.deleteUser = async (u) => {
@@ -739,8 +667,7 @@
         };
 
         window.addNewProject = async () => {
-            const nameInput = document.getElementById('nP');
-            const newName = nameInput.value.toUpperCase().trim();
+            const newName = document.getElementById('nP').value.toUpperCase().trim();
             const start = document.getElementById('nPStart').value;
             const end = document.getElementById('nPEnd').value;
             if(!newName) return msg("NAMA PROJEK WAJIB DIISI!");
@@ -748,15 +675,14 @@
                 const oldName = editingProjectOldName;
                 if (newName !== oldName) {
                     const proj = projectsData.find(p => p.name === oldName);
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', newName), { created: true, assignedUsers: proj.assignedUsers || [], startDate: start, endDate: end, tasks: proj.tasks || {} });
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', newName), { created: true, assignedUsers: proj.assignedUsers || [], startDate: start, endDate: end, tasks: proj.tasks || {}, notes: proj.notes || "" });
                     await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', oldName));
-                    const logsToUpdate = logsData.filter(l => l.project_name === oldName);
-                    for (const l of logsToUpdate) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', l.id), { project_name: newName }); }
+                    for (const l of logsData.filter(l => l.project_name === oldName)) { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', l.id), { project_name: newName }); }
                 } else { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', oldName), { startDate: start, endDate: end }); }
                 msg("✅ PROJEK DIPERBARUI");
             } else {
                 if (projectsData.some(p => p.name === newName)) return msg("NAMA PROJEK SUDAH ADA!");
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', newName), { created: true, assignedUsers: [], startDate: start, endDate: end, tasks: {} });
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', newName), { created: true, assignedUsers: [], startDate: start, endDate: end, tasks: {}, notes: "" });
                 msg("✅ PROJEK DITAMBAHKAN");
             }
             resetProjectForm();
@@ -764,16 +690,14 @@
 
         window.resetProjectForm = () => {
             isEditingProject = false; editingProjectOldName = "";
-            const nPInput = document.getElementById('nP'); nPInput.value = ''; nPInput.disabled = false; nPInput.classList.remove('input-disabled');
-            document.getElementById('nPStart').value = ''; document.getElementById('nPEnd').value = '';
+            document.getElementById('nP').value = ''; document.getElementById('nPStart').value = ''; document.getElementById('nPEnd').value = '';
             document.getElementById('btnAddNewProject').innerText = "+ Tambahkan Projek"; document.getElementById('btnCancelEditProj').classList.add('hidden');
             document.getElementById('projFormTitle').innerText = "Tambah Projek Baru";
         };
 
         window.editProjectPrompt = (name, start, end) => {
             isEditingProject = true; editingProjectOldName = name;
-            const nPInput = document.getElementById('nP'); nPInput.value = name; nPInput.disabled = false; nPInput.classList.remove('input-disabled');
-            document.getElementById('nPStart').value = start || ''; document.getElementById('nPEnd').value = end || '';
+            document.getElementById('nP').value = name; document.getElementById('nPStart').value = start || ''; document.getElementById('nPEnd').value = end || '';
             document.getElementById('btnAddNewProject').innerText = "Update Projek"; document.getElementById('btnCancelEditProj').classList.remove('hidden');
             document.getElementById('projFormTitle').innerText = "Edit Projek: " + name;
             msg("MODE EDIT PROJEK");
@@ -787,16 +711,18 @@
             const dropdownId = `selAddUser_${projectName.replace(/\s+/g, '_')}`;
             const userId = document.getElementById(dropdownId).value;
             if(!userId) return msg("PILIH ANGGOTA TIM!");
-            await toggleUserAssignment(projectName, userId, true);
+            const project = projectsData.find(p => p.name === projectName);
+            let updatedUsers = project.assignedUsers || [];
+            if (!updatedUsers.includes(userId)) updatedUsers.push(userId);
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', projectName), { assignedUsers: updatedUsers });
+            msg(`UPDATE TIM ${projectName}`);
         };
 
-        window.toggleUserAssignment = async (projectName, userId, isChecked) => {
+        window.toggleUserAssignment = async (projectName, userId, isAdding) => {
             const project = projectsData.find(p => p.name === projectName);
-            if (!project) return;
-            let updatedUsers = project.assignedUsers || [];
-            if (isChecked) { if (!updatedUsers.includes(userId)) updatedUsers.push(userId); } 
-            else { updatedUsers = updatedUsers.filter(uid => uid !== userId); }
-            try { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', projectName), { assignedUsers: updatedUsers }); msg(`UPDATE TIM ${projectName}`); } catch (err) { msg("❌ GAGAL UPDATE"); }
+            let updatedUsers = (project.assignedUsers || []).filter(uid => uid !== userId);
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', projectName), { assignedUsers: updatedUsers });
+            msg(`UPDATE TIM ${projectName}`);
         };
 
         window.deleteLog = async (id) => { if(confirm("Hapus laporan progres ini?")) { await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', id)); msg("LAPORAN DIHAPUS"); } };
@@ -808,22 +734,19 @@
             ['input','logs','projek','settings'].forEach(k => {
                 const view = document.getElementById('v_'+k); const btn = document.getElementById('t_'+k);
                 if(view) view.classList.toggle('hidden', k !== t);
-                if(btn) { btn.classList.toggle('tab-active', k === t); btn.classList.toggle('text-slate-400', k !== t); if(k === t) btn.classList.add('text-blue-600'); else btn.classList.remove('text-blue-600'); }
+                if(btn) { btn.classList.toggle('tab-active', k === t); btn.classList.toggle('text-slate-400', k !== t); if(k === t) btn.classList.add('text-blue-600'); }
             });
             if(t === 'logs') renderLogs();
         };
 
         window.msg = (m) => { const t = document.getElementById('toast'); t.innerText = m; t.style.opacity = "1"; setTimeout(() => t.style.opacity = "0", 3000); };
 
-        // Global assignments
+        window.toggleAccordion = toggleAccordion; window.saveProjectNote = saveProjectNote; window.toggleTask = toggleTask; window.toggleNotifPanel = toggleNotifPanel; window.handleProjSearch = handleProjSearch;
+        window.changeProjPage = changeProjPage; window.renderUserList = renderUserList; window.changeUserPage = changeUserPage; window.renderLogs = renderLogs;
         window.saveUser = saveUser; window.resetUserForm = resetUserForm; window.editUserPrompt = editUserPrompt; window.deleteUser = deleteUser;
         window.addNewProject = addNewProject; window.resetProjectForm = resetProjectForm; window.editProjectPrompt = editProjectPrompt; window.deleteProject = deleteProject;
-        window.deleteLog = deleteLog; window.editLogPrompt = editLogPrompt; window.confirmEditLog = confirmEditLog; window.closeEditModal = closeEditModal;
-        window.addUserToProject = addUserToProject; window.toggleUserAssignment = toggleUserAssignment; window.tab = tab;
-        window.renderLogs = renderLogs; window.changeUserPage = changeUserPage; window.changeProjPage = changeProjPage; window.handleProjSearch = handleProjSearch;
-        window.renderSidebarDeadlines = renderSidebarDeadlines; window.toggleNotifPanel = toggleNotifPanel; window.checkDeadlines = checkDeadlines;
-        window.toggleTask = toggleTask;
-        window.toggleAccordion = toggleAccordion;
+        window.addUserToProject = addUserToProject; window.toggleUserAssignment = toggleUserAssignment; window.deleteLog = deleteLog; window.editLogPrompt = editLogPrompt;
+        window.confirmEditLog = confirmEditLog; window.closeEditModal = closeEditModal; window.tab = tab;
     </script>
 </body>
 </html>
