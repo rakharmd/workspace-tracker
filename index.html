@@ -3,14 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WORKSPACE Tracker</title>
+    <title>WORKSPACE Tracker - Firebase</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f1f5f9; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
         .tab-active { color: #2563eb; border-bottom: 3px solid #2563eb; }
-        .modal-overlay { background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); }
         .card { background: white; border-radius: 1.5rem; border: 1px solid #e2e8f0; }
         #toast { transition: opacity 0.3s; pointer-events: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -18,173 +16,247 @@
 </head>
 <body class="pb-10">
 
+    <!-- LOGIN PAGE -->
     <div id="loginPage" class="flex items-center justify-center min-h-screen p-4">
         <div class="bg-white w-full max-w-md p-10 rounded-[2.5rem] shadow-2xl border-none">
             <h1 class="text-3xl font-extrabold text-center text-slate-900 mb-1 tracking-tighter italic uppercase">WORKSPACE</h1>
-            <p class="text-center text-slate-400 text-[10px] mb-6 font-bold tracking-[0.3em] uppercase">SQL Cloud System</p>
+            <p class="text-center text-slate-400 text-[10px] mb-8 font-bold tracking-[0.3em] uppercase">Firebase Cloud System</p>
             
-            <div id="connectionStatus" class="mb-6 text-center text-[9px] font-bold p-2 rounded-xl bg-slate-100 text-slate-400 uppercase tracking-widest border border-slate-200">
-                Mengecek Koneksi...
-            </div>
-
             <form id="loginForm" class="space-y-4">
                 <input type="text" id="u" placeholder="Username" required class="w-full p-4 border rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 text-sm">
                 <input type="password" id="p" placeholder="Password" required class="w-full p-4 border rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 text-sm">
-                <button type="submit" id="btnLogin" class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-all uppercase tracking-widest text-xs">Masuk</button>
+                <button type="submit" id="btnLogin" class="w-full bg-slate-900 text-white font-bold py-4 rounded-2xl shadow-lg active:scale-95 transition-all uppercase tracking-widest text-xs">Masuk Sekarang</button>
             </form>
-            
-            <p class="mt-8 text-[9px] text-center text-slate-400 leading-relaxed uppercase font-semibold">
-                Matikan AdBlock jika banner merah muncul.
-            </p>
+            <p id="statusDB" class="mt-6 text-[9px] text-center text-slate-400 uppercase font-bold tracking-widest italic">Menghubungkan Database...</p>
         </div>
     </div>
 
+    <!-- MAIN APP -->
     <div id="mainApp" class="hidden max-w-2xl mx-auto">
         <header class="p-6 bg-white/80 backdrop-blur border-b flex justify-between items-center sticky top-0 z-50 shadow-sm">
             <div>
-                <h2 id="uDisp" class="font-bold text-slate-800 text-lg uppercase tracking-tight">User</h2>
+                <h2 id="uDisp" class="font-bold text-slate-800 text-lg uppercase tracking-tight italic">User</h2>
                 <span id="rDisp" class="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Role</span>
             </div>
-            <button onclick="location.reload()" class="text-[10px] font-bold text-red-500 bg-red-50 px-4 py-2 rounded-full border border-red-100 uppercase tracking-wider">Logout</button>
+            <button onclick="location.reload()" class="text-[10px] font-bold text-red-500 bg-red-50 px-4 py-2 rounded-full border border-red-100 uppercase">Logout</button>
         </header>
 
         <nav class="flex bg-white border-b sticky top-[77px] z-40 overflow-x-auto no-scrollbar">
             <button onclick="tab('input')" id="t_input" class="flex-1 py-4 text-[11px] font-bold tab-active uppercase tracking-widest">Input</button>
             <button onclick="tab('logs')" id="t_logs" class="flex-1 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Pantauan</button>
-            <button onclick="tab('settings')" id="t_settings" class="hidden flex-1 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Settings</button>
         </nav>
 
         <main class="p-4 space-y-6">
+            <!-- VIEW: INPUT -->
             <section id="v_input" class="space-y-4">
                 <div class="card p-6 shadow-sm border-blue-50">
                     <form id="progressForm" class="space-y-4">
-                        <label class="text-[9px] font-bold text-slate-400 uppercase ml-1">Tanggal</label>
-                        <input type="date" id="f_date" required class="w-full p-3 border rounded-xl bg-slate-50 outline-none text-sm">
-                        <label class="text-[9px] font-bold text-slate-400 uppercase ml-1">Projek</label>
-                        <select id="f_proj" required class="w-full p-3 border rounded-xl bg-white font-bold text-slate-700 text-sm outline-none"></select>
-                        <label class="text-[9px] font-bold text-slate-400 uppercase ml-1">Progress</label>
-                        <textarea id="f_work" rows="5" placeholder="Detail pekerjaan..." required class="w-full p-3 border rounded-xl bg-slate-50 outline-none text-sm"></textarea>
-                        <button type="submit" id="btnSubmitLog" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg uppercase text-[10px] tracking-widest">Simpan</button>
+                        <label class="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Tanggal Kerja</label>
+                        <input type="date" id="f_date" required class="w-full p-3 border rounded-xl bg-slate-50 outline-none text-sm font-semibold">
+                        <label class="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Pilih Projek</label>
+                        <select id="f_proj" required class="w-full p-3 border rounded-xl bg-white font-bold text-slate-700 text-sm outline-none border-slate-200"></select>
+                        <label class="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Detail Pekerjaan (Progres)</label>
+                        <textarea id="f_work" rows="5" placeholder="Tuliskan apa yang kamu kerjakan hari ini..." required class="w-full p-3 border rounded-xl bg-slate-50 outline-none text-sm leading-relaxed"></textarea>
+                        <button type="submit" id="btnSubmitLog" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg uppercase text-[10px] tracking-widest active:scale-95 transition-all">Simpan Progres</button>
                     </form>
                 </div>
             </section>
 
+            <!-- VIEW: PANTUAN -->
             <section id="v_logs" class="hidden space-y-4">
                 <div class="card p-4 space-y-3 sticky top-[140px] z-30 shadow-xl border-slate-200">
                     <div class="flex gap-2">
-                        <select id="flUser" class="flex-1 p-3 border rounded-xl text-[11px] font-bold bg-slate-50 outline-none"></select>
-                        <select id="flProj" class="flex-1 p-3 border rounded-xl text-[11px] font-bold bg-slate-50 outline-none"></select>
+                        <select id="flUser" onchange="renderLogs()" class="flex-1 p-3 border rounded-xl text-[11px] font-bold bg-slate-50 outline-none border-slate-200"></select>
+                        <select id="flProj" onchange="renderLogs()" class="flex-1 p-3 border rounded-xl text-[11px] font-bold bg-slate-50 outline-none border-slate-200"></select>
                     </div>
-                    <button onclick="loadLogs()" id="btnDraw" class="w-full bg-slate-900 text-white font-bold py-4 rounded-xl text-[10px] tracking-widest shadow-lg uppercase">Tampilkan Data</button>
                 </div>
                 <div id="logList" class="space-y-3 pt-2"></div>
             </section>
         </main>
     </div>
 
-    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl opacity-0 z-[100] text-[10px] font-bold uppercase text-center"></div>
+    <!-- TOAST NOTIFIKASI -->
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl opacity-0 z-[100] text-[10px] font-bold uppercase tracking-widest text-center"></div>
 
-    <script>
-        const SB_URL = 'https://rcrjmrpgyuyzpzceexb.supabase.co'; 
-        const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjcmptcnBndXJ5dXpwemNlZXhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDU2NzcsImV4cCI6MjA5MTIyMTY3N30.A4TeDYxayj2ln0Y0CLzdfUcXCgJVilL-O1kB-LY5hY4';
-        
-        const sbClient = supabase.createClient(SB_URL, SB_KEY);
+    <!-- FIREBASE SDK -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // --- CONFIG FIREBASE RAKHA ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyD-wrKOTP046d3Ojr_pKPHEWWf7Kuk5Nco",
+            authDomain: "workspace-tracker-b3f8a.firebaseapp.com",
+            projectId: "workspace-tracker-b3f8a",
+            storageBucket: "workspace-tracker-b3f8a.firebasestorage.app",
+            messagingSenderId: "347113310211",
+            appId: "1:347113310211:web:900680ab7b8456a0f66636",
+            measurementId: "G-46YN28RC22"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = "workspace-tracker-final";
+
         let currentUser = null;
+        let logsData = [];
 
-        window.addEventListener('load', async () => {
-            const statusDiv = document.getElementById('connectionStatus');
+        // 1. Koneksi Otomatis ke Cloud Google
+        const init = async () => {
             try {
-                const { error } = await sbClient.from('users').select('count', { count: 'exact', head: true });
-                if (error) throw error;
-                statusDiv.innerText = "✅ Database Terhubung";
-                statusDiv.className = "mb-6 text-center text-[9px] font-bold p-2 rounded-xl bg-green-100 text-green-600 uppercase tracking-widest border border-green-200";
-            } catch (err) {
-                statusDiv.innerText = "⚠️ GAGAL TERHUBUNG KE DATABASE";
-                statusDiv.className = "mb-6 text-center text-[9px] font-bold p-2 rounded-xl bg-red-100 text-red-600 uppercase tracking-widest border border-red-200";
+                await signInAnonymously(auth);
+                onAuthStateChanged(auth, (user) => {
+                    if (user) {
+                        document.getElementById('statusDB').innerText = "✅ Koneksi Cloud Aktif";
+                        document.getElementById('statusDB').classList.replace('text-slate-400', 'text-green-600');
+                    }
+                });
+            } catch (e) {
+                document.getElementById('statusDB').innerText = "⚠️ Masalah Koneksi";
+                document.getElementById('statusDB').classList.replace('text-slate-400', 'text-red-600');
             }
-        });
+        };
+        init();
 
+        // 2. Sistem Login Firestore
         document.getElementById('loginForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnLogin');
-            btn.disabled = true; btn.innerText = "SINKRONISASI...";
+            btn.disabled = true; btn.innerText = "MENGECEK...";
             
-            const u = document.getElementById('u').value.trim();
+            const u = document.getElementById('u').value.trim().toLowerCase();
             const p = document.getElementById('p').value.trim();
             
-            try {
-                const { data, error } = await sbClient.from('users').select('*').eq('username', u).eq('password', p).maybeSingle();
-                if (error) throw error;
-                if (data) { currentUser = data; initApp(); } 
-                else { msg("❌ USER TIDAK DITEMUKAN"); btn.disabled = false; btn.innerText = "MASUK"; }
-            } catch (err) {
-                msg("❌ KONEKSI DIBLOKIR BROWSER");
-                btn.disabled = false; btn.innerText = "MASUK";
+            // Mengambil data user dari path yang aman
+            const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', u);
+            const userSnap = await getDoc(userRef);
+
+            if (userSnap.exists() && userSnap.data().password === p) {
+                currentUser = { username: u, ...userSnap.data() };
+                startApp();
+            } else if (u === 'admin' && p === 'admin123') {
+                // Backdoor untuk login pertama kali & setup admin
+                currentUser = { username: 'admin', role: 'ADMIN' };
+                await setDoc(userRef, { password: 'admin123', role: 'ADMIN' });
+                startApp();
+            } else {
+                msg("❌ USERNAME/PASSWORD SALAH");
+                btn.disabled = false; btn.innerText = "MASUK SEKARANG";
             }
         };
 
-        async function initApp() {
+        async function startApp() {
             document.getElementById('loginPage').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('uDisp').innerText = currentUser.username;
             document.getElementById('rDisp').innerText = currentUser.role;
             document.getElementById('f_date').valueAsDate = new Date();
 
-            const { data: projs } = await sbClient.from('projects').select('name').order('name');
-            const { data: users } = await sbClient.from('users').select('username').order('username');
-            
-            const fP = document.getElementById('f_proj'), flP = document.getElementById('flProj'), flU = document.getElementById('flUser');
-            fP.innerHTML = '<option value="" disabled selected>-- Pilih Projek --</option>';
-            flP.innerHTML = '<option value="ALL">SEMUA PROJEK</option>';
-            flU.innerHTML = '<option value="ALL">SEMUA USER</option>';
+            if (currentUser.role !== 'ADMIN') document.getElementById('flUser').classList.add('hidden');
 
-            if(projs) projs.forEach(p => { fP.add(new Option(p.name, p.name)); flP.add(new Option(p.name, p.name)); });
-            if(users) users.forEach(u => flU.add(new Option(u.username, u.username)));
-            if(currentUser.role === 'USER') flU.classList.add('hidden');
+            // Ambil Daftar Projek secara Real-time
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'projects'), (snap) => {
+                const fP = document.getElementById('f_proj');
+                const flP = document.getElementById('flProj');
+                const projs = snap.docs.map(d => d.id);
+                fP.innerHTML = '<option value="" disabled selected>-- Pilih Projek --</option>';
+                flP.innerHTML = '<option value="ALL">SEMUA PROJEK</option>';
+                projs.sort().forEach(p => { fP.add(new Option(p, p)); flP.add(new Option(p, p)); });
+                
+                // Tambahkan projek contoh jika database benar-benar kosong
+                if(projs.length === 0 && currentUser.role === 'ADMIN') {
+                    setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', 'PROJEK CONTOH'), { info: "default" });
+                }
+            });
+
+            // Ambil Daftar User untuk Filter (Hanya Admin)
+            if (currentUser.role === 'ADMIN') {
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
+                    const flU = document.getElementById('flUser');
+                    flU.innerHTML = '<option value="ALL">SEMUA TIM</option>';
+                    snap.docs.forEach(d => flU.add(new Option(d.id.toUpperCase(), d.id)));
+                });
+            }
+
+            // Ambil Laporan Progres secara Real-time
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), (snap) => {
+                logsData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                // Sort manual terbaru di atas
+                logsData.sort((a, b) => new Date(b.tanggal) - new Date(a.tanggal));
+                renderLogs();
+            });
+
             tab('input');
         }
 
-        async function loadLogs() {
+        // Fungsi Menampilkan Laporan ke Layar
+        window.renderLogs = () => {
             const list = document.getElementById('logList');
-            list.innerHTML = '<div class="text-center py-10 text-xs animate-pulse text-slate-400">MEMUAT...</div>';
             const fP = document.getElementById('flProj').value;
             const fU = currentUser.role === 'ADMIN' ? document.getElementById('flUser').value : currentUser.username;
 
-            let q = sbClient.from('logs').select('*');
-            if(fP !== 'ALL') q = q.eq('project_name', fP);
-            if(fU !== 'ALL') q = q.eq('username', fU);
-            
-            const { data } = await q.order('tanggal', { ascending: false });
-            list.innerHTML = '';
-            if(!data || data.length === 0) return list.innerHTML = '<div class="text-center py-20 text-[10px] font-bold uppercase opacity-30 tracking-widest">Kosong</div>';
-            
-            data.forEach(l => {
-                list.innerHTML += `<div class="bg-white p-5 rounded-3xl shadow-sm border-l-4 border-l-slate-900 mb-3 border border-slate-100"><div class="flex justify-between items-start mb-2"><div class="flex flex-col"><span class="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md uppercase w-fit">${l.username} &bull; ${l.project_name}</span><span class="text-[9px] font-bold text-slate-400 mt-1 uppercase">${l.tanggal}</span></div></div><p class="text-sm text-slate-700 leading-relaxed font-medium">${l.pekerjaan.replace(/\n/g, '<br>')}</p></div>`;
-            });
-        }
+            const filtered = logsData.filter(l => 
+                (fP === 'ALL' || l.project_name === fP) && 
+                (fU === 'ALL' || l.username === fU)
+            );
 
+            list.innerHTML = filtered.length ? '' : '<div class="text-center py-20 text-[10px] font-bold uppercase opacity-20 tracking-[0.3em] italic">Data Masih Kosong</div>';
+            
+            filtered.forEach(l => {
+                list.innerHTML += `
+                <div class="bg-white p-5 rounded-3xl shadow-sm border-l-4 border-l-slate-900 mb-3 border border-slate-100 animate-in fade-in duration-300">
+                    <div class="flex justify-between items-start mb-2">
+                        <div class="flex flex-col">
+                            <span class="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md uppercase w-fit mb-1">${l.username} &bull; ${l.project_name}</span>
+                            <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">${l.tanggal}</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-slate-700 leading-relaxed font-medium">${l.pekerjaan.replace(/\n/g, '<br>')}</p>
+                </div>`;
+            });
+        };
+
+        // Simpan Laporan ke Cloud
         document.getElementById('progressForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnSubmitLog');
-            btn.disabled = true; btn.innerText = "MENYIMPAN...";
-            const payload = { tanggal: document.getElementById('f_date').value, username: currentUser.username, project_name: document.getElementById('f_proj').value, pekerjaan: document.getElementById('f_work').value };
-            const { error } = await sbClient.from('logs').insert([payload]);
-            if(!error) { msg("✅ TERSIMPAN"); document.getElementById('f_work').value = ''; }
-            btn.disabled = false; btn.innerText = "SIMPAN";
+            btn.disabled = true; btn.innerText = "MENGIRIM...";
+
+            try {
+                if (!auth.currentUser) throw new Error("Akses Ditolak");
+
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), {
+                    tanggal: document.getElementById('f_date').value,
+                    username: currentUser.username,
+                    project_name: document.getElementById('f_proj').value,
+                    pekerjaan: document.getElementById('f_work').value,
+                    ts: serverTimestamp()
+                });
+                msg("✅ LAPORAN TERKIRIM");
+                document.getElementById('f_work').value = '';
+            } catch (err) {
+                msg("❌ GAGAL SIMPAN");
+            }
+            btn.disabled = false; btn.innerText = "SIMPAN PROGRES";
         };
 
-        function tab(t) {
+        // Navigasi Tab
+        window.tab = (t) => {
             document.getElementById('v_input').classList.toggle('hidden', t !== 'input');
             document.getElementById('v_logs').classList.toggle('hidden', t !== 'logs');
             document.getElementById('t_input').classList.toggle('tab-active', t === 'input');
             document.getElementById('t_logs').classList.toggle('tab-active', t === 'logs');
-            if(t === 'logs') loadLogs();
-        }
+            if(t === 'logs') renderLogs();
+        };
 
-        function msg(m) {
+        window.msg = (m) => {
             const t = document.getElementById('toast'); t.innerText = m;
             t.style.opacity = "1"; setTimeout(() => t.style.opacity = "0", 3000);
-        }
+        };
+        
+        window.renderLogs = renderLogs;
     </script>
 </body>
 </html>
