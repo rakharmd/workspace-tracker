@@ -297,6 +297,15 @@
             return userColors[u] || 'bg-slate-100 text-slate-700 border-slate-200';
         };
 
+        // Fungsi pembantu untuk mendapatkan tanggal lokal (WIB) dalam format YYYY-MM-DD
+        const getLocalDateString = () => {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        };
+
         const init = async () => {
             try {
                 await signInAnonymously(auth);
@@ -339,9 +348,8 @@
             document.getElementById('uDisp').innerText = currentUser.username.toUpperCase();
             document.getElementById('rDisp').innerText = currentUser.role;
             
-            // Otomatisasi Tanggal Kerja hari ini saat login
-            const today = new Date().toISOString().split('T')[0];
-            document.getElementById('f_date').value = today;
+            // Otomatisasi Tanggal Kerja hari ini (Lokal) saat login
+            document.getElementById('f_date').value = getLocalDateString();
 
             if (currentUser.role === 'ADMIN') {
                 document.getElementById('t_projek').classList.remove('hidden');
@@ -649,11 +657,10 @@
             const pagSet = document.getElementById('userPagination');
             if(!listSet) return;
             flU.innerHTML = '<option value="ALL">SEMUA TIM</option>';
-            const sorted = usersData.sort((a,b) => a.id.idCompare(b.id)); // Fix typo in original: sorted.forEach...
-            const totalPages = Math.ceil(usersData.length / usersPerPage) || 1;
+            const sortedList = usersData.sort((a,b) => a.id.localeCompare(b.id));
+            const totalPages = Math.ceil(sortedList.length / usersPerPage) || 1;
             if (usersCurrentPage > totalPages) usersCurrentPage = totalPages;
             const startIndex = (usersCurrentPage - 1) * usersPerPage;
-            const sortedList = usersData.sort((a,b) => a.id.localeCompare(b.id));
             const paginated = sortedList.slice(startIndex, startIndex + usersPerPage);
             listSet.innerHTML = '';
             sortedList.forEach(u => flU.add(new Option(u.id.toUpperCase(), u.id)));
@@ -745,9 +752,8 @@
                     ts: serverTimestamp()
                 });
                 msg("✅ LAPORAN TERKIRIM"); document.getElementById('f_work').value = '';
-                // Tetap biarkan tanggal di hari ini setelah submit
-                const today = new Date().toISOString().split('T')[0];
-                document.getElementById('f_date').value = today;
+                // Tetap biarkan tanggal di hari ini (Lokal) setelah submit
+                document.getElementById('f_date').value = getLocalDateString();
             } catch (err) { msg("❌ GAGAL SIMPAN"); }
             btn.disabled = false; btn.innerText = "SIMPAN PROGRES";
         };
