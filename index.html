@@ -402,10 +402,28 @@
             
             userProjects.forEach(proj => {
                 const startDate = proj.startDate ? new Date(proj.startDate).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) : '-';
-                const deadline = proj.endDate ? new Date(proj.endDate).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) : 'No Deadline';
+                const deadlineStr = proj.endDate ? new Date(proj.endDate).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) : 'No Deadline';
                 const progress = calculateProgress(proj.tasks);
                 const notes = proj.notes || "";
                 const isFinished = proj.isFinished || false;
+
+                // Logika Warna Kotak Tanggal
+                let dateBoxClass = "bg-white border-slate-200 text-slate-800"; // Default
+                if (proj.endDate) {
+                    const today = new Date(); today.setHours(0,0,0,0);
+                    const end = new Date(proj.endDate); end.setHours(0,0,0,0);
+                    const diffDays = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+
+                    if (diffDays <= 0) {
+                        dateBoxClass = "bg-black text-white border-black";
+                    } else if (diffDays <= 3) {
+                        dateBoxClass = "bg-red-500 text-white border-red-500";
+                    } else if (diffDays <= 7) {
+                        dateBoxClass = "bg-orange-500 text-white border-orange-500";
+                    } else if (diffDays <= 14) {
+                        dateBoxClass = "bg-green-500 text-white border-green-500";
+                    }
+                }
                 
                 let checklistHtml = '';
                 PROGRESS_TASKS.forEach(t => {
@@ -424,13 +442,13 @@
                         <div class="p-4">
                             <div class="flex justify-between items-start mb-2">
                                 <div class="cursor-pointer flex-grow pr-2" onclick="toggleAccordion(this)">
-                                    <div class="flex items-center gap-2 mb-1">
+                                    <div class="flex items-center gap-2 mb-2">
                                         <span class="text-[10px] font-extrabold uppercase truncate ${isFinished ? 'text-white' : 'text-slate-800'}">${proj.name}</span>
                                         <span class="text-[9px] font-black ${isFinished ? 'text-green-400' : 'text-blue-600'}">${progress}%</span>
                                     </div>
-                                    <div class="flex items-center gap-1.5">
-                                        <span class="text-[8px] font-bold uppercase tracking-tighter ${isFinished ? 'text-slate-500' : 'text-slate-400'}">Timeline:</span>
-                                        <span class="text-[9px] font-extrabold ${isFinished ? 'text-slate-300' : 'text-slate-600'}">${startDate} - ${deadline}</span>
+                                    <!-- Kotak Tanggal Berwarna -->
+                                    <div class="inline-block px-2 py-1 rounded-lg border text-[9px] font-extrabold tracking-tight ${isFinished ? 'opacity-50' : dateBoxClass}">
+                                        ${deadlineStr}
                                     </div>
                                 </div>
                                 <!-- Slide Button Finish -->
