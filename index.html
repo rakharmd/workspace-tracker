@@ -17,6 +17,9 @@
         .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
         .input-disabled { background-color: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
         .user-pill { background-color: #eff6ff; border: 1px solid #dbeafe; color: #2563eb; }
+        .page-btn { padding: 0.5rem 1rem; border-radius: 0.75rem; background: white; border: 1px solid #e2e8f0; font-size: 0.75rem; font-weight: 700; color: #64748b; transition: all 0.2s; }
+        .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .page-btn:not(:disabled):hover { border-color: #2563eb; color: #2563eb; }
     </style>
 </head>
 <body class="pb-10">
@@ -86,7 +89,7 @@
                     <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2">
                         <span class="w-2 h-2 bg-blue-600 rounded-full"></span> Manajemen Akun
                     </h3>
-                    <div class="space-y-4">
+                    <div class="space-y-4 mb-8">
                         <div class="grid grid-cols-2 gap-2">
                             <input type="text" id="mU" placeholder="Username" class="p-3 border rounded-xl text-sm outline-none bg-white">
                             <input type="text" id="mP" placeholder="Password" class="p-3 border rounded-xl text-sm outline-none bg-white">
@@ -102,20 +105,38 @@
                         </div>
                     </div>
                     
-                    <div class="mt-6 space-y-2" id="userListSettings"></div>
+                    <div class="space-y-2 mb-4" id="userListSettings"></div>
+                    <div id="userPagination" class="flex justify-between items-center px-1">
+                        <!-- Pagination Akun -->
+                    </div>
                 </div>
 
                 <!-- Manajemen Projek -->
                 <div class="card p-6 shadow-sm border-slate-100">
-                    <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2">
-                        <span class="w-2 h-2 bg-green-600 rounded-full"></span> Daftar Projek Global
-                    </h3>
-                    <div class="flex gap-2 mb-6">
-                        <input type="text" id="nP" placeholder="Nama Projek Baru..." class="flex-grow p-3 border rounded-xl text-sm outline-none bg-slate-50 uppercase font-bold border-slate-200">
-                        <button onclick="addNewProject()" class="bg-blue-600 text-white px-5 rounded-xl font-bold active:scale-95">+</button>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xs font-bold text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                            <span class="w-2 h-2 bg-green-600 rounded-full"></span> Daftar Projek Global
+                        </h3>
                     </div>
-                    <div id="projListSettings" class="space-y-5">
+                    
+                    <!-- Form Tambah & Search -->
+                    <div class="space-y-3 mb-6">
+                        <div class="flex gap-2">
+                            <input type="text" id="nP" placeholder="Nama Projek Baru..." class="flex-grow p-3 border rounded-xl text-sm outline-none bg-slate-50 uppercase font-bold border-slate-200">
+                            <button onclick="addNewProject()" class="bg-blue-600 text-white px-5 rounded-xl font-bold active:scale-95">+</button>
+                        </div>
+                        <div class="relative">
+                            <input type="text" id="searchProj" oninput="handleProjSearch()" placeholder="Cari nama projek..." class="w-full p-3 pl-10 border rounded-xl text-xs outline-none bg-white border-slate-200 shadow-sm">
+                            <svg class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                    </div>
+
+                    <div id="projListSettings" class="space-y-5 mb-4">
                         <!-- Daftar Projek dengan dropdown tim akan muncul di sini -->
+                    </div>
+                    
+                    <div id="projPagination" class="flex justify-between items-center px-1">
+                        <!-- Pagination Projek -->
                     </div>
                 </div>
             </section>
@@ -166,6 +187,13 @@
         let usersData = [];
         let projectsData = [];
         let isEditingUser = false;
+
+        // Pagination State
+        let usersCurrentPage = 1;
+        const usersPerPage = 5;
+        let projsCurrentPage = 1;
+        const projsPerPage = 3;
+        let projSearchQuery = "";
 
         // 1. Initial Connection
         const init = async () => {
@@ -234,102 +262,174 @@
         function listenProjects() {
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'projects'), (snap) => {
                 projectsData = snap.docs.map(d => ({ name: d.id, ...d.data() }));
-                
-                const fP = document.getElementById('f_proj');
-                const flP = document.getElementById('flProj');
-                const listSet = document.getElementById('projListSettings');
-
-                fP.innerHTML = '<option value="" disabled selected>-- Pilih Projek --</option>';
-                flP.innerHTML = '<option value="ALL">SEMUA PROJEK</option>';
-                if(listSet) listSet.innerHTML = '';
-
-                projectsData.sort((a,b) => a.name.localeCompare(b.name)).forEach(proj => {
-                    const assignedUsers = proj.assignedUsers || [];
-                    const isAssigned = currentUser.role === 'ADMIN' || assignedUsers.includes(currentUser.username);
-                    
-                    if (isAssigned) {
-                        fP.add(new Option(proj.name, proj.name));
-                        flP.add(new Option(proj.name, proj.name));
-                    }
-
-                    if(listSet) {
-                        // Pills untuk tim yang sudah ditugaskan
-                        let assignedPills = '';
-                        assignedUsers.sort().forEach(uid => {
-                            assignedPills += `
-                                <div class="user-pill flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-bold uppercase shadow-sm">
-                                    <span>${uid}</span>
-                                    <button onclick="toggleUserAssignment('${proj.name}', '${uid}', false)" class="hover:text-red-500 ml-0.5">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
-                                    </button>
-                                </div>
-                            `;
-                        });
-
-                        // Dropdown untuk menambah tim baru (yang belum ditugaskan)
-                        const availableUsers = usersData.filter(u => !assignedUsers.includes(u.id));
-                        let userOptions = '<option value="" disabled selected>Pilih Anggota Tim...</option>';
-                        availableUsers.forEach(u => userOptions += `<option value="${u.id}">${u.id.toUpperCase()}</option>`);
-
-                        listSet.innerHTML += `
-                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-xs font-extrabold uppercase text-slate-800 tracking-tight flex items-center gap-2">
-                                        <span class="w-1.5 h-1.5 bg-blue-600 rounded-full"></span> ${proj.name}
-                                    </span>
-                                    <button onclick="deleteProject('${proj.name}')" class="text-red-400 hover:text-red-600 text-[9px] font-bold uppercase flex items-center gap-1">
-                                        Hapus Projek
-                                    </button>
-                                </div>
-
-                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                                    <p class="text-[9px] font-extrabold text-slate-400 uppercase mb-2 tracking-widest">Tim Penanggung Jawab:</p>
-                                    <div class="flex flex-wrap gap-2 mb-4">
-                                        ${assignedPills || '<p class="text-[9px] italic text-slate-300 uppercase py-2">Belum ada tim ditugaskan</p>'}
-                                    </div>
-                                    
-                                    <div class="flex gap-2">
-                                        <select id="selAddUser_${proj.name.replace(/\s+/g, '_')}" class="flex-grow p-2.5 border rounded-xl text-[10px] font-bold bg-white outline-none border-slate-200 shadow-sm focus:ring-2 focus:ring-blue-500">
-                                            ${userOptions}
-                                        </select>
-                                        <button onclick="addUserToProject('${proj.name}')" class="bg-blue-600 text-white px-4 rounded-xl font-bold shadow-lg shadow-blue-100 active:scale-95">+</button>
-                                    </div>
-                                </div>
-                            </div>`;
-                    }
-                });
-                renderLogs();
+                renderProjectList();
+                renderInputDropdowns();
             });
         }
+
+        function renderInputDropdowns() {
+            const fP = document.getElementById('f_proj');
+            const flP = document.getElementById('flProj');
+            
+            const currentFpVal = fP.value;
+            const currentFlpVal = flP.value;
+
+            fP.innerHTML = '<option value="" disabled selected>-- Pilih Projek --</option>';
+            flP.innerHTML = '<option value="ALL">SEMUA PROJEK</option>';
+
+            projectsData.sort((a,b) => a.name.localeCompare(b.name)).forEach(proj => {
+                const assignedUsers = proj.assignedUsers || [];
+                const isAssigned = currentUser.role === 'ADMIN' || assignedUsers.includes(currentUser.username);
+                
+                if (isAssigned) {
+                    fP.add(new Option(proj.name, proj.name));
+                    flP.add(new Option(proj.name, proj.name));
+                }
+            });
+
+            if(currentFpVal) fP.value = currentFpVal;
+            if(currentFlpVal) flP.value = currentFlpVal;
+        }
+
+        window.renderProjectList = () => {
+            const listSet = document.getElementById('projListSettings');
+            const pagSet = document.getElementById('projPagination');
+            if(!listSet) return;
+
+            // Filter
+            const filtered = projectsData.filter(p => p.name.includes(projSearchQuery.toUpperCase())).sort((a,b) => a.name.localeCompare(b.name));
+            
+            // Pagination
+            const totalPages = Math.ceil(filtered.length / projsPerPage) || 1;
+            if (projsCurrentPage > totalPages) projsCurrentPage = totalPages;
+            
+            const startIndex = (projsCurrentPage - 1) * projsPerPage;
+            const paginated = filtered.slice(startIndex, startIndex + projsPerPage);
+
+            listSet.innerHTML = '';
+            paginated.forEach(proj => {
+                const assignedUsers = proj.assignedUsers || [];
+                
+                let assignedPills = '';
+                assignedUsers.sort().forEach(uid => {
+                    assignedPills += `
+                        <div class="user-pill flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-bold uppercase shadow-sm">
+                            <span>${uid}</span>
+                            <button onclick="toggleUserAssignment('${proj.name}', '${uid}', false)" class="hover:text-red-500 ml-0.5">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                            </button>
+                        </div>
+                    `;
+                });
+
+                const availableUsers = usersData.filter(u => !assignedUsers.includes(u.id)).sort((a,b) => a.id.localeCompare(b.id));
+                let userOptions = '<option value="" disabled selected>Pilih Anggota Tim...</option>';
+                availableUsers.forEach(u => userOptions += `<option value="${u.id}">${u.id.toUpperCase()}</option>`);
+
+                listSet.innerHTML += `
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-xs font-extrabold uppercase text-slate-800 tracking-tight flex items-center gap-2">
+                                <span class="w-1.5 h-1.5 bg-blue-600 rounded-full"></span> ${proj.name}
+                            </span>
+                            <button onclick="deleteProject('${proj.name}')" class="text-red-400 hover:text-red-600 text-[9px] font-bold uppercase flex items-center gap-1">
+                                Hapus Projek
+                            </button>
+                        </div>
+
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <p class="text-[9px] font-extrabold text-slate-400 uppercase mb-2 tracking-widest">Tim Penanggung Jawab:</p>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                ${assignedPills || '<p class="text-[9px] italic text-slate-300 uppercase py-2">Belum ada tim ditugaskan</p>'}
+                            </div>
+                            
+                            <div class="flex gap-2">
+                                <select id="selAddUser_${proj.name.replace(/\s+/g, '_')}" class="flex-grow p-2.5 border rounded-xl text-[10px] font-bold bg-white outline-none border-slate-200 shadow-sm focus:ring-2 focus:ring-blue-500">
+                                    ${userOptions}
+                                </select>
+                                <button onclick="addUserToProject('${proj.name}')" class="bg-blue-600 text-white px-4 rounded-xl font-bold shadow-lg shadow-blue-100 active:scale-95">+</button>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+
+            // Pagination Controls
+            pagSet.innerHTML = `
+                <button onclick="changeProjPage(-1)" ${projsCurrentPage === 1 ? 'disabled' : ''} class="page-btn">Sebelumnya</button>
+                <span class="text-[10px] font-bold text-slate-400 uppercase">Hal ${projsCurrentPage} dari ${totalPages}</span>
+                <button onclick="changeProjPage(1)" ${projsCurrentPage === totalPages ? 'disabled' : ''} class="page-btn">Selanjutnya</button>
+            `;
+            
+            if(filtered.length === 0) {
+                listSet.innerHTML = '<div class="text-center py-10 text-[10px] font-bold text-slate-400 italic">Projek tidak ditemukan</div>';
+                pagSet.innerHTML = '';
+            }
+        };
+
+        window.handleProjSearch = () => {
+            projSearchQuery = document.getElementById('searchProj').value;
+            projsCurrentPage = 1;
+            renderProjectList();
+        };
+
+        window.changeProjPage = (dir) => {
+            projsCurrentPage += dir;
+            renderProjectList();
+            document.getElementById('projListSettings').scrollIntoView({ behavior: 'smooth' });
+        };
 
         function listenUsers() {
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
                 usersData = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-                
-                if(currentUser.role !== 'ADMIN') return;
-
-                const flU = document.getElementById('flUser');
-                const listSet = document.getElementById('userListSettings');
-
-                flU.innerHTML = '<option value="ALL">SEMUA TIM</option>';
-                listSet.innerHTML = '';
-
-                usersData.sort((a,b) => a.id.localeCompare(b.id)).forEach(u => {
-                    flU.add(new Option(u.id.toUpperCase(), u.id));
-                    listSet.innerHTML += `
-                        <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center">
-                            <div class="flex-grow">
-                                <p class="text-xs font-extrabold text-slate-800 uppercase">${u.id} <span class="text-[9px] text-blue-500 italic">(${u.role})</span></p>
-                                <p class="text-[9px] text-slate-400 font-bold uppercase">Pass: ${u.password}</p>
-                            </div>
-                            <div class="flex gap-2 ml-2">
-                                <button onclick="editUserPrompt('${u.id}', '${u.password}', '${u.role}')" class="text-[10px] font-bold text-blue-500">EDIT</button>
-                                <button onclick="deleteUser('${u.id}')" class="text-[10px] font-bold text-red-500">HAPUS</button>
-                            </div>
-                        </div>`;
-                });
+                renderUserList();
             });
         }
+
+        window.renderUserList = () => {
+            if(currentUser.role !== 'ADMIN') return;
+
+            const flU = document.getElementById('flUser');
+            const listSet = document.getElementById('userListSettings');
+            const pagSet = document.getElementById('userPagination');
+
+            flU.innerHTML = '<option value="ALL">SEMUA TIM</option>';
+            
+            const sorted = usersData.sort((a,b) => a.id.localeCompare(b.id));
+            const totalPages = Math.ceil(sorted.length / usersPerPage) || 1;
+            if (usersCurrentPage > totalPages) usersCurrentPage = totalPages;
+
+            const startIndex = (usersCurrentPage - 1) * usersPerPage;
+            const paginated = sorted.slice(startIndex, startIndex + usersPerPage);
+
+            listSet.innerHTML = '';
+            sorted.forEach(u => flU.add(new Option(u.id.toUpperCase(), u.id))); // Dropdown filter pantauan tetap semua
+
+            paginated.forEach(u => {
+                listSet.innerHTML += `
+                    <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center">
+                        <div class="flex-grow">
+                            <p class="text-xs font-extrabold text-slate-800 uppercase">${u.id} <span class="text-[9px] text-blue-500 italic">(${u.role})</span></p>
+                            <p class="text-[9px] text-slate-400 font-bold uppercase">Pass: ${u.password}</p>
+                        </div>
+                        <div class="flex gap-2 ml-2">
+                            <button onclick="editUserPrompt('${u.id}', '${u.password}', '${u.role}')" class="text-[10px] font-bold text-blue-500">EDIT</button>
+                            <button onclick="deleteUser('${u.id}')" class="text-[10px] font-bold text-red-500">HAPUS</button>
+                        </div>
+                    </div>`;
+            });
+
+            // Pagination Controls
+            pagSet.innerHTML = `
+                <button onclick="changeUserPage(-1)" ${usersCurrentPage === 1 ? 'disabled' : ''} class="page-btn">Sebelumnya</button>
+                <span class="text-[10px] font-bold text-slate-400 uppercase">Hal ${usersCurrentPage} dari ${totalPages}</span>
+                <button onclick="changeUserPage(1)" ${usersCurrentPage === totalPages ? 'disabled' : ''} class="page-btn">Selanjutnya</button>
+            `;
+        };
+
+        window.changeUserPage = (dir) => {
+            usersCurrentPage += dir;
+            renderUserList();
+        };
 
         function listenLogs() {
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), (snap) => {
@@ -445,7 +545,7 @@
             document.getElementById('btnSaveUser').innerText = "Update Data Akun";
             document.getElementById('btnCancelEdit').classList.remove('hidden');
             
-            document.getElementById('v_settings').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('userListSettings').scrollIntoView({ behavior: 'smooth' });
             msg("MODE EDIT: " + u.toUpperCase());
         };
 
@@ -482,7 +582,6 @@
             if(!userId) return msg("PILIH ANGGOTA TIM!");
             
             await toggleUserAssignment(projectName, userId, true);
-            sel.selectedIndex = 0;
         };
 
         window.toggleUserAssignment = async (projectName, userId, isChecked) => {
@@ -500,7 +599,7 @@
                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', projectName), {
                     assignedUsers: updatedUsers
                 });
-                msg(`BERHASIL UPDATE TIM ${projectName}`);
+                msg(`UPDATE TIM ${projectName}`);
             } catch (err) {
                 msg("❌ GAGAL UPDATE");
             }
@@ -568,6 +667,9 @@
         window.toggleUserAssignment = toggleUserAssignment;
         window.tab = tab;
         window.renderLogs = renderLogs;
+        window.changeUserPage = changeUserPage;
+        window.changeProjPage = changeProjPage;
+        window.handleProjSearch = handleProjSearch;
     </script>
 </body>
 </html>
