@@ -551,7 +551,20 @@
             document.getElementById('btnAddNewProject').innerText = "Update Projek"; document.getElementById('btnCancelEditProj').classList.remove('hidden');
         };
 
-        window.deleteProject = async (name) => { if(confirm("Hapus projek ini?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name)); };
+        window.deleteProject = async (name) => { 
+            if(confirm(`Hapus projek "${name}"? Semua history progres projek ini juga akan dihapus secara permanen.`)) {
+                // 1. Hapus dokumen projek
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name));
+                
+                // 2. Hapus semua log yang terkait dengan projek ini
+                const logsToDelete = logsData.filter(l => l.project_name === name);
+                const deletePromises = logsToDelete.map(l => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', l.id)));
+                await Promise.all(deletePromises);
+                
+                msg(`✅ PROJEK ${name} & HISTORY DIHAPUS`);
+            }
+        };
+
         window.addUserToProject = async (name) => {
             const uid = document.getElementById(`selAddUser_${name.replace(/\s+/g, '_')}`).value; if(!uid) return;
             const p = projectsData.find(x => x.name === name); let assigned = p.assignedUsers || []; assigned.push(uid);
