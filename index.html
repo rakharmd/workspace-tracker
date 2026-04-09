@@ -338,7 +338,11 @@
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('uDisp').innerText = currentUser.username.toUpperCase();
             document.getElementById('rDisp').innerText = currentUser.role;
-            document.getElementById('f_date').valueAsDate = new Date();
+            
+            // Otomatisasi Tanggal Kerja hari ini saat login
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('f_date').value = today;
+
             if (currentUser.role === 'ADMIN') {
                 document.getElementById('t_projek').classList.remove('hidden');
                 document.getElementById('t_settings').classList.remove('hidden');
@@ -410,9 +414,9 @@
                 // Logika Warna Kotak Tanggal
                 let dateBoxClass = "bg-white border-slate-200 text-slate-800"; // Default
                 if (proj.endDate) {
-                    const today = new Date(); today.setHours(0,0,0,0);
+                    const todayDate = new Date(); todayDate.setHours(0,0,0,0);
                     const end = new Date(proj.endDate); end.setHours(0,0,0,0);
-                    const diffDays = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+                    const diffDays = Math.ceil((end - todayDate) / (1000 * 60 * 60 * 24));
 
                     if (diffDays <= 0) {
                         dateBoxClass = "bg-black text-white border-black";
@@ -521,14 +525,14 @@
             const list = document.getElementById('notifList');
             const badge = document.getElementById('notifCount');
             if(!list || !currentUser) return;
-            const today = new Date(); today.setHours(0,0,0,0);
+            const todayDate = new Date(); todayDate.setHours(0,0,0,0);
             let alertCount = 0; let html = '';
             projectsData.forEach(proj => {
                 if (proj.isFinished) return; // Don't show deadline alerts for finished projects
                 const assigned = proj.assignedUsers || [];
                 if ((currentUser.role === 'ADMIN' || assigned.includes(currentUser.username)) && proj.endDate) {
                     const end = new Date(proj.endDate); end.setHours(0,0,0,0);
-                    const diffDays = Math.ceil((end - today) / (1000 * 60 * 60 * 24));
+                    const diffDays = Math.ceil((end - todayDate) / (1000 * 60 * 60 * 24));
                     let alertMsg = '', bgColor = '';
                     if (diffDays === 0) { alertMsg = 'DEADLINE HARI INI!'; bgColor = 'bg-red-50 border-red-200 text-red-600'; } 
                     else if (diffDays === 3) { alertMsg = 'Deadline 3 hari lagi!'; bgColor = 'bg-orange-50 border-orange-200 text-orange-600'; } 
@@ -645,13 +649,14 @@
             const pagSet = document.getElementById('userPagination');
             if(!listSet) return;
             flU.innerHTML = '<option value="ALL">SEMUA TIM</option>';
-            const sorted = usersData.sort((a,b) => a.id.localeCompare(b.id));
-            const totalPages = Math.ceil(sorted.length / usersPerPage) || 1;
+            const sorted = usersData.sort((a,b) => a.id.idCompare(b.id)); // Fix typo in original: sorted.forEach...
+            const totalPages = Math.ceil(usersData.length / usersPerPage) || 1;
             if (usersCurrentPage > totalPages) usersCurrentPage = totalPages;
             const startIndex = (usersCurrentPage - 1) * usersPerPage;
-            const paginated = sorted.slice(startIndex, startIndex + usersPerPage);
+            const sortedList = usersData.sort((a,b) => a.id.localeCompare(b.id));
+            const paginated = sortedList.slice(startIndex, startIndex + usersPerPage);
             listSet.innerHTML = '';
-            sorted.forEach(u => flU.add(new Option(u.id.toUpperCase(), u.id)));
+            sortedList.forEach(u => flU.add(new Option(u.id.toUpperCase(), u.id)));
             paginated.forEach(u => {
                 listSet.innerHTML += `
                     <div class="bg-white p-3 rounded-xl border border-slate-200 flex justify-between items-center">
@@ -740,6 +745,9 @@
                     ts: serverTimestamp()
                 });
                 msg("✅ LAPORAN TERKIRIM"); document.getElementById('f_work').value = '';
+                // Tetap biarkan tanggal di hari ini setelah submit
+                const today = new Date().toISOString().split('T')[0];
+                document.getElementById('f_date').value = today;
             } catch (err) { msg("❌ GAGAL SIMPAN"); }
             btn.disabled = false; btn.innerText = "SIMPAN PROGRES";
         };
