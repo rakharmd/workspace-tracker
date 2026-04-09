@@ -40,9 +40,9 @@
         .label-readonly { color: #94a3b8; font-size: 8px; font-weight: 700; text-transform: uppercase; }
         .label-readonly.checked { color: #64748b; text-decoration: line-through; }
 
-        /* Sticky Note Style */
-        .sticky-note { background-color: #fef9c3; border-left: 4px solid #facc15; border-radius: 0.75rem; padding: 0.75rem; }
-        .sticky-note-textarea { background: transparent; border: none; outline: none; width: 100%; font-size: 11px; font-weight: 600; color: #854d0e; resize: none; line-height: 1.4; }
+        /* Sticky Note Style - Enlarged */
+        .sticky-note { background-color: #fef9c3; border-left: 6px solid #facc15; border-radius: 1rem; padding: 1.25rem; }
+        .sticky-note-textarea { background: transparent; border: none; outline: none; width: 100%; font-size: 13px; font-weight: 600; color: #854d0e; resize: none; line-height: 1.5; min-height: 150px; }
     </style>
 </head>
 <body class="pb-10">
@@ -133,7 +133,7 @@
                         <select id="flProj" onchange="renderLogs()" class="flex-1 p-3 border rounded-xl text-[11px] font-bold bg-slate-50 outline-none border-slate-200"></select>
                     </div>
                 </div>
-                <div id="logList" class="space-y-3 pt-2"></div>
+                <div id="logList" class="space-y-4 pt-2"></div>
             </section>
 
             <!-- VIEW: MANAJEMEN PROJEK (TAB PROJEK) -->
@@ -264,6 +264,21 @@
         let projsCurrentPage = 1;
         const projsPerPage = 3;
         let projSearchQuery = "";
+
+        // Konfigurasi Warna User (Helper)
+        const userColors = {
+            'rakha': 'bg-blue-100 text-blue-700 border-blue-200',
+            'deby': 'bg-purple-100 text-purple-700 border-purple-200',
+            'edward': 'bg-green-100 text-green-700 border-green-200',
+            'jerico': 'bg-orange-100 text-orange-700 border-orange-200',
+            'justin': 'bg-rose-100 text-rose-700 border-rose-200',
+            'admin': 'bg-slate-900 text-white border-slate-900'
+        };
+
+        const getUserColorClass = (username) => {
+            const u = username.toLowerCase();
+            return userColors[u] || 'bg-slate-100 text-slate-700 border-slate-200';
+        };
 
         const init = async () => {
             try {
@@ -403,12 +418,12 @@
                              <div class="grid grid-cols-2 gap-x-2 bg-slate-50/50 p-2 rounded-xl mb-4">
                                 ${checklistHtml}
                              </div>
-                             <!-- Sticky Note Feature -->
+                             <!-- Sticky Note Feature - Enlarged -->
                              <p class="text-[7px] font-black text-slate-300 uppercase mb-2 tracking-widest">Sticky Note (Catatan Projek):</p>
                              <div class="sticky-note">
-                                <textarea id="note_${proj.name.replace(/\s+/g, '_')}" class="sticky-note-textarea" rows="4" placeholder="Tulis catatan penting di sini...">${notes}</textarea>
+                                <textarea id="note_${proj.name.replace(/\s+/g, '_')}" class="sticky-note-textarea" rows="6" placeholder="Tulis catatan penting di sini...">${notes}</textarea>
                                 <div class="flex justify-end mt-2">
-                                    <button onclick="saveProjectNote('${proj.name}', 'note_${proj.name.replace(/\s+/g, '_')}')" class="text-[8px] font-bold bg-yellow-400 text-yellow-900 px-3 py-1 rounded-full uppercase tracking-widest shadow-sm active:scale-95 transition-all">Simpan Catatan</button>
+                                    <button onclick="saveProjectNote('${proj.name}', 'note_${proj.name.replace(/\s+/g, '_')}')" class="text-[10px] font-bold bg-yellow-400 text-yellow-900 px-4 py-2 rounded-full uppercase tracking-widest shadow-sm active:scale-95 transition-all">Simpan Catatan</button>
                                 </div>
                              </div>
                         </div>
@@ -609,13 +624,52 @@
                 const matchUser = fU === 'ALL' || l.username === fU;
                 return matchProj && matchUser;
             });
+
             list.innerHTML = filtered.length ? '' : '<div class="text-center py-20 text-[10px] font-bold uppercase opacity-20 italic">Data Kosong</div>';
+            
+            let lastDate = "";
+            let isAltRow = false; // Zebra stripping by date
+
             filtered.forEach(l => {
                 const canEdit = l.username === currentUser.username || currentUser.role === 'ADMIN';
-                list.innerHTML += `<div class="bg-white p-5 rounded-3xl shadow-sm border-l-4 border-l-slate-900 mb-3 border border-slate-100 relative">
-                    <div class="flex justify-between items-start mb-2"><div class="flex flex-col"><span class="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md uppercase w-fit mb-1">${l.username.toUpperCase()} &bull; ${l.project_name}</span><span class="text-[9px] font-bold text-slate-400">${l.tanggal}</span></div>
-                    ${canEdit ? `<div class="flex gap-1"><button onclick="editLogPrompt('${l.id}', \`${l.pekerjaan.replace(/'/g, "\\'")}\`)" class="p-2 text-slate-300 hover:text-blue-500"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button><button onclick="deleteLog('${l.id}')" class="p-2 text-slate-300 hover:text-red-500"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div>` : ''}</div>
-                    <p class="text-sm text-slate-700 leading-relaxed font-medium">${l.pekerjaan.replace(/\n/g, '<br>')}</p></div>`;
+                const colorClass = getUserColorClass(l.username);
+                
+                // Cek Perubahan Tanggal untuk Zebra Striping
+                if (l.tanggal !== lastDate) {
+                    lastDate = l.tanggal;
+                    isAltRow = !isAltRow;
+                }
+
+                const rowBg = isAltRow ? 'bg-blue-50/50' : 'bg-white';
+                const dateDisplay = new Date(l.tanggal).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+
+                list.innerHTML += `
+                    <div class="${rowBg} p-6 rounded-[2rem] shadow-sm border border-slate-100 transition-colors relative">
+                        <div class="flex justify-between items-start mb-4">
+                            <div class="flex flex-col gap-2">
+                                <!-- Header Identitas User & Projek dengan Warna Berbeda -->
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <span class="text-[10px] font-black border px-3 py-1.5 rounded-full uppercase tracking-widest ${colorClass}">
+                                        ${l.username} &bull; ${l.project_name}
+                                    </span>
+                                </div>
+                                <!-- Tanggal yang Dihighlight (Lebih Menonjol) -->
+                                <div class="flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    <span class="text-sm font-extrabold text-slate-800 tracking-tight">${dateDisplay}</span>
+                                </div>
+                            </div>
+                            
+                            ${canEdit ? `
+                            <div class="flex gap-1">
+                                <button onclick="editLogPrompt('${l.id}', \`${l.pekerjaan.replace(/'/g, "\\'")}\`)" class="p-2.5 bg-white border border-slate-100 rounded-full text-slate-400 hover:text-blue-500 shadow-sm transition-all"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
+                                <button onclick="deleteLog('${l.id}')" class="p-2.5 bg-white border border-slate-100 rounded-full text-slate-400 hover:text-red-500 shadow-sm transition-all"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                            </div>` : ''}
+                        </div>
+                        <div class="bg-white/50 p-4 rounded-2xl border border-slate-50">
+                            <p class="text-[13px] text-slate-700 leading-relaxed font-semibold">${l.pekerjaan.replace(/\n/g, '<br>')}</p>
+                        </div>
+                    </div>`;
             });
         };
 
