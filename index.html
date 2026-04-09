@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WORKSPACE Tracker - Managed Projects</title>
+    <title>WORKSPACE Tracker - Optimized Admin</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
@@ -16,13 +16,14 @@
         .btn-primary:active { transform: scale(0.95); }
         .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
         .input-disabled { background-color: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
+        .user-pill { background-color: #eff6ff; border: 1px solid #dbeafe; color: #2563eb; }
     </style>
 </head>
 <body class="pb-10">
 
     <!-- HALAMAN LOGIN -->
     <div id="loginPage" class="flex items-center justify-center min-h-screen p-4">
-        <div class="bg-white w-full max-w-md p-10 rounded-[2.5rem] shadow-2xl border-none text-center">
+        <div class="bg-white w-full max-w-md p-10 rounded-[2.5rem] shadow-2xl border-none text-center border border-slate-100">
             <h1 class="text-3xl font-extrabold text-slate-900 mb-1 tracking-tighter italic uppercase">WORKSPACE</h1>
             <p class="text-slate-400 text-[10px] mb-8 font-bold tracking-[0.3em] uppercase">Firebase Managed System</p>
             
@@ -81,7 +82,7 @@
             <!-- VIEW: SETTINGS (ADMIN ONLY) -->
             <section id="v_settings" class="hidden space-y-8">
                 <!-- Manajemen Akun -->
-                <div class="card p-6 shadow-sm bg-slate-50/50">
+                <div class="card p-6 shadow-sm bg-slate-50/50 border-slate-100">
                     <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2">
                         <span class="w-2 h-2 bg-blue-600 rounded-full"></span> Manajemen Akun
                     </h3>
@@ -105,16 +106,16 @@
                 </div>
 
                 <!-- Manajemen Projek -->
-                <div class="card p-6 shadow-sm">
+                <div class="card p-6 shadow-sm border-slate-100">
                     <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2">
                         <span class="w-2 h-2 bg-green-600 rounded-full"></span> Daftar Projek Global
                     </h3>
-                    <div class="flex gap-2 mb-4">
-                        <input type="text" id="nP" placeholder="Nama Projek Baru..." class="flex-grow p-3 border rounded-xl text-sm outline-none bg-slate-50 uppercase font-bold">
-                        <button onclick="addNewProject()" class="bg-blue-600 text-white px-6 rounded-xl font-bold">+</button>
+                    <div class="flex gap-2 mb-6">
+                        <input type="text" id="nP" placeholder="Nama Projek Baru..." class="flex-grow p-3 border rounded-xl text-sm outline-none bg-slate-50 uppercase font-bold border-slate-200">
+                        <button onclick="addNewProject()" class="bg-blue-600 text-white px-5 rounded-xl font-bold active:scale-95">+</button>
                     </div>
-                    <div id="projListSettings" class="space-y-4">
-                        <!-- Daftar Projek dengan Plotting Tim akan muncul di sini -->
+                    <div id="projListSettings" class="space-y-5">
+                        <!-- Daftar Projek dengan dropdown tim akan muncul di sini -->
                     </div>
                 </div>
             </section>
@@ -221,7 +222,7 @@
                 document.getElementById('flUser').classList.add('hidden');
             }
 
-            listenUsers(); // Harus load users dulu sebelum projects untuk plotting
+            listenUsers();
             listenProjects();
             listenLogs();
 
@@ -252,28 +253,46 @@
                     }
 
                     if(listSet) {
-                        // Card Projek di Settings
-                        let teamCheckboxes = '';
-                        usersData.forEach(user => {
-                            const checked = assignedUsers.includes(user.id) ? 'checked' : '';
-                            teamCheckboxes += `
-                                <label class="flex items-center gap-1.5 p-1.5 bg-white border border-slate-100 rounded-lg cursor-pointer">
-                                    <input type="checkbox" onchange="toggleUserAssignment('${proj.name}', '${user.id}', this.checked)" ${checked} class="w-3.5 h-3.5 rounded accent-blue-600">
-                                    <span class="text-[10px] font-bold uppercase text-slate-500">${user.id}</span>
-                                </label>
+                        // Pills untuk tim yang sudah ditugaskan
+                        let assignedPills = '';
+                        assignedUsers.sort().forEach(uid => {
+                            assignedPills += `
+                                <div class="user-pill flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-[10px] font-bold uppercase shadow-sm">
+                                    <span>${uid}</span>
+                                    <button onclick="toggleUserAssignment('${proj.name}', '${uid}', false)" class="hover:text-red-500 ml-0.5">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                    </button>
+                                </div>
                             `;
                         });
 
+                        // Dropdown untuk menambah tim baru (yang belum ditugaskan)
+                        const availableUsers = usersData.filter(u => !assignedUsers.includes(u.id));
+                        let userOptions = '<option value="" disabled selected>Pilih Anggota Tim...</option>';
+                        availableUsers.forEach(u => userOptions += `<option value="${u.id}">${u.id.toUpperCase()}</option>`);
+
                         listSet.innerHTML += `
-                            <div class="bg-slate-50/50 p-4 rounded-2xl border border-slate-100 shadow-sm">
-                                <div class="flex justify-between items-center mb-3">
-                                    <span class="text-xs font-extrabold uppercase text-slate-800 tracking-tight">${proj.name}</span>
-                                    <button onclick="deleteProject('${proj.name}')" class="text-red-400 hover:text-red-600 text-[10px] font-bold uppercase">Hapus Projek</button>
+                            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-extrabold uppercase text-slate-800 tracking-tight flex items-center gap-2">
+                                        <span class="w-1.5 h-1.5 bg-blue-600 rounded-full"></span> ${proj.name}
+                                    </span>
+                                    <button onclick="deleteProject('${proj.name}')" class="text-red-400 hover:text-red-600 text-[9px] font-bold uppercase flex items-center gap-1">
+                                        Hapus Projek
+                                    </button>
                                 </div>
-                                <div class="bg-white p-3 rounded-xl border border-slate-200">
-                                    <p class="text-[9px] font-bold text-slate-400 uppercase mb-2">Tim Bertanggung Jawab</p>
-                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                        ${teamCheckboxes || '<p class="text-[9px] italic text-slate-400">Belum ada user</p>'}
+
+                                <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                                    <p class="text-[9px] font-extrabold text-slate-400 uppercase mb-2 tracking-widest">Tim Penanggung Jawab:</p>
+                                    <div class="flex flex-wrap gap-2 mb-4">
+                                        ${assignedPills || '<p class="text-[9px] italic text-slate-300 uppercase py-2">Belum ada tim ditugaskan</p>'}
+                                    </div>
+                                    
+                                    <div class="flex gap-2">
+                                        <select id="selAddUser_${proj.name.replace(/\s+/g, '_')}" class="flex-grow p-2.5 border rounded-xl text-[10px] font-bold bg-white outline-none border-slate-200 shadow-sm focus:ring-2 focus:ring-blue-500">
+                                            ${userOptions}
+                                        </select>
+                                        <button onclick="addUserToProject('${proj.name}')" class="bg-blue-600 text-white px-4 rounded-xl font-bold shadow-lg shadow-blue-100 active:scale-95">+</button>
                                     </div>
                                 </div>
                             </div>`;
@@ -295,7 +314,7 @@
                 flU.innerHTML = '<option value="ALL">SEMUA TIM</option>';
                 listSet.innerHTML = '';
 
-                usersData.forEach(u => {
+                usersData.sort((a,b) => a.id.localeCompare(b.id)).forEach(u => {
                     flU.add(new Option(u.id.toUpperCase(), u.id));
                     listSet.innerHTML += `
                         <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center">
@@ -332,7 +351,6 @@
                 const project = projectsData.find(p => p.name === l.project_name);
                 const assignedUsers = project ? (project.assignedUsers || []) : [];
                 
-                // User biasa hanya bisa lihat projek yang ditugaskan ke mereka
                 const isAssigned = currentUser.role === 'ADMIN' || assignedUsers.includes(currentUser.username);
                 if (!isAssigned) return false;
 
@@ -346,7 +364,7 @@
             filtered.forEach(l => {
                 const canEdit = l.username === currentUser.username || currentUser.role === 'ADMIN';
                 list.innerHTML += `
-                <div class="bg-white p-5 rounded-3xl shadow-sm border-l-4 border-l-slate-900 mb-3 border border-slate-100 relative group">
+                <div class="bg-white p-5 rounded-3xl shadow-sm border-l-4 border-l-slate-900 mb-3 border border-slate-100 relative">
                     <div class="flex justify-between items-start mb-2">
                         <div class="flex flex-col">
                             <span class="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md uppercase w-fit mb-1">${l.username.toUpperCase()} &bull; ${l.project_name}</span>
@@ -442,7 +460,6 @@
         window.addNewProject = async () => {
             const name = document.getElementById('nP').value.toUpperCase().trim();
             if(!name) return;
-            // Inisialisasi projek baru dengan array kosong untuk assignedUsers
             await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { 
                 created: true,
                 assignedUsers: []
@@ -456,6 +473,16 @@
                 await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name));
                 msg("PROJEK DIHAPUS");
             }
+        };
+
+        window.addUserToProject = async (projectName) => {
+            const dropdownId = `selAddUser_${projectName.replace(/\s+/g, '_')}`;
+            const sel = document.getElementById(dropdownId);
+            const userId = sel.value;
+            if(!userId) return msg("PILIH ANGGOTA TIM!");
+            
+            await toggleUserAssignment(projectName, userId, true);
+            sel.selectedIndex = 0;
         };
 
         window.toggleUserAssignment = async (projectName, userId, isChecked) => {
@@ -473,9 +500,9 @@
                 await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', projectName), {
                     assignedUsers: updatedUsers
                 });
-                msg(`UPDATE AKSES: ${projectName}`);
+                msg(`BERHASIL UPDATE TIM ${projectName}`);
             } catch (err) {
-                msg("❌ GAGAL UPDATE AKSES");
+                msg("❌ GAGAL UPDATE");
             }
         };
 
@@ -537,6 +564,7 @@
         window.editLogPrompt = editLogPrompt;
         window.confirmEditLog = confirmEditLog;
         window.closeEditModal = closeEditModal;
+        window.addUserToProject = addUserToProject;
         window.toggleUserAssignment = toggleUserAssignment;
         window.tab = tab;
         window.renderLogs = renderLogs;
