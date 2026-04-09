@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WORKSPACE Tracker - Admin Power</title>
+    <title>WORKSPACE Tracker - Collaborative Mode</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
@@ -69,7 +69,9 @@
             <section id="v_logs" class="hidden space-y-4">
                 <div class="card p-4 space-y-3 sticky top-[140px] z-30 shadow-xl border-slate-200">
                     <div class="flex gap-2">
+                        <!-- Dropdown ini hanya terlihat oleh Admin -->
                         <select id="flUser" onchange="renderLogs()" class="flex-1 p-3 border rounded-xl text-[11px] font-bold bg-slate-50 outline-none border-slate-200"></select>
+                        <!-- Dropdown Projek terlihat oleh semua orang -->
                         <select id="flProj" onchange="renderLogs()" class="flex-1 p-3 border rounded-xl text-[11px] font-bold bg-slate-50 outline-none border-slate-200"></select>
                     </div>
                 </div>
@@ -276,7 +278,11 @@
         window.renderLogs = () => {
             const list = document.getElementById('logList');
             const fP = document.getElementById('flProj').value;
-            const fU = currentUser.role === 'ADMIN' ? document.getElementById('flUser').value : currentUser.username;
+            
+            // Logika baru: 
+            // Jika Admin, gunakan filter dari dropdown flUser.
+            // Jika User, biarkan default 'ALL' agar bisa melihat progres orang lain pada projek tersebut.
+            const fU = currentUser.role === 'ADMIN' ? document.getElementById('flUser').value : 'ALL';
 
             const filtered = logsData.filter(l => 
                 (fP === 'ALL' || l.project_name === fP) && 
