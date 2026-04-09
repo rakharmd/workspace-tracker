@@ -122,7 +122,7 @@
                     <!-- Form Tambah & Search -->
                     <div class="space-y-3 mb-6">
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
-                            <p class="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Tambah Projek Baru</p>
+                            <p id="projFormTitle" class="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Tambah Projek Baru</p>
                             <input type="text" id="nP" placeholder="NAMA PROJEK BARU..." class="w-full p-3 border rounded-xl text-sm outline-none bg-white uppercase font-bold border-slate-200">
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
@@ -134,7 +134,10 @@
                                     <input type="date" id="nPEnd" class="w-full p-2.5 border rounded-xl text-xs bg-white outline-none">
                                 </div>
                             </div>
-                            <button onclick="addNewProject()" class="w-full bg-blue-600 text-white py-3 rounded-xl font-bold active:scale-95 text-xs uppercase tracking-widest shadow-lg shadow-blue-100">+ Tambahkan Projek</button>
+                            <div class="flex gap-2">
+                                <button id="btnCancelEditProj" onclick="resetProjectForm()" class="hidden flex-1 bg-slate-200 text-slate-600 font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest">Batal</button>
+                                <button id="btnAddNewProject" onclick="addNewProject()" class="flex-[2] bg-blue-600 text-white py-3 rounded-xl font-bold active:scale-95 text-xs uppercase tracking-widest shadow-lg shadow-blue-100">+ Tambahkan Projek</button>
+                            </div>
                         </div>
 
                         <div class="relative">
@@ -199,6 +202,7 @@
         let usersData = [];
         let projectsData = [];
         let isEditingUser = false;
+        let isEditingProject = false;
 
         // Pagination State
         let usersCurrentPage = 1;
@@ -355,9 +359,14 @@
                                     <span class="${proj.endDate ? 'text-red-500' : ''}">${endDateStr}</span>
                                 </div>
                             </div>
-                            <button onclick="deleteProject('${proj.name}')" class="text-red-400 hover:text-red-600 text-[9px] font-bold uppercase">
-                                Hapus
-                            </button>
+                            <div class="flex gap-2">
+                                <button onclick="editProjectPrompt('${proj.name}', '${proj.startDate}', '${proj.endDate}')" class="text-blue-500 hover:text-blue-700 text-[9px] font-bold uppercase">
+                                    Edit
+                                </button>
+                                <button onclick="deleteProject('${proj.name}')" class="text-red-400 hover:text-red-600 text-[9px] font-bold uppercase">
+                                    Hapus
+                                </button>
+                            </div>
                         </div>
 
                         <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
@@ -587,17 +596,53 @@
 
             if(!name) return msg("NAMA PROJEK WAJIB DIISI!");
             
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { 
-                created: true,
-                assignedUsers: [],
-                startDate: start,
-                endDate: end
-            });
+            if (isEditingProject) {
+                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { 
+                    startDate: start,
+                    endDate: end
+                });
+                msg("✅ PROJEK DIPERBARUI");
+            } else {
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { 
+                    created: true,
+                    assignedUsers: [],
+                    startDate: start,
+                    endDate: end
+                });
+                msg("✅ PROJEK DITAMBAHKAN");
+            }
             
-            document.getElementById('nP').value = '';
+            resetProjectForm();
+        };
+
+        window.resetProjectForm = () => {
+            isEditingProject = false;
+            const nPInput = document.getElementById('nP');
+            nPInput.value = '';
+            nPInput.disabled = false;
+            nPInput.classList.remove('input-disabled');
             document.getElementById('nPStart').value = '';
             document.getElementById('nPEnd').value = '';
-            msg("✅ PROJEK DITAMBAHKAN");
+            document.getElementById('btnAddNewProject').innerText = "+ Tambahkan Projek";
+            document.getElementById('btnCancelEditProj').classList.add('hidden');
+            document.getElementById('projFormTitle').innerText = "Tambah Projek Baru";
+        };
+
+        window.editProjectPrompt = (name, start, end) => {
+            isEditingProject = true;
+            const nPInput = document.getElementById('nP');
+            nPInput.value = name;
+            nPInput.disabled = true;
+            nPInput.classList.add('input-disabled');
+            document.getElementById('nPStart').value = start || '';
+            document.getElementById('nPEnd').value = end || '';
+            
+            document.getElementById('btnAddNewProject').innerText = "Update Projek";
+            document.getElementById('btnCancelEditProj').classList.remove('hidden');
+            document.getElementById('projFormTitle').innerText = "Edit Projek: " + name;
+            
+            document.getElementById('nP').scrollIntoView({ behavior: 'smooth' });
+            msg("MODE EDIT PROJEK");
         };
 
         window.deleteProject = async (name) => {
@@ -690,6 +735,8 @@
         window.editUserPrompt = editUserPrompt;
         window.deleteUser = deleteUser;
         window.addNewProject = addNewProject;
+        window.resetProjectForm = resetProjectForm;
+        window.editProjectPrompt = editProjectPrompt;
         window.deleteProject = deleteProject;
         window.deleteLog = deleteLog;
         window.editLogPrompt = editLogPrompt;
