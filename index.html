@@ -93,7 +93,7 @@
                         <div id="notifList" class="max-h-80 overflow-y-auto p-2 space-y-2"></div>
                     </div>
                 </div>
-                <button onclick="location.reload()" class="text-[10px] font-bold text-red-500 bg-red-50 px-4 py-2 rounded-full border border-red-100 uppercase">Logout</button>
+                <button onclick="logout()" class="text-[10px] font-bold text-red-500 bg-red-50 px-4 py-2 rounded-full border border-red-100 uppercase">Logout</button>
             </div>
         </header>
 
@@ -278,6 +278,13 @@
                     if (user) {
                         document.getElementById('statusDB').innerText = "✅ Cloud Connected";
                         document.getElementById('statusDB').classList.replace('text-slate-400', 'text-green-600');
+                        
+                        // Cek Sesi Tersimpan
+                        const savedUser = localStorage.getItem('ws_user');
+                        if (savedUser && !currentUser) {
+                            currentUser = JSON.parse(savedUser);
+                            startApp();
+                        }
                     }
                 });
             } catch (e) { document.getElementById('statusDB').innerText = "⚠️ Connection Error"; }
@@ -293,10 +300,12 @@
             const userSnap = await getDoc(userRef);
             if (userSnap.exists() && userSnap.data().password === p) {
                 currentUser = { username: u, ...userSnap.data() };
+                localStorage.setItem('ws_user', JSON.stringify(currentUser)); // Simpan Sesi
                 startApp();
             } else if (u === 'admin' && p === 'admin123') {
                 currentUser = { username: 'admin', role: 'ADMIN' };
                 await setDoc(userRef, { password: 'admin123', role: 'ADMIN' });
+                localStorage.setItem('ws_user', JSON.stringify(currentUser)); // Simpan Sesi
                 startApp();
             } else { msg("❌ LOGIN GAGAL"); btn.disabled = false; btn.innerText = "Masuk Sekarang"; }
         };
@@ -315,11 +324,21 @@
             listenUsers(); listenProjects(); listenLogs(); tab('input');
         }
 
+        window.logout = () => {
+            if (confirm("Keluar dari aplikasi?")) {
+                localStorage.removeItem('ws_user'); // Hapus Sesi
+                location.reload();
+            }
+        };
+
         window.formatDoc = (cmd, val) => { document.execCommand(cmd, false, val); document.getElementById('personalNoteEditor').focus(); };
         window.savePersonalNote = async () => {
             const content = document.getElementById('personalNoteEditor').innerHTML;
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.username), { privateNotes: content });
-            currentUser.privateNotes = content; msg("✅ CATATAN TERSIMPAN");
+            currentUser.privateNotes = content; 
+            // Update juga di localStorage agar catatan terbaru tetap muncul saat refresh
+            localStorage.setItem('ws_user', JSON.stringify(currentUser));
+            msg("✅ CATATAN TERSIMPAN");
         };
 
         window.insertBullet = (id) => {
@@ -345,7 +364,7 @@
             fP.innerHTML = '<option value="" disabled selected>-- Pilih Projek --</option>';
             flP.innerHTML = '<option value="ALL">SEMUA PROJEK</option>';
             projectsData.sort((a,b) => a.name.localeCompare(b.name)).forEach(proj => {
-                if (currentUser.role === 'ADMIN' || (proj.assignedUsers || []).includes(currentUser.username)) {
+                if (currentUser && (currentUser.role === 'ADMIN' || (proj.assignedUsers || []).includes(currentUser.username))) {
                     fP.add(new Option(proj.name, proj.name)); flP.add(new Option(proj.name, proj.name));
                 }
             });
@@ -353,6 +372,7 @@
 
         window.renderSidebarDeadlines = () => {
             const sideList = document.getElementById('sideProjList'); if(!sideList) return;
+            if(!currentUser) return;
             const userProjects = projectsData.filter(proj => currentUser.role === 'ADMIN' || (proj.assignedUsers || []).includes(currentUser.username))
                 .sort((a, b) => (a.isFinished === b.isFinished) ? a.name.localeCompare(b.name) : (a.isFinished ? 1 : -1));
             sideList.innerHTML = userProjects.length ? '' : '<p class="text-[9px] text-slate-400 text-center py-4">Belum ada projek aktif</p>';
@@ -550,8 +570,9 @@
         }
 
         window.renderUserList = () => {
-            if(currentUser.role !== 'ADMIN') return;
+            if(currentUser && currentUser.role !== 'ADMIN') return;
             const flU = document.getElementById('flUser'); const list = document.getElementById('userListSettings'); const pag = document.getElementById('userPagination');
+            if(!flU) return;
             flU.innerHTML = '<option value="ALL">SEMUA TIM</option>';
             const sorted = usersData.sort((a,b) => a.id.localeCompare(b.id)); sorted.forEach(u => flU.add(new Option(u.id.toUpperCase(), u.id)));
             const total = Math.ceil(sorted.length / usersPerPage) || 1; const startIndex = (usersCurrentPage - 1) * usersPerPage;
@@ -592,7 +613,8 @@
 
         window.renderLogs = () => {
             const list = document.getElementById('logList'); if(!list) return;
-            const fP = document.getElementById('flProj').value; const fU = currentUser.role === 'ADMIN' ? document.getElementById('flUser').value : 'ALL';
+            const fP = document.getElementById('flProj').value; 
+            const fU = (currentUser && currentUser.role === 'ADMIN') ? document.getElementById('flUser').value : (currentUser ? currentUser.username : 'ALL');
             const fK = document.getElementById('searchLog').value.toLowerCase();
             const filtered = logsData.filter(l => {
                 const matchProj = fP === 'ALL' || l.project_name === fP; const matchUser = fU === 'ALL' || l.username === fU;
@@ -601,7 +623,7 @@
             });
             list.innerHTML = filtered.length ? '' : '<p class="text-center py-20 text-[10px] opacity-20 font-bold italic">Belum ada data</p>';
             filtered.forEach(l => {
-                const canEdit = l.username === currentUser.username || currentUser.role === 'ADMIN';
+                const canEdit = currentUser && (l.username === currentUser.username || currentUser.role === 'ADMIN');
                 list.innerHTML += `<div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100"><div class="flex justify-between items-start mb-4"><div class="space-y-1"><span class="text-[9px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase">${l.username} &bull; ${l.project_name}</span><p class="text-sm font-extrabold text-slate-800">${new Date(l.tanggal).toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'})}</p></div>${canEdit ? `<div class="flex gap-1"><button onclick="editLogPrompt('${l.id}', \`${l.pekerjaan.replace(/'/g, "\\'")}\`)" class="p-2 border rounded-full text-slate-300 hover:text-blue-500 transition-all"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button><button onclick="deleteLog('${l.id}')" class="p-2 border rounded-full text-slate-300 hover:text-red-500 transition-all"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div>` : ''}</div><p class="text-[13px] text-slate-600 leading-relaxed font-semibold">${l.pekerjaan.replace(/\n/g, '<br>')}</p></div>`;
             });
         };
