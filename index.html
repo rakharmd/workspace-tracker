@@ -15,6 +15,7 @@
         .btn-primary { background-color: #0f172a; color: white; transition: all 0.2s; }
         .btn-primary:active { transform: scale(0.95); }
         .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
+        .input-disabled { background-color: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
     </style>
 </head>
 <body class="pb-10">
@@ -38,8 +39,8 @@
     <div id="mainApp" class="hidden max-w-2xl mx-auto">
         <header class="p-6 bg-white/80 backdrop-blur border-b flex justify-between items-center sticky top-0 z-50 shadow-sm">
             <div>
-                <h2 id="uDisp" class="font-bold text-slate-800 text-lg uppercase tracking-tight italic">User</h2>
-                <span id="rDisp" class="text-[9px] bg-blue-600 text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Role</span>
+                <h2 id="uDisp" class="font-bold text-slate-800 text-lg uppercase tracking-tight italic text-blue-600">User</h2>
+                <span id="rDisp" class="text-[9px] bg-slate-900 text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Role</span>
             </div>
             <button onclick="location.reload()" class="text-[10px] font-bold text-red-500 bg-red-50 px-4 py-2 rounded-full border border-red-100 uppercase">Logout</button>
         </header>
@@ -101,7 +102,10 @@
                             </div>
                         </div>
 
-                        <button onclick="saveUser()" class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest">Simpan Akun</button>
+                        <div class="flex gap-2">
+                            <button id="btnCancelEdit" onclick="resetUserForm()" class="hidden flex-1 bg-slate-200 text-slate-600 font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest">Batal</button>
+                            <button id="btnSaveUser" onclick="saveUser()" class="flex-[2] bg-slate-900 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest">Simpan Akun</button>
+                        </div>
                     </div>
                     
                     <div class="mt-6 space-y-2" id="userListSettings"></div>
@@ -165,6 +169,7 @@
         let logsData = [];
         let usersData = [];
         let projectsData = [];
+        let isEditingUser = false;
 
         // 1. Initial Connection
         const init = async () => {
@@ -211,7 +216,7 @@
         async function startApp() {
             document.getElementById('loginPage').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
-            document.getElementById('uDisp').innerText = currentUser.username;
+            document.getElementById('uDisp').innerText = currentUser.username.toUpperCase();
             document.getElementById('rDisp').innerText = currentUser.role;
             document.getElementById('f_date').valueAsDate = new Date();
 
@@ -245,7 +250,6 @@
                 if(checkList) checkList.innerHTML = '';
 
                 projectsData.sort().forEach(p => {
-                    // Filter Dropdown berdasarkan Plotting Admin
                     const isAssigned = currentUser.assignedProjects === 'ALL' || (Array.isArray(currentUser.assignedProjects) && currentUser.assignedProjects.includes(p));
                     
                     if (isAssigned) {
@@ -285,7 +289,7 @@
 
                 usersData.forEach(u => {
                     flU.add(new Option(u.id.toUpperCase(), u.id));
-                    const assignedList = u.assignedProjects === 'ALL' ? 'AKSES SEMUA' : (u.assignedProjects || []).join(', ');
+                    const assignedList = u.assignedProjects === 'ALL' ? 'AKSES SEMUA' : (Array.isArray(u.assignedProjects) ? u.assignedProjects.join(', ') : 'TIDAK ADA AKSES');
                     listSet.innerHTML += `
                         <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex justify-between items-center">
                             <div class="flex-grow">
@@ -331,7 +335,7 @@
                 <div class="bg-white p-5 rounded-3xl shadow-sm border-l-4 border-l-slate-900 mb-3 border border-slate-100 relative group">
                     <div class="flex justify-between items-start mb-2">
                         <div class="flex flex-col">
-                            <span class="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md uppercase w-fit mb-1">${l.username} &bull; ${l.project_name}</span>
+                            <span class="text-[9px] font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded-md uppercase w-fit mb-1">${l.username.toUpperCase()} &bull; ${l.project_name}</span>
                             <span class="text-[9px] font-bold text-slate-400 uppercase tracking-tighter">${l.tanggal}</span>
                         </div>
                         ${canEdit ? `
@@ -366,7 +370,8 @@
         // --- SETTINGS ACTIONS ---
 
         window.saveUser = async () => {
-            const u = document.getElementById('mU').value.trim().toLowerCase();
+            const uInput = document.getElementById('mU');
+            const u = uInput.value.trim().toLowerCase();
             const p = document.getElementById('mP').value.trim();
             const r = document.getElementById('mR').value;
             
@@ -381,25 +386,47 @@
                 role: r,
                 assignedProjects: assigned
             });
-            msg("✅ AKUN BERHASIL DISIMPAN");
+            
+            msg(isEditingUser ? "✅ DATA AKUN DIPERBARUI" : "✅ AKUN BERHASIL DISIMPAN");
             resetUserForm();
         };
 
         window.resetUserForm = () => {
-            document.getElementById('mU').value = '';
+            isEditingUser = false;
+            const uInput = document.getElementById('mU');
+            uInput.value = '';
+            uInput.disabled = false;
+            uInput.classList.remove('input-disabled');
+            
             document.getElementById('mP').value = '';
             document.getElementById('mR').value = 'USER';
             document.querySelectorAll('input[name="assign"]').forEach(cb => cb.checked = false);
+            
+            document.getElementById('btnSaveUser').innerText = "Simpan Akun";
+            document.getElementById('btnCancelEdit').classList.add('hidden');
         };
 
         window.editUserPrompt = (u, p, r, assigned) => {
-            document.getElementById('mU').value = u;
+            isEditingUser = true;
+            const uInput = document.getElementById('mU');
+            uInput.value = u;
+            uInput.disabled = true;
+            uInput.classList.add('input-disabled');
+            
             document.getElementById('mP').value = p;
             document.getElementById('mR').value = r;
+            
+            // Reset dulu semua checkbox
             document.querySelectorAll('input[name="assign"]').forEach(cb => {
-                cb.checked = Array.isArray(assigned) && assigned.includes(cb.value);
+                cb.checked = (assigned === 'ALL' || (Array.isArray(assigned) && assigned.includes(cb.value)));
             });
-            msg("SILAHKAN EDIT DATA DI ATAS");
+
+            document.getElementById('btnSaveUser').innerText = "Update Data Akun";
+            document.getElementById('btnCancelEdit').classList.remove('hidden');
+            
+            // Scroll ke atas form
+            document.getElementById('v_settings').scrollIntoView({ behavior: 'smooth' });
+            msg("MODE EDIT: " + u.toUpperCase());
         };
 
         window.deleteUser = async (u) => {
@@ -471,6 +498,20 @@
             const t = document.getElementById('toast'); t.innerText = m;
             t.style.opacity = "1"; setTimeout(() => t.style.opacity = "0", 3000);
         };
+
+        // Global assignments
+        window.saveUser = saveUser;
+        window.resetUserForm = resetUserForm;
+        window.editUserPrompt = editUserPrompt;
+        window.deleteUser = deleteUser;
+        window.addNewProject = addNewProject;
+        window.deleteProject = deleteProject;
+        window.deleteLog = deleteLog;
+        window.editLogPrompt = editLogPrompt;
+        window.confirmEditLog = confirmEditLog;
+        window.closeEditModal = closeEditModal;
+        window.tab = tab;
+        window.renderLogs = renderLogs;
     </script>
 </body>
 </html>
