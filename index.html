@@ -203,6 +203,7 @@
         let projectsData = [];
         let isEditingUser = false;
         let isEditingProject = false;
+        let editingProjectOldName = "";
 
         // Pagination State
         let usersCurrentPage = 1;
@@ -590,20 +591,45 @@
         };
 
         window.addNewProject = async () => {
-            const name = document.getElementById('nP').value.toUpperCase().trim();
+            const nameInput = document.getElementById('nP');
+            const newName = nameInput.value.toUpperCase().trim();
             const start = document.getElementById('nPStart').value;
             const end = document.getElementById('nPEnd').value;
 
-            if(!name) return msg("NAMA PROJEK WAJIB DIISI!");
+            if(!newName) return msg("NAMA PROJEK WAJIB DIISI!");
             
             if (isEditingProject) {
-                await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { 
-                    startDate: start,
-                    endDate: end
-                });
+                const oldName = editingProjectOldName;
+                
+                if (newName !== oldName) {
+                    // Rename logic: Pindahkan data ke ID baru, hapus ID lama
+                    const proj = projectsData.find(p => p.name === oldName);
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', newName), { 
+                        created: true,
+                        assignedUsers: proj.assignedUsers || [],
+                        startDate: start,
+                        endDate: end
+                    });
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', oldName));
+                    
+                    // Update riwayat pekerjaan (logs) terkait
+                    const logsToUpdate = logsData.filter(l => l.project_name === oldName);
+                    for (const l of logsToUpdate) {
+                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', l.id), {
+                            project_name: newName
+                        });
+                    }
+                } else {
+                    // Update hanya tanggal
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', oldName), { 
+                        startDate: start,
+                        endDate: end
+                    });
+                }
                 msg("✅ PROJEK DIPERBARUI");
             } else {
-                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { 
+                if (projectsData.some(p => p.name === newName)) return msg("NAMA PROJEK SUDAH ADA!");
+                await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', newName), { 
                     created: true,
                     assignedUsers: [],
                     startDate: start,
@@ -617,6 +643,7 @@
 
         window.resetProjectForm = () => {
             isEditingProject = false;
+            editingProjectOldName = "";
             const nPInput = document.getElementById('nP');
             nPInput.value = '';
             nPInput.disabled = false;
@@ -630,10 +657,11 @@
 
         window.editProjectPrompt = (name, start, end) => {
             isEditingProject = true;
+            editingProjectOldName = name;
             const nPInput = document.getElementById('nP');
             nPInput.value = name;
-            nPInput.disabled = true;
-            nPInput.classList.add('input-disabled');
+            nPInput.disabled = false;
+            nPInput.classList.remove('input-disabled');
             document.getElementById('nPStart').value = start || '';
             document.getElementById('nPEnd').value = end || '';
             
