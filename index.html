@@ -128,10 +128,11 @@
 
     <script>
         // --- KONFIGURASI SUPABASE ---
+        // Ganti URL dan Key dengan data dari Project Settings > API di Supabase
         const SB_URL = 'https://rcrjmrpgyuyzpzceexb.supabase.co'; 
         const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJjcmptcnBndXJ5dXpwemNlZXhiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2NDU2NzcsImV4cCI6MjA5MTIyMTY3N30.A4TeDYxayj2ln0Y0CLzdfUcXCgJVilL-O1kB-LY5hY4';
         
-        // Menggunakan variabel global 'supabase' dari CDN untuk membuat client
+        // Buat client dengan nama variabel sbClient agar tidak konflik
         const sbClient = supabase.createClient(SB_URL, SB_KEY);
 
         let currentUser = null;
@@ -143,16 +144,24 @@
             const btn = document.getElementById('btnLogin');
             btn.disabled = true; btn.innerText = "CHECKING...";
             
-            const u = document.getElementById('u').value;
-            const p = document.getElementById('p').value;
+            const u = document.getElementById('u').value.trim();
+            const p = document.getElementById('p').value.trim();
             
-            const { data, error } = await sbClient.from('users').select('*').eq('username', u).eq('password', p).single();
-            
-            if(data) {
-                currentUser = data;
-                initApp();
-            } else {
-                msg("❌ LOGIN GAGAL");
+            try {
+                const { data, error } = await sbClient.from('users').select('*').eq('username', u).eq('password', p).maybeSingle();
+                
+                if (error) throw error;
+
+                if (data) {
+                    currentUser = data;
+                    initApp();
+                } else {
+                    msg("❌ USER TIDAK DITEMUKAN");
+                    btn.disabled = false; btn.innerText = "LOGIN";
+                }
+            } catch (err) {
+                console.error("Login Error:", err);
+                msg("❌ ERROR: " + err.message);
                 btn.disabled = false; btn.innerText = "LOGIN";
             }
         };
@@ -176,28 +185,32 @@
         }
 
         async function syncData() {
-            const { data: projs } = await sbClient.from('projects').select('name').order('name');
-            const { data: users } = await sbClient.from('users').select('username').order('username');
-            
-            globalProjs = projs ? projs.map(p => p.name) : [];
-            const fP = document.getElementById('f_proj');
-            const flP = document.getElementById('flProj');
-            const flU = document.getElementById('flUser');
-            const edP = document.getElementById('editProj');
+            try {
+                const { data: projs } = await sbClient.from('projects').select('name').order('name');
+                const { data: users } = await sbClient.from('users').select('username').order('username');
+                
+                globalProjs = projs ? projs.map(p => p.name) : [];
+                const fP = document.getElementById('f_proj');
+                const flP = document.getElementById('flProj');
+                const flU = document.getElementById('flUser');
+                const edP = document.getElementById('editProj');
 
-            fP.innerHTML = '<option value="" disabled selected>-- Pilih Projek --</option>';
-            flP.innerHTML = '<option value="ALL">SEMUA PROJEK</option>';
-            flU.innerHTML = '<option value="ALL">SEMUA USER</option>';
-            edP.innerHTML = '';
+                fP.innerHTML = '<option value="" disabled selected>-- Pilih Projek --</option>';
+                flP.innerHTML = '<option value="ALL">SEMUA PROJEK</option>';
+                flU.innerHTML = '<option value="ALL">SEMUA USER</option>';
+                edP.innerHTML = '';
 
-            globalProjs.forEach(p => {
-                fP.add(new Option(p,p));
-                flP.add(new Option(p,p));
-                edP.add(new Option(p,p));
-            });
+                globalProjs.forEach(p => {
+                    fP.add(new Option(p,p));
+                    flP.add(new Option(p,p));
+                    edP.add(new Option(p,p));
+                });
 
-            if(users) users.forEach(u => flU.add(new Option(u.username, u.username)));
-            if(currentUser.role === 'ADMIN') renderAdminSettings();
+                if(users) users.forEach(u => flU.add(new Option(u.username, u.username)));
+                if(currentUser.role === 'ADMIN') renderAdminSettings();
+            } catch (e) {
+                console.error("Sync Error:", e);
+            }
         }
 
         // --- DATA LOGS ---
@@ -269,16 +282,18 @@
             const pL = document.getElementById('projListAdmin');
             
             uL.innerHTML = '';
-            users.forEach(u => {
-                uL.innerHTML += `
-                <div class="flex justify-between items-center bg-white p-3 rounded-xl border text-[10px] font-bold">
-                    <span>${u.username} <span class="text-blue-500 italic">(${u.role})</span></span>
-                    <div class="flex gap-3">
-                        <button onclick="editU('${u.username}', '${u.password}', '${u.role}')" class="text-blue-600">Edit</button>
-                        <button onclick="delU('${u.username}')" class="text-red-500">Hapus</button>
-                    </div>
-                </div>`;
-            });
+            if (users) {
+                users.forEach(u => {
+                    uL.innerHTML += `
+                    <div class="flex justify-between items-center bg-white p-3 rounded-xl border text-[10px] font-bold">
+                        <span>${u.username} <span class="text-blue-500 italic">(${u.role})</span></span>
+                        <div class="flex gap-3">
+                            <button onclick="editU('${u.username}', '${u.password}', '${u.role}')" class="text-blue-600">Edit</button>
+                            <button onclick="delU('${u.username}')" class="text-red-500">Hapus</button>
+                        </div>
+                    </div>`;
+                });
+            }
 
             pL.innerHTML = '';
             globalProjs.forEach(p => {
