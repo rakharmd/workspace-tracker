@@ -53,15 +53,12 @@
         .editor-content { padding: 1rem; min-height: 200px; max-height: 400px; overflow-y: auto; outline: none; font-size: 13px; line-height: 1.6; color: #334155; }
         .editor-content ul { list-style-type: disc; padding-left: 1.5rem; }
 
-        /* Badge Notes Style */
         .badge-notes { background-color: #facc15; color: #713f12; font-size: 7px; font-weight: 900; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 2px 4px rgba(234, 179, 8, 0.2); }
         
-        /* Gambar Terkompresi Style di Editor */
         #f_work_editor img { max-width: 100%; height: auto; border-radius: 0.75rem; border: 2px solid #e2e8f0; margin: 10px 0; display: block; }
         
-        /* Style untuk gambar di Laporan (Pantauan) agar rapi */
         .log-content img { 
-            max-width: 200px; 
+            max-width: 150px; 
             height: auto; 
             border-radius: 0.75rem; 
             border: 1px solid #e2e8f0; 
@@ -365,8 +362,6 @@
             document.execCommand('insertUnorderedList', false, null);
         };
 
-        // --- Logika Baru: Kompresi & Penyisipan Gambar ---
-        
         function compressAndResizeImage(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -442,7 +437,6 @@
             }
         });
 
-        // --- Logika Zoom Gambar ---
         window.openZoomModal = (src) => {
             document.getElementById('zoomedImg').src = src;
             document.getElementById('modalZoom').classList.remove('hidden');
@@ -451,14 +445,11 @@
             document.getElementById('modalZoom').classList.add('hidden');
         };
 
-        // Delegated listener untuk gambar di list log
         document.getElementById('logList').addEventListener('click', (e) => {
             if (e.target.tagName === 'IMG') {
                 openZoomModal(e.target.src);
             }
         });
-
-        // ----------------------------------------------------
 
         function listenProjects() {
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'projects'), (snap) => {
@@ -531,7 +522,7 @@
                         <div class="hidden px-4 pb-4 border-t ${isFinished ? 'border-slate-700 bg-slate-800/50' : 'border-slate-50'} mt-1 accordion-body">
                              <p class="text-[7px] font-black uppercase mb-2 mt-3 tracking-widest ${isFinished ? 'text-slate-500' : 'text-slate-300'}">Daftar Checklist Progress:</p>
                              <div class="grid grid-cols-2 gap-x-2 ${isFinished ? 'bg-slate-900/40' : 'bg-slate-50/50'} p-2 rounded-xl mb-4">${checklistHtml}</div>
-                             <p class="text-[7px] font-black uppercase mb-2 tracking-widest ${isFinished ? 'text-slate-500' : 'text-slate-300'}">Sticky Note (Catatan Projek):</p>
+                             <p class="text-[7px] font-black uppercase mb-2 tracking-widest ${isFinished ? 'text-slate-500' : 'text-slate-300'}">Catatan Projek:</p>
                              <div class="sticky-note ${isFinished ? 'opacity-50 grayscale' : ''}">
                                 <textarea id="note_${safeName}" class="sticky-note-textarea" rows="6" placeholder="Tulis catatan penting di sini...">${proj.notes || ""}</textarea>
                                 <div class="flex justify-between items-center mt-2">
@@ -728,7 +719,7 @@
             list.innerHTML = filtered.length ? '' : '<p class="text-center py-20 text-[10px] opacity-20 font-bold italic">Belum ada data</p>';
             filtered.forEach(l => {
                 const canEdit = l.username === currentUser.username || currentUser.role === 'ADMIN';
-                list.innerHTML += `<div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 transition-all"><div class="flex justify-between items-start mb-4"><div class="space-y-1"><span class="text-[9px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase">${l.username} &bull; ${l.project_name}</span><p class="text-sm font-extrabold text-slate-800">${new Date(l.tanggal).toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'})}</p></div>${canEdit ? `<div class="flex gap-1"><button onclick="editLogPrompt('${l.id}', \`${l.pekerjaan.replace(/'/g, "\\'")}\`)" class="p-2 border rounded-full text-slate-300 hover:text-blue-500 transition-all"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button><button onclick="deleteLog('${l.id}')" class="p-2 border rounded-full text-slate-300 hover:text-red-500 transition-all"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div>` : ''}</div><div class="log-content text-[13px] text-slate-600 leading-relaxed font-semibold">${l.pekerjaan.replace(/\n/g, '<br>')}</div></div>`;
+                list.innerHTML += `<div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 transition-all"><div class="flex justify-between items-start mb-4"><div class="space-y-1"><span class="text-[9px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase">${l.username} &bull; ${l.project_name}</span><p class="text-sm font-extrabold text-slate-800">${new Date(l.tanggal).toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'})}</p></div>${canEdit ? `<div class="flex gap-1"><button onclick="editLogPrompt('${l.id}')" class="p-2 border rounded-full text-slate-300 hover:text-blue-500 transition-all"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button><button onclick="deleteLog('${l.id}')" class="p-2 border rounded-full text-slate-300 hover:text-red-500 transition-all"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div>` : ''}</div><div class="log-content text-[13px] text-slate-600 leading-relaxed font-semibold">${l.pekerjaan.replace(/\n/g, '<br>')}</div></div>`;
             });
         };
 
@@ -741,9 +732,11 @@
 
         window.deleteLog = async (id) => { if(confirm("Hapus progres ini?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', id)); };
         
-        window.editLogPrompt = (id, workHtml) => { 
+        window.editLogPrompt = (id) => { 
+            const log = logsData.find(l => l.id === id);
+            if (!log) return;
             document.getElementById('editLogId').value = id; 
-            document.getElementById('editLogWork').innerHTML = workHtml; 
+            document.getElementById('editLogWork').innerHTML = log.pekerjaan; 
             document.getElementById('modalEdit').classList.remove('hidden'); 
         };
         window.confirmEditLog = async () => { 
