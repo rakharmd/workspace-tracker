@@ -347,6 +347,14 @@
         };
         init();
 
+        // --- Perbaikan Zoom Gambar Global ---
+        // Kita gunakan Event Delegation agar gambar yang baru muncul pun bisa diklik
+        document.addEventListener('click', (e) => {
+            if (e.target.tagName === 'IMG' && e.target.closest('.log-content')) {
+                openZoomModal(e.target.src);
+            }
+        });
+
         document.getElementById('loginForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnLogin'); btn.disabled = true; btn.innerText = "MENGECEK...";
