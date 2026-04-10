@@ -33,7 +33,7 @@
         .label-readonly { color: #94a3b8; font-size: 8px; font-weight: 700; text-transform: uppercase; }
         .label-readonly.checked { color: #64748b; text-decoration: line-through; }
 
-        .sticky-note { background-color: #fef9c3; border-left: 6px solid #facc15; border-radius: 1rem; padding: 1.25rem; }
+        .sticky-note { background-color: #fef9c3; border-left: 6px solid #facc15; border-radius: 1rem; padding: 1.25rem; position: relative; }
         .sticky-note-textarea { background: transparent; border: none; outline: none; width: 100%; font-size: 13px; font-weight: 600; color: #854d0e; resize: none; line-height: 1.5; min-height: 150px; }
 
         .switch-finish { position: relative; display: inline-block; width: 50px; height: 24px; }
@@ -74,7 +74,7 @@
 <body class="pb-10">
 
     <!-- LOGIN PAGE -->
-    <div id="loginPage" class="flex items-center justify-center min-h-screen p-4">
+    <div id="loginPage" class="flex items-center justify-center min-h-screen p-4 bg-slate-50">
         <div class="bg-white w-full max-w-md p-10 rounded-[2.5rem] shadow-2xl border-none text-center border border-slate-100">
             <h1 class="text-3xl font-extrabold text-slate-900 mb-1 tracking-tighter italic uppercase">WORKSPACE</h1>
             <p class="text-slate-400 text-[10px] mb-8 font-bold tracking-[0.3em] uppercase">Firebase Managed System</p>
@@ -261,6 +261,25 @@
         </div>
     </div>
 
+    <!-- MODAL STICKY NOTE ZOOM -->
+    <div id="modalSticky" class="hidden fixed inset-0 z-[110] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col">
+            <div class="p-6 bg-yellow-400 flex justify-between items-center">
+                <h3 id="stickyProjName" class="text-sm font-black text-yellow-900 uppercase tracking-widest">Catatan Projek</h3>
+                <button onclick="closeStickyModal()" class="text-yellow-900 hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="p-6 bg-yellow-50 flex-grow">
+                <textarea id="stickyZoomArea" class="w-full h-[60vh] bg-transparent border-none outline-none font-bold text-slate-800 text-base leading-relaxed resize-none" placeholder="Tuliskan catatan detail di sini..."></textarea>
+            </div>
+            <div class="p-4 bg-white border-t flex justify-between items-center">
+                <button onclick="insertBullet('stickyZoomArea')" class="text-xs font-bold bg-slate-100 text-slate-600 px-4 py-2 rounded-full border border-slate-200 uppercase tracking-widest shadow-sm">• List</button>
+                <button id="btnSaveStickyModal" class="bg-yellow-400 text-yellow-900 px-8 py-3 rounded-full font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all">Simpan & Tutup</button>
+            </div>
+        </div>
+    </div>
+
     <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl opacity-0 z-[100] text-[10px] font-bold uppercase tracking-widest text-center"></div>
 
     <script type="module">
@@ -306,13 +325,24 @@
             return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         };
 
+        // --- Perbaikan Mekanisme Tetap Login ---
         const init = async () => {
+            // Cek sesi secara sinkron di awal
+            const savedUser = localStorage.getItem('ws_user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                startApp();
+            }
+
             try {
+                // Login ke Firebase di background
                 await signInAnonymously(auth);
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         document.getElementById('statusDB').innerText = "✅ Cloud Connected";
                         document.getElementById('statusDB').classList.replace('text-slate-400', 'text-green-600');
+                        
+                        // Jika belum startApp karena tidak ada localStorage, biarkan login manual
                     }
                 });
             } catch (e) { document.getElementById('statusDB').innerText = "⚠️ Connection Error"; }
@@ -328,10 +358,12 @@
             const userSnap = await getDoc(userRef);
             if (userSnap.exists() && userSnap.data().password === p) {
                 currentUser = { username: u, ...userSnap.data() };
+                localStorage.setItem('ws_user', JSON.stringify(currentUser)); // Simpan Sesi
                 startApp();
             } else if (u === 'admin' && p === 'admin123') {
                 currentUser = { username: 'admin', role: 'ADMIN' };
                 await setDoc(userRef, { password: 'admin123', role: 'ADMIN' });
+                localStorage.setItem('ws_user', JSON.stringify(currentUser)); // Simpan Sesi
                 startApp();
             } else { msg("❌ LOGIN GAGAL"); btn.disabled = false; btn.innerText = "Masuk Sekarang"; }
         };
@@ -350,18 +382,65 @@
             listenUsers(); listenProjects(); listenLogs(); tab('input');
         }
 
+        window.logout = () => {
+            if (confirm("Keluar dari aplikasi?")) {
+                localStorage.removeItem('ws_user'); 
+                location.reload();
+            }
+        };
+
         window.formatDoc = (cmd, val) => { document.execCommand(cmd, false, val); document.getElementById('personalNoteEditor').focus(); };
         window.savePersonalNote = async () => {
             const content = document.getElementById('personalNoteEditor').innerHTML;
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.username), { privateNotes: content });
-            currentUser.privateNotes = content; msg("✅ CATATAN TERSIMPAN");
+            currentUser.privateNotes = content; 
+            localStorage.setItem('ws_user', JSON.stringify(currentUser)); // Update Sesi
+            msg("✅ CATATAN TERSIMPAN");
         };
 
         window.insertBullet = (id) => {
             const el = document.getElementById(id); el.focus();
-            document.execCommand('insertUnorderedList', false, null);
+            if (el.tagName === 'TEXTAREA') {
+                const start = el.selectionStart;
+                const end = el.selectionEnd;
+                const value = el.value;
+                el.value = value.substring(0, start) + "• " + value.substring(end);
+                el.selectionStart = el.selectionEnd = start + 2;
+            } else {
+                document.execCommand('insertUnorderedList', false, null);
+            }
         };
 
+        // --- Logika Zoom Gambar ---
+        window.openZoomModal = (src) => {
+            document.getElementById('zoomedImg').src = src;
+            document.getElementById('modalZoom').classList.remove('hidden');
+        };
+        window.closeZoomModal = () => document.getElementById('modalZoom').classList.add('hidden');
+
+        // --- Logika Zoom Sticky Note ---
+        window.openStickyZoom = (projName) => {
+            const proj = projectsData.find(p => p.name === projName);
+            if (!proj) return;
+            document.getElementById('stickyProjName').innerText = "CATATAN: " + proj.name;
+            document.getElementById('stickyZoomArea').value = proj.notes || "";
+            document.getElementById('btnSaveStickyModal').onclick = () => saveStickyZoom(projName);
+            document.getElementById('modalSticky').classList.remove('hidden');
+        };
+
+        window.closeStickyModal = () => document.getElementById('modalSticky').classList.add('hidden');
+
+        window.saveStickyZoom = async (projName) => {
+            const newVal = document.getElementById('stickyZoomArea').value;
+            const textareaInSidebar = document.getElementById(`note_${projName.replace(/\s+/g, '_')}`);
+            if (textareaInSidebar) textareaInSidebar.value = newVal;
+            
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', projName), { notes: newVal });
+            closeStickyModal();
+            msg("✅ CATATAN DISIMPAN");
+        };
+
+        // --- Kompresi Gambar ---
         function compressAndResizeImage(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -372,28 +451,16 @@
                     img.onload = () => {
                         let width = img.width;
                         let height = img.height;
-
                         if (width > height) {
-                            if (width > maxWidth) {
-                                height = height * (maxWidth / width);
-                                width = maxWidth;
-                            }
+                            if (width > maxWidth) { height = height * (maxWidth / width); width = maxWidth; }
                         } else {
-                            if (height > maxHeight) {
-                                width = width * (maxHeight / height);
-                                height = maxHeight;
-                            }
+                            if (height > maxHeight) { width = width * (maxHeight / height); height = maxHeight; }
                         }
-
                         const canvas = document.createElement('canvas');
-                        canvas.width = width;
-                        canvas.height = height;
+                        canvas.width = width; canvas.height = height;
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
-
-                        canvas.toBlob((blob) => {
-                            resolve(blob);
-                        }, 'image/jpeg', quality);
+                        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', quality);
                     };
                     img.onerror = error => reject(error);
                 };
@@ -403,7 +470,7 @@
 
         window.triggerImageInput = () => document.getElementById('imageInput').click();
         window.handleImageUpload = async (event) => {
-            const file = event.target.result ? event.target.files[0] : null; if (!file) return;
+            const file = event.target.files[0]; if (!file) return;
             try {
                 const compressedBlob = await compressAndResizeImage(file);
                 const reader = new FileReader();
@@ -434,20 +501,6 @@
                         };
                     } catch (error) { msg("❌ GAGAL MENEMPEL GAMBAR"); }
                 }
-            }
-        });
-
-        window.openZoomModal = (src) => {
-            document.getElementById('zoomedImg').src = src;
-            document.getElementById('modalZoom').classList.remove('hidden');
-        };
-        window.closeZoomModal = () => {
-            document.getElementById('modalZoom').classList.add('hidden');
-        };
-
-        document.getElementById('logList').addEventListener('click', (e) => {
-            if (e.target.tagName === 'IMG') {
-                openZoomModal(e.target.src);
             }
         });
 
@@ -524,6 +577,9 @@
                              <div class="grid grid-cols-2 gap-x-2 ${isFinished ? 'bg-slate-900/40' : 'bg-slate-50/50'} p-2 rounded-xl mb-4">${checklistHtml}</div>
                              <p class="text-[7px] font-black uppercase mb-2 tracking-widest ${isFinished ? 'text-slate-500' : 'text-slate-300'}">Catatan Projek:</p>
                              <div class="sticky-note ${isFinished ? 'opacity-50 grayscale' : ''}">
+                                <button onclick="openStickyZoom('${proj.name}')" class="absolute top-2 right-2 p-1.5 bg-white/50 hover:bg-white rounded-lg shadow-sm text-yellow-900 transition-all">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                                </button>
                                 <textarea id="note_${safeName}" class="sticky-note-textarea" rows="6" placeholder="Tulis catatan penting di sini...">${proj.notes || ""}</textarea>
                                 <div class="flex justify-between items-center mt-2">
                                     <button onclick="insertBullet('note_${safeName}')" class="text-[10px] font-bold bg-white text-slate-600 px-3 py-1.5 rounded-full border border-slate-200 uppercase tracking-widest shadow-sm active:scale-95 transition-all">• List</button>
