@@ -57,11 +57,26 @@
         .badge-notes { background-color: #facc15; color: #713f12; font-size: 7px; font-weight: 900; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 2px 4px rgba(234, 179, 8, 0.2); }
         
         /* Gambar Terkompresi Style di Editor */
-        #f_work_editor img, .editor-content img { max-width: 100%; height: auto; border-radius: 0.75rem; border: 2px solid #e2e8f0; margin: 10px 0; display: block; }
+        #f_work_editor img { max-width: 100%; height: auto; border-radius: 0.75rem; border: 2px solid #e2e8f0; margin: 10px 0; display: block; }
+        
+        /* Style untuk gambar di Laporan (Pantauan) agar rapi */
+        .log-content img { 
+            max-width: 200px; 
+            height: auto; 
+            border-radius: 0.75rem; 
+            border: 1px solid #e2e8f0; 
+            margin: 8px 0; 
+            display: inline-block; 
+            cursor: zoom-in; 
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        .log-content img:hover { transform: scale(1.05); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
     </style>
 </head>
 <body class="pb-10">
 
+    <!-- LOGIN PAGE -->
     <div id="loginPage" class="flex items-center justify-center min-h-screen p-4">
         <div class="bg-white w-full max-w-md p-10 rounded-[2.5rem] shadow-2xl border-none text-center border border-slate-100">
             <h1 class="text-3xl font-extrabold text-slate-900 mb-1 tracking-tighter italic uppercase">WORKSPACE</h1>
@@ -75,6 +90,7 @@
         </div>
     </div>
 
+    <!-- MAIN APP -->
     <div id="mainApp" class="hidden max-w-4xl mx-auto">
         <header class="p-6 bg-white/80 backdrop-blur border-b flex justify-between items-center sticky top-0 z-50 shadow-sm">
             <div class="flex items-center gap-4">
@@ -106,6 +122,7 @@
         </nav>
 
         <main class="p-4">
+            <!-- VIEW: INPUT PROGRES -->
             <section id="v_input" class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="md:col-span-2 space-y-6">
                     <div class="card p-6 shadow-sm border-blue-50">
@@ -161,6 +178,7 @@
                 </div>
             </section>
 
+            <!-- VIEW: PANTAUAN LOGS -->
             <section id="v_logs" class="hidden space-y-4 max-w-2xl mx-auto">
                 <div class="card p-4 space-y-3 sticky top-[140px] z-30 shadow-xl border-slate-200">
                     <div class="relative">
@@ -181,6 +199,7 @@
                 <div id="logList" class="space-y-4 pt-2"></div>
             </section>
 
+            <!-- VIEW: PROJEK GLOBAL -->
             <section id="v_projek" class="hidden space-y-6 max-w-2xl mx-auto">
                 <div class="card p-6 shadow-sm border-slate-100">
                     <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-green-600 rounded-full"></span> Daftar Projek Global</h3>
@@ -204,6 +223,7 @@
                 </div>
             </section>
 
+            <!-- VIEW: SETTINGS -->
             <section id="v_settings" class="hidden space-y-8 max-w-2xl mx-auto">
                 <div class="card p-6 shadow-sm bg-slate-50/50 border-slate-100">
                     <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-blue-600 rounded-full"></span> Manajemen Akun</h3>
@@ -222,6 +242,7 @@
         </main>
     </div>
 
+    <!-- MODAL EDIT LOG -->
     <div id="modalEdit" class="hidden fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-md p-6 rounded-3xl shadow-2xl">
             <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest">Edit Progres</h3>
@@ -230,6 +251,16 @@
                 <div id="editLogWork" contenteditable="true" class="editor-content w-full p-4 border rounded-2xl bg-slate-50 min-h-[150px]"></div>
                 <div class="flex gap-2"><button onclick="closeEditModal()" class="flex-1 py-3 bg-slate-100 text-slate-500 rounded-xl font-bold text-xs uppercase">Batal</button><button onclick="confirmEditLog()" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-xs uppercase">Simpan Perubahan</button></div>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL ZOOM GAMBAR -->
+    <div id="modalZoom" class="hidden fixed inset-0 z-[110] modal-overlay flex items-center justify-center p-4 cursor-zoom-out" onclick="closeZoomModal()">
+        <div class="relative max-w-5xl w-full h-full flex items-center justify-center pointer-events-none">
+            <img id="zoomedImg" src="" class="max-w-full max-h-full rounded-2xl shadow-2xl object-contain bg-white p-2 pointer-events-auto">
+            <button class="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full backdrop-blur-md transition-all pointer-events-auto">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
         </div>
     </div>
 
@@ -336,7 +367,6 @@
 
         // --- Logika Baru: Kompresi & Penyisipan Gambar ---
         
-        // Fungsi Kompresi Gambar
         function compressAndResizeImage(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -376,7 +406,6 @@
             });
         }
 
-        // Metode 1: Tombol Unggah Gambar
         window.triggerImageInput = () => document.getElementById('imageInput').click();
         window.handleImageUpload = async (event) => {
             const file = event.target.result ? event.target.files[0] : null; if (!file) return;
@@ -390,15 +419,14 @@
                     document.execCommand('insertImage', false, dataUrl);
                 };
             } catch (error) { msg("❌ GAGAL MEMPROSES GAMBAR"); }
-            event.target.value = ''; // Bersihkan input
+            event.target.value = ''; 
         };
 
-        // Metode 2: Tempel Gambar (Ctrl+V)
         document.getElementById('f_work_editor').addEventListener('paste', async (event) => {
             const items = (event.clipboardData || event.originalEvent.clipboardData).items;
             for (let item of items) {
                 if (item.type.startsWith('image/')) {
-                    event.preventDefault(); // Cegah tempel default
+                    event.preventDefault(); 
                     const file = item.getAsFile();
                     try {
                         const compressedBlob = await compressAndResizeImage(file);
@@ -411,6 +439,22 @@
                         };
                     } catch (error) { msg("❌ GAGAL MENEMPEL GAMBAR"); }
                 }
+            }
+        });
+
+        // --- Logika Zoom Gambar ---
+        window.openZoomModal = (src) => {
+            document.getElementById('zoomedImg').src = src;
+            document.getElementById('modalZoom').classList.remove('hidden');
+        };
+        window.closeZoomModal = () => {
+            document.getElementById('modalZoom').classList.add('hidden');
+        };
+
+        // Delegated listener untuk gambar di list log
+        document.getElementById('logList').addEventListener('click', (e) => {
+            if (e.target.tagName === 'IMG') {
+                openZoomModal(e.target.src);
             }
         });
 
@@ -684,13 +728,12 @@
             list.innerHTML = filtered.length ? '' : '<p class="text-center py-20 text-[10px] opacity-20 font-bold italic">Belum ada data</p>';
             filtered.forEach(l => {
                 const canEdit = l.username === currentUser.username || currentUser.role === 'ADMIN';
-                list.innerHTML += `<div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100"><div class="flex justify-between items-start mb-4"><div class="space-y-1"><span class="text-[9px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase">${l.username} &bull; ${l.project_name}</span><p class="text-sm font-extrabold text-slate-800">${new Date(l.tanggal).toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'})}</p></div>${canEdit ? `<div class="flex gap-1"><button onclick="editLogPrompt('${l.id}', \`${l.pekerjaan.replace(/'/g, "\\'")}\`)" class="p-2 border rounded-full text-slate-300 hover:text-blue-500 transition-all"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button><button onclick="deleteLog('${l.id}')" class="p-2 border rounded-full text-slate-300 hover:text-red-500 transition-all"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div>` : ''}</div><p class="text-[13px] text-slate-600 leading-relaxed font-semibold">${l.pekerjaan.replace(/\n/g, '<br>')}</p></div>`;
+                list.innerHTML += `<div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 transition-all"><div class="flex justify-between items-start mb-4"><div class="space-y-1"><span class="text-[9px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase">${l.username} &bull; ${l.project_name}</span><p class="text-sm font-extrabold text-slate-800">${new Date(l.tanggal).toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'})}</p></div>${canEdit ? `<div class="flex gap-1"><button onclick="editLogPrompt('${l.id}', \`${l.pekerjaan.replace(/'/g, "\\'")}\`)" class="p-2 border rounded-full text-slate-300 hover:text-blue-500 transition-all"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button><button onclick="deleteLog('${l.id}')" class="p-2 border rounded-full text-slate-300 hover:text-red-500 transition-all"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div>` : ''}</div><div class="log-content text-[13px] text-slate-600 leading-relaxed font-semibold">${l.pekerjaan.replace(/\n/g, '<br>')}</div></div>`;
             });
         };
 
         document.getElementById('progressForm').onsubmit = async (e) => {
             e.preventDefault(); const btn = document.getElementById('btnSubmitLog'); btn.disabled = true;
-            // Ambil konten HTML dari editor baru, bukan textarea lama
             const workHtml = document.getElementById('f_work_editor').innerHTML;
             await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), { tanggal: document.getElementById('f_date').value, username: currentUser.username, project_name: document.getElementById('f_proj').value, pekerjaan: workHtml, ts: serverTimestamp() });
             document.getElementById('f_work_editor').innerHTML = ''; msg("✅ PROGRES TERSIMPAN"); btn.disabled = false;
@@ -698,7 +741,6 @@
 
         window.deleteLog = async (id) => { if(confirm("Hapus progres ini?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', id)); };
         
-        // Update fungsi edit modal untuk editor kaya
         window.editLogPrompt = (id, workHtml) => { 
             document.getElementById('editLogId').value = id; 
             document.getElementById('editLogWork').innerHTML = workHtml; 
