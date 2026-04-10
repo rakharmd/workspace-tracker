@@ -36,12 +36,12 @@
         .sticky-note { background-color: #fef9c3; border-left: 6px solid #facc15; border-radius: 1rem; padding: 1.25rem; position: relative; }
         .sticky-note-textarea { background: transparent; border: none; outline: none; width: 100%; font-size: 13px; font-weight: 600; color: #854d0e; resize: none; line-height: 1.5; min-height: 150px; }
 
-        .switch-finish { position: relative; display: inline-block; width: 50px; height: 24px; }
+        .switch-finish { position: relative; display: inline-block; width: 44px; height: 22px; }
         .switch-finish input { opacity: 0; width: 0; height: 0; }
         .slider-finish { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e2e8f0; transition: .4s; border-radius: 34px; }
-        .slider-finish:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        .slider-finish:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider-finish { background-color: #10b981; }
-        input:checked + .slider-finish:before { transform: translateX(26px); }
+        input:checked + .slider-finish:before { transform: translateX(22px); }
 
         .rotate-180 { transform: rotate(180deg); }
 
@@ -310,7 +310,7 @@
         let editingProjectOldName = "";
         let openAdminProjName = null;
         
-        // Logika Persistent State: Menyimpan nama projek yang sedang terbuka accordionnya
+        // Logika Persistent State
         let openProjectAccordions = new Set();
 
         const PROGRESS_TASKS = [
@@ -428,9 +428,6 @@
 
         window.saveStickyZoom = async (projName) => {
             const newVal = document.getElementById('stickyZoomArea').value;
-            const textareaInSidebar = document.getElementById(`note_${projName.replace(/\s+/g, '_')}`);
-            if (textareaInSidebar) textareaInSidebar.value = newVal;
-            
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', projName), { notes: newVal });
             closeStickyModal();
             msg("✅ CATATAN DISIMPAN");
@@ -531,8 +528,6 @@
                 const deadlineStr = proj.endDate ? new Date(proj.endDate).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) : 'No Deadline';
                 const progress = calculateProgress(proj.tasks); const isFinished = proj.isFinished || false; const safeName = proj.name.replace(/\s+/g, '_');
                 const hasNotes = proj.notes && proj.notes.trim().length > 0;
-                
-                // Cek apakah accordion sedang terbuka
                 const isOpen = openProjectAccordions.has(proj.name);
 
                 let dateBoxClass = "bg-white border-slate-200 text-slate-800"; 
@@ -554,28 +549,37 @@
                 sideList.innerHTML += `
                     <div class="rounded-2xl border ${isFinished ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100 shadow-sm'} overflow-hidden transition-all">
                         <div class="p-4">
-                            <div class="flex justify-between items-start mb-2">
-                                <div class="cursor-pointer flex-grow pr-2 flex justify-between items-center group" onclick="toggleAccordion(this, '${proj.name}')">
-                                    <div class="flex-grow">
-                                        <div class="flex items-center gap-2 mb-2">
-                                            <span class="text-[10px] font-extrabold uppercase truncate ${isFinished ? 'text-white' : 'text-slate-800'}">${proj.name}</span>
-                                            <span class="text-[9px] font-black ${isFinished ? 'text-green-400' : 'text-blue-600'}">${progress}%</span>
-                                            ${hasNotes ? `<span class="badge-notes">NOTES</span>` : ''}
-                                        </div>
-                                        <div class="inline-block px-2 py-1 rounded-lg border text-[9px] font-extrabold ${isFinished ? 'opacity-50' : dateBoxClass}">${deadlineStr}</div>
+                            <!-- Header Kartu yang Diperbaiki -->
+                            <div class="flex justify-between items-start mb-3">
+                                <div class="flex-grow space-y-1">
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <span class="text-[10px] font-extrabold uppercase truncate ${isFinished ? 'text-white' : 'text-slate-800'}">${proj.name}</span>
+                                        <span class="text-[9px] font-black ${isFinished ? 'text-green-400' : 'text-blue-600'}">${progress}%</span>
+                                        ${hasNotes ? `<span class="badge-notes">NOTES</span>` : ''}
                                     </div>
-                                    <svg class="w-3 h-3 text-slate-300 group-hover:text-blue-500 transition-transform arrow-icon ${isOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                                    <div class="inline-block px-2 py-1 rounded-lg border text-[9px] font-extrabold ${isFinished ? 'opacity-50' : dateBoxClass}">${deadlineStr}</div>
                                 </div>
-                                <div class="flex flex-col items-center gap-1 ml-2"><span class="text-[7px] font-black uppercase tracking-widest ${isFinished ? 'text-green-400' : 'text-slate-400'}">Finish</span><label class="switch-finish"><input type="checkbox" ${isFinished ? 'checked' : ''} onchange="toggleFinishProject('${proj.name}', this.checked)"><span class="slider-finish"></span></label></div>
+                                <div class="flex flex-col items-end gap-1 shrink-0 ml-2">
+                                    <span class="text-[7px] font-black uppercase tracking-widest ${isFinished ? 'text-green-400' : 'text-slate-400'}">Finish</span>
+                                    <label class="switch-finish"><input type="checkbox" ${isFinished ? 'checked' : ''} onchange="toggleFinishProject('${proj.name}', this.checked)"><span class="slider-finish"></span></label>
+                                </div>
                             </div>
-                            <div class="w-full ${isFinished ? 'bg-slate-700' : 'bg-slate-100'} h-1.5 rounded-full overflow-hidden mb-2"><div class="${isFinished ? 'bg-green-500' : 'bg-blue-600'} h-full transition-all duration-500" style="width: ${progress}%"></div></div>
+                            
+                            <!-- Progres Bar & Toggle Chevron -->
+                            <div class="flex items-center gap-3">
+                                <div class="flex-grow ${isFinished ? 'bg-slate-700' : 'bg-slate-100'} h-1.5 rounded-full overflow-hidden"><div class="${isFinished ? 'bg-green-500' : 'bg-blue-600'} h-full transition-all duration-500" style="width: ${progress}%"></div></div>
+                                <button onclick="toggleAccordion(this, '${proj.name}')" class="p-1 rounded-full hover:bg-slate-50 transition-colors group">
+                                    <svg class="w-4 h-4 text-slate-300 group-hover:text-blue-500 transition-transform arrow-icon ${isOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
+                            </div>
                         </div>
+                        
                         <div class="${isOpen ? '' : 'hidden'} px-4 pb-4 border-t ${isFinished ? 'border-slate-700 bg-slate-800/50' : 'border-slate-50'} mt-1 accordion-body">
                              <p class="text-[7px] font-black uppercase mb-2 mt-3 tracking-widest ${isFinished ? 'text-slate-500' : 'text-slate-300'}">Daftar Checklist Progress:</p>
                              <div class="grid grid-cols-2 gap-x-2 ${isFinished ? 'bg-slate-900/40' : 'bg-slate-50/50'} p-2 rounded-xl mb-4">${checklistHtml}</div>
                              <p class="text-[7px] font-black uppercase mb-2 tracking-widest ${isFinished ? 'text-slate-500' : 'text-slate-300'}">Catatan Projek:</p>
                              <div class="sticky-note ${isFinished ? 'opacity-50 grayscale' : ''}">
-                                <button onclick="openStickyZoom('${proj.name}')" class="absolute top-2 right-2 p-1.5 bg-white/50 hover:bg-white rounded-lg shadow-sm text-yellow-900 transition-all">
+                                <button onclick="openStickyZoom('${proj.name}')" class="absolute top-2 right-2 p-1.5 bg-white/50 hover:bg-white rounded-lg shadow-sm text-yellow-900 transition-all z-10">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
                                 </button>
                                 <textarea id="note_${safeName}" class="sticky-note-textarea" rows="6" placeholder="Tulis catatan penting di sini...">${proj.notes || ""}</textarea>
@@ -589,10 +593,10 @@
             });
         };
 
-        window.toggleAccordion = (header, projName) => {
-            const card = header.closest('.rounded-2xl'); 
+        window.toggleAccordion = (btn, projName) => {
+            const card = btn.closest('.rounded-2xl'); 
             const body = card.querySelector('.accordion-body'); 
-            const icon = header.querySelector('.arrow-icon');
+            const icon = btn.querySelector('.arrow-icon');
             const isClosing = !body.classList.contains('hidden');
             
             body.classList.toggle('hidden', isClosing); 
