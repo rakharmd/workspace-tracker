@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WORKSPACE Tracker - Stable V1</title>
+    <title>WORKSPACE Tracker - Stable V1 (Drag & Drop)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
@@ -15,11 +15,6 @@
         .btn-primary { background-color: #0f172a; color: white; transition: all 0.2s; }
         .btn-primary:active { transform: scale(0.95); }
         .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
-        .input-disabled { background-color: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
-        .user-pill { background-color: #eff6ff; border: 1px solid #dbeafe; color: #2563eb; }
-        .page-btn { padding: 0.5rem 1rem; border-radius: 0.75rem; background: white; border: 1px solid #e2e8f0; font-size: 0.75rem; font-weight: 700; color: #64748b; transition: all 0.2s; }
-        .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        .page-btn:not(:disabled):hover { border-color: #2563eb; color: #2563eb; }
         
         @keyframes pulse-red {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
@@ -65,6 +60,10 @@
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
         }
         .log-content img:hover { transform: scale(1.05); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+
+        /* Drag & Drop Feedback */
+        .dragging { opacity: 0.5; border: 2px dashed #3b82f6; }
+        .drag-over { border-top: 4px solid #3b82f6 !important; }
     </style>
 </head>
 <body class="pb-10">
@@ -141,7 +140,7 @@
                         </form>
                     </div>
 
-                    <div class="card p-6 shadow-sm border-slate-100 bg-slate-50/30 bg-white">
+                    <div class="card p-6 shadow-sm border-slate-100 bg-white">
                         <h3 class="text-[10px] font-extrabold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-purple-600 rounded-full"></span> Catatan Pribadi Akun</h3>
                         <div class="editor-container">
                             <div class="editor-toolbar">
@@ -280,22 +279,14 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, onSnapshot, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, onSnapshot, addDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = {
-            apiKey: "AIzaSyD-wrKOTP046d3Ojr_pKPHEWWf7Kuk5Nco",
-            authDomain: "workspace-tracker-b3f8a.firebaseapp.com",
-            projectId: "workspace-tracker-b3f8a",
-            storageBucket: "workspace-tracker-b3f8a.firebasestorage.app",
-            messagingSenderId: "347113310211",
-            appId: "1:347113310211:web:900680ab7b8456a0f66636"
-        };
-
+        const firebaseConfig = JSON.parse(__firebase_config);
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
-        const appId = "workspace-tracker-final-v2";
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'workspace-tracker-final-v2';
 
         let currentUser = null;
         let logsData = [];
@@ -306,8 +297,8 @@
         let editingProjectOldName = "";
         let openAdminProjName = null;
         
-        // Logika Persistent State
         let openProjectAccordions = new Set();
+        let draggedProjectName = null;
 
         const PROGRESS_TASKS = [
             { key: "drafting", label: "Drafting" }, { key: "layouting", label: "Layouting" }, { key: "moodboard", label: "Moodboard" },
@@ -328,22 +319,26 @@
             const savedUser = localStorage.getItem('ws_user');
             if (savedUser) {
                 currentUser = JSON.parse(savedUser);
-                startApp();
             }
 
             try {
-                await signInAnonymously(auth);
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         document.getElementById('statusDB').innerText = "✅ Cloud Connected";
                         document.getElementById('statusDB').classList.replace('text-slate-400', 'text-green-600');
+                        if(currentUser) startApp();
                     }
                 });
             } catch (e) { document.getElementById('statusDB').innerText = "⚠️ Connection Error"; }
         };
         init();
 
-        // --- Perbaikan Zoom Gambar Global ---
         document.addEventListener('click', (e) => {
             if (e.target.tagName === 'IMG' && e.target.closest('.log-content')) {
                 openZoomModal(e.target.src);
@@ -392,6 +387,7 @@
 
         window.formatDoc = (cmd, val) => { document.execCommand(cmd, false, val); document.getElementById('personalNoteEditor').focus(); };
         window.savePersonalNote = async () => {
+            if (!auth.currentUser) return;
             const content = document.getElementById('personalNoteEditor').innerHTML;
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.username), { privateNotes: content });
             currentUser.privateNotes = content; 
@@ -430,6 +426,7 @@
         window.closeStickyModal = () => document.getElementById('modalSticky').classList.add('hidden');
 
         window.saveStickyZoom = async (projName) => {
+            if (!auth.currentUser) return;
             const newVal = document.getElementById('stickyZoomArea').value;
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', projName), { notes: newVal });
             closeStickyModal();
@@ -500,10 +497,13 @@
         });
 
         function listenProjects() {
+            if (!auth.currentUser) return;
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'projects'), (snap) => {
                 projectsData = snap.docs.map(d => ({ name: d.id, ...d.data() }));
+                // Sort by order field primarily
+                projectsData.sort((a, b) => (a.order || 0) - (b.order || 0));
                 renderProjectList(); renderInputDropdowns(); renderSidebarDeadlines(); checkDeadlines();
-            });
+            }, (err) => {});
         }
 
         function calculateProgress(tasks = {}) {
@@ -515,7 +515,7 @@
             if(!fP || !flP) return;
             fP.innerHTML = '<option value="" disabled selected>-- Pilih Projek --</option>';
             flP.innerHTML = '<option value="ALL">SEMUA PROJEK</option>';
-            projectsData.sort((a,b) => a.name.localeCompare(b.name)).forEach(proj => {
+            projectsData.forEach(proj => {
                 if (currentUser.role === 'ADMIN' || (proj.assignedUsers || []).includes(currentUser.username)) {
                     fP.add(new Option(proj.name, proj.name)); flP.add(new Option(proj.name, proj.name));
                 }
@@ -524,10 +524,11 @@
 
         window.renderSidebarDeadlines = () => {
             const sideList = document.getElementById('sideProjList'); if(!sideList) return;
-            const userProjects = projectsData.filter(proj => currentUser.role === 'ADMIN' || (proj.assignedUsers || []).includes(currentUser.username))
-                .sort((a, b) => (a.isFinished === b.isFinished) ? a.name.localeCompare(b.name) : (a.isFinished ? 1 : -1));
+            const userProjects = projectsData.filter(proj => currentUser.role === 'ADMIN' || (proj.assignedUsers || []).includes(currentUser.username));
+            
             sideList.innerHTML = userProjects.length ? '' : '<p class="text-[9px] text-slate-400 text-center py-4">Belum ada projek aktif</p>';
-            userProjects.forEach(proj => {
+            
+            userProjects.forEach((proj, idx) => {
                 const deadlineStr = proj.endDate ? new Date(proj.endDate).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) : 'No Deadline';
                 const progress = calculateProgress(proj.tasks); const isFinished = proj.isFinished || false; const safeName = proj.name.replace(/\s+/g, '_');
                 const hasNotes = proj.notes && proj.notes.trim().length > 0;
@@ -549,10 +550,16 @@
                     checklistHtml += `<div class="flex items-center gap-2 py-0.5"><input type="checkbox" id="task_${safeName}_${t.key}" class="task-checkbox w-3 h-3 rounded" ${isChecked ? 'checked' : ''} onchange="toggleTask('${proj.name}', '${t.key}', this.checked)"><label for="task_${safeName}_${t.key}" class="text-[8px] font-bold uppercase ${isFinished ? 'text-slate-400 line-through' : 'text-slate-500'} cursor-pointer">${t.label}</label></div>`;
                 });
 
-                sideList.innerHTML += `
-                    <div class="rounded-2xl border ${isFinished ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100 shadow-sm'} overflow-hidden transition-all">
+                const cardHtml = `
+                    <div class="project-card rounded-2xl border ${isFinished ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100 shadow-sm'} overflow-hidden transition-all cursor-move" 
+                         draggable="true" 
+                         data-name="${proj.name}"
+                         ondragstart="handleDragStart(event, '${proj.name}')"
+                         ondragover="handleDragOver(event)"
+                         ondragleave="handleDragLeave(event)"
+                         ondrop="handleDrop(event, '${proj.name}')">
                         <div class="p-4">
-                            <div class="flex justify-between items-start mb-3">
+                            <div class="flex justify-between items-start mb-3 pointer-events-none">
                                 <div class="flex-grow space-y-1">
                                     <div class="flex items-center gap-2 flex-wrap">
                                         <span class="text-[10px] font-extrabold uppercase truncate ${isFinished ? 'text-white' : 'text-slate-800'}">${proj.name}</span>
@@ -561,14 +568,14 @@
                                     </div>
                                     <div class="inline-block px-2 py-1 rounded-lg border text-[9px] font-extrabold ${isFinished ? 'opacity-50' : dateBoxClass}">${deadlineStr}</div>
                                 </div>
-                                <div class="flex flex-col items-end gap-1 shrink-0 ml-2">
+                                <div class="flex flex-col items-end gap-1 shrink-0 ml-2 pointer-events-auto">
                                     <span class="text-[7px] font-black uppercase tracking-widest ${isFinished ? 'text-green-400' : 'text-slate-400'}">Finish</span>
                                     <label class="switch-finish"><input type="checkbox" ${isFinished ? 'checked' : ''} onchange="toggleFinishProject('${proj.name}', this.checked)"><span class="slider-finish"></span></label>
                                 </div>
                             </div>
                             
                             <div class="flex items-center gap-3">
-                                <div class="flex-grow ${isFinished ? 'bg-slate-700' : 'bg-slate-100'} h-1.5 rounded-full overflow-hidden"><div class="${isFinished ? 'bg-green-500' : 'bg-blue-600'} h-full transition-all duration-500" style="width: ${progress}%"></div></div>
+                                <div class="flex-grow ${isFinished ? 'bg-slate-700' : 'bg-slate-100'} h-1.5 rounded-full overflow-hidden pointer-events-none"><div class="${isFinished ? 'bg-green-500' : 'bg-blue-600'} h-full transition-all duration-500" style="width: ${progress}%"></div></div>
                                 <button onclick="toggleAccordion(this, '${proj.name}')" class="p-1 rounded-full hover:bg-slate-50 transition-colors group">
                                     <svg class="w-4 h-4 text-slate-300 group-hover:text-blue-500 transition-transform arrow-icon ${isOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
                                 </button>
@@ -591,7 +598,56 @@
                              </div>
                         </div>
                     </div>`;
+                sideList.insertAdjacentHTML('beforeend', cardHtml);
             });
+        };
+
+        // DRAG AND DROP HANDLERS
+        window.handleDragStart = (e, name) => {
+            draggedProjectName = name;
+            e.currentTarget.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        };
+
+        window.handleDragOver = (e) => {
+            e.preventDefault();
+            const card = e.currentTarget;
+            if (card.dataset.name !== draggedProjectName) {
+                card.classList.add('drag-over');
+            }
+        };
+
+        window.handleDragLeave = (e) => {
+            e.currentTarget.classList.remove('drag-over');
+        };
+
+        window.handleDrop = async (e, targetName) => {
+            e.preventDefault();
+            e.currentTarget.classList.remove('drag-over');
+            document.querySelectorAll('.project-card').forEach(c => c.classList.remove('dragging'));
+
+            if (draggedProjectName === targetName) return;
+
+            // Reorder Local Array
+            const fromIndex = projectsData.findIndex(p => p.name === draggedProjectName);
+            const toIndex = projectsData.findIndex(p => p.name === targetName);
+            
+            const reordered = [...projectsData];
+            const [draggedItem] = reordered.splice(fromIndex, 1);
+            reordered.splice(toIndex, 0, draggedItem);
+
+            // Update state and Firestore
+            projectsData = reordered;
+            renderSidebarDeadlines();
+
+            // Persist order to Firestore
+            const batch = writeBatch(db);
+            reordered.forEach((p, i) => {
+                const ref = doc(db, 'artifacts', appId, 'public', 'data', 'projects', p.name);
+                batch.update(ref, { order: i });
+            });
+            await batch.commit();
+            msg("✅ URUTAN PROJEK DIPERBARUI");
         };
 
         window.toggleAccordion = (btn, projName) => {
@@ -611,18 +667,23 @@
         };
 
         window.saveProjectNote = async (projName, textareaId) => {
+            if (!auth.currentUser) return;
             const val = document.getElementById(textareaId).value;
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', projName), { notes: val });
             msg("✅ CATATAN PROJEK DISIMPAN");
         };
 
         window.toggleFinishProject = async (projName, isChecked) => {
+            if (!auth.currentUser) return;
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', projName), { isFinished: isChecked });
             msg(isChecked ? `✅ PROJEK ${projName} SELESAI!` : `🔄 PROJEK ${projName} AKTIF KEMBALI`);
         };
 
         window.toggleTask = async (projName, taskKey, isChecked) => {
-            const proj = projectsData.find(p => p.name === projName); const tasks = { ...(proj.tasks || {}) }; tasks[taskKey] = isChecked;
+            if (!auth.currentUser) return;
+            const proj = projectsData.find(p => p.name === projName); 
+            const tasks = { ...(proj.tasks || {}) }; 
+            tasks[taskKey] = isChecked;
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', projName), { tasks });
         };
 
@@ -648,7 +709,7 @@
 
         window.renderProjectList = () => {
             const list = document.getElementById('projListSettings'); const pag = document.getElementById('projPagination'); if(!list) return;
-            const filtered = projectsData.filter(p => p.name.includes(projSearchQuery.toUpperCase())).sort((a,b) => a.name.localeCompare(b.name));
+            const filtered = projectsData.filter(p => p.name.includes(projSearchQuery.toUpperCase()));
             const total = Math.ceil(filtered.length / projsPerPage) || 1;
             const startIndex = (projsCurrentPage - 1) * projsPerPage;
             list.innerHTML = '';
@@ -692,18 +753,21 @@
         };
 
         window.addNewProject = async () => {
+            if (!auth.currentUser) return;
             const name = document.getElementById('nP').value.toUpperCase().trim();
             const start = document.getElementById('nPStart').value; const end = document.getElementById('nPEnd').value;
             if(!name) return msg("NAMA PROJEK KOSONG!");
+            
+            const maxOrder = projectsData.length > 0 ? Math.max(...projectsData.map(p => p.order || 0)) : 0;
+
             if (isEditingProject) {
                 const old = editingProjectOldName;
                 if (name !== old) {
                     const p = projectsData.find(x => x.name === old);
                     await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { ...p, startDate: start, endDate: end });
                     await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', old));
-                    logsData.filter(l => l.project_name === old).forEach(async l => await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', l.id), { project_name: name }));
                 } else { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', old), { startDate: start, endDate: end }); }
-            } else { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { assignedUsers: [], startDate: start, endDate: end, tasks: {}, notes: "", isFinished: false }); }
+            } else { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { assignedUsers: [], startDate: start, endDate: end, tasks: {}, notes: "", isFinished: false, order: maxOrder + 1 }); }
             resetProjectForm(); msg("✅ DATA TERSIMPAN");
         };
 
@@ -717,29 +781,34 @@
             document.getElementById('btnAddNewProject').innerText = "Update Projek"; document.getElementById('btnCancelEditProj').classList.remove('hidden');
         };
 
-        window.deleteProject = async (name) => { if(confirm("Hapus projek ini?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name)); };
+        window.deleteProject = async (name) => { if(!auth.currentUser) return; if(confirm("Hapus projek ini?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name)); };
+        
         window.addUserToProject = async (name) => {
+            if (!auth.currentUser) return;
             const uid = document.getElementById(`selAddUser_${name.replace(/\s+/g, '_')}`).value; if(!uid) return;
             const p = projectsData.find(x => x.name === name); let assigned = p.assignedUsers || []; assigned.push(uid);
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { assignedUsers: assigned });
         };
 
         window.toggleUserAssignment = async (name, uid) => {
+            if (!auth.currentUser) return;
             const p = projectsData.find(x => x.name === name); let assigned = (p.assignedUsers || []).filter(x => x !== uid);
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { assignedUsers: assigned });
         };
 
         function listenUsers() {
+            if (!auth.currentUser) return;
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
                 usersData = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderUserList();
-            });
+            }, (err) => {});
         }
 
         window.renderUserList = () => {
             if(currentUser.role !== 'ADMIN') return;
             const flU = document.getElementById('flUser'); const list = document.getElementById('userListSettings'); const pag = document.getElementById('userPagination');
             flU.innerHTML = '<option value="ALL">SEMUA TIM</option>';
-            const sorted = usersData.sort((a,b) => a.id.localeCompare(b.id)); sorted.forEach(u => flU.add(new Option(u.id.toUpperCase(), u.id)));
+            const sorted = [...usersData].sort((a,b) => a.id.localeCompare(b.id)); 
+            sorted.forEach(u => flU.add(new Option(u.id.toUpperCase(), u.id)));
             const total = Math.ceil(sorted.length / usersPerPage) || 1; const startIndex = (usersCurrentPage - 1) * usersPerPage;
             list.innerHTML = '';
             sorted.slice(startIndex, startIndex + usersPerPage).forEach(u => {
@@ -749,6 +818,7 @@
         };
 
         window.saveUser = async () => {
+            if (!auth.currentUser) return;
             const u = document.getElementById('mU').value.trim().toLowerCase(); const p = document.getElementById('mP').value.trim(); const r = document.getElementById('mR').value;
             if(!u || !p) return msg("ISI USER & PASS!");
             await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u), { password: p, role: r }, { merge: true });
@@ -767,20 +837,19 @@
             document.getElementById('btnSaveUser').innerText = "Update Akun"; document.getElementById('btnCancelEdit').classList.remove('hidden');
         };
 
-        window.deleteUser = async (u) => { if(u !== 'admin' && confirm("Hapus akun ini?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u)); };
+        window.deleteUser = async (u) => { if(!auth.currentUser) return; if(u !== 'admin' && confirm("Hapus akun ini?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u)); };
 
         function listenLogs() {
+            if (!auth.currentUser) return;
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), (snap) => {
-                // Perbaikan: Urutkan berdasarkan Timestamp server (terbaru di atas)
                 logsData = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => {
                     const timeA = a.ts ? (a.ts.seconds * 1000 + a.ts.nanoseconds / 1000000) : 0;
                     const timeB = b.ts ? (b.ts.seconds * 1000 + b.ts.nanoseconds / 1000000) : 0;
-                    // Jika jam sama, fallback ke tanggal
                     if (timeB === timeA) return new Date(b.tanggal) - new Date(a.tanggal);
                     return timeB - timeA;
                 });
                 renderLogs();
-            });
+            }, (err) => {});
         }
 
         window.renderLogs = () => {
@@ -802,7 +871,6 @@
                 const canEdit = l.username === currentUser.username || currentUser.role === 'ADMIN';
                 const timeStr = l.ts ? new Date(l.ts.seconds * 1000).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '';
                 
-                // Zebra stripping berdasarkan perubahan tanggal
                 if (l.tanggal !== lastDate) {
                     isWhite = !isWhite;
                     lastDate = l.tanggal;
@@ -820,22 +888,32 @@
                             ${canEdit ? `
                             <div class="flex gap-1">
                                 <button onclick="editLogPrompt('${l.id}')" class="p-2 border rounded-full text-slate-300 hover:text-blue-500 transition-all"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
-                                <button onclick="deleteLog('${l.id}')" class="p-2 border rounded-full text-slate-300 hover:text-red-500 transition-all"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
+                                <button onclick="deleteLog('${l.id}')" class="p-2 border rounded-full text-slate-300 hover:text-red-500 transition-all"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2.032 0 0116.138 21H7.862a2 2.032 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                             </div>` : ''}
                         </div>
-                        <div class="log-content text-[13px] text-slate-600 leading-relaxed font-semibold">${l.pekerjaan.replace(/\n/g, '<br>')}</div>
+                        <div class="log-content text-[13px] text-slate-600 leading-relaxed font-semibold">${l.pekerjaan}</div>
                     </div>`;
             });
         };
 
         document.getElementById('progressForm').onsubmit = async (e) => {
-            e.preventDefault(); const btn = document.getElementById('btnSubmitLog'); btn.disabled = true;
+            e.preventDefault(); 
+            if (!auth.currentUser) return;
+            const btn = document.getElementById('btnSubmitLog'); btn.disabled = true;
             const workHtml = document.getElementById('f_work_editor').innerHTML;
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), { tanggal: document.getElementById('f_date').value, username: currentUser.username, project_name: document.getElementById('f_proj').value, pekerjaan: workHtml, ts: serverTimestamp() });
-            document.getElementById('f_work_editor').innerHTML = ''; msg("✅ PROGRES TERSIMPAN"); btn.disabled = false;
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), { 
+                tanggal: document.getElementById('f_date').value, 
+                username: currentUser.username, 
+                project_name: document.getElementById('f_proj').value, 
+                pekerjaan: workHtml, 
+                ts: serverTimestamp() 
+            });
+            document.getElementById('f_work_editor').innerHTML = ''; 
+            msg("✅ PROGRES TERSIMPAN"); 
+            btn.disabled = false;
         };
 
-        window.deleteLog = async (id) => { if(confirm("Hapus progres ini?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', id)); };
+        window.deleteLog = async (id) => { if(!auth.currentUser) return; if(confirm("Hapus progres ini?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', id)); };
         
         window.editLogPrompt = (id) => { 
             const log = logsData.find(l => l.id === id);
@@ -845,6 +923,7 @@
             document.getElementById('modalEdit').classList.remove('hidden'); 
         };
         window.confirmEditLog = async () => { 
+            if (!auth.currentUser) return;
             const updatedWorkHtml = document.getElementById('editLogWork').innerHTML;
             await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', document.getElementById('editLogId').value), { pekerjaan: updatedWorkHtml }); 
             closeEditModal(); msg("✅ UPDATE BERHASIL"); 
