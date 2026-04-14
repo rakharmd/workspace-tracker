@@ -9,7 +9,7 @@
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
         .tab-active { color: #2563eb; border-bottom: 3px solid #2563eb; }
-        .card { background: white; border-radius: 1.5rem; border: 1px solid #e2e8f0; }
+        .card { border-radius: 1.5rem; border: 1px solid #e2e8f0; }
         #toast { transition: opacity 0.3s; pointer-events: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .btn-primary { background-color: #0f172a; color: white; transition: all 0.2s; }
@@ -118,7 +118,7 @@
             <!-- VIEW: INPUT PROGRES -->
             <section id="v_input" class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="md:col-span-2 space-y-6">
-                    <div class="card p-6 shadow-sm border-blue-50">
+                    <div class="card p-6 shadow-sm border-blue-50 bg-white">
                         <form id="progressForm" class="space-y-4">
                             <label class="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Tanggal Kerja</label>
                             <input type="date" id="f_date" required class="w-full p-3 border rounded-xl bg-slate-50 outline-none text-sm font-semibold">
@@ -141,7 +141,7 @@
                         </form>
                     </div>
 
-                    <div class="card p-6 shadow-sm border-slate-100 bg-slate-50/30">
+                    <div class="card p-6 shadow-sm border-slate-100 bg-slate-50/30 bg-white">
                         <h3 class="text-[10px] font-extrabold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-purple-600 rounded-full"></span> Catatan Pribadi Akun</h3>
                         <div class="editor-container">
                             <div class="editor-toolbar">
@@ -164,7 +164,7 @@
                 </div>
 
                 <div class="md:col-span-1 space-y-4">
-                    <div class="card p-5 shadow-sm bg-slate-50/50 border-slate-100 h-fit">
+                    <div class="card p-5 shadow-sm bg-slate-50/50 border-slate-100 h-fit bg-white">
                         <h3 class="text-[10px] font-extrabold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-blue-600 rounded-full"></span> Detail Progres Projek</h3>
                         <div id="sideProjList" class="space-y-4"></div>
                     </div>
@@ -173,7 +173,7 @@
 
             <!-- VIEW: PANTAUAN LOGS -->
             <section id="v_logs" class="hidden space-y-4 max-w-2xl mx-auto">
-                <div class="card p-4 space-y-3 sticky top-[140px] z-30 shadow-xl border-slate-200">
+                <div class="card p-4 space-y-3 sticky top-[140px] z-30 shadow-xl border-slate-200 bg-white">
                     <div class="relative">
                         <input type="text" id="searchLog" oninput="renderLogs()" placeholder="Cari isi laporan kerja..." class="w-full p-2.5 pl-9 border rounded-xl text-xs outline-none bg-slate-50 border-slate-200 font-semibold focus:ring-1 focus:ring-blue-500">
                         <svg class="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
@@ -194,7 +194,7 @@
 
             <!-- VIEW: PROJEK GLOBAL -->
             <section id="v_projek" class="hidden space-y-6 max-w-2xl mx-auto">
-                <div class="card p-6 shadow-sm border-slate-100">
+                <div class="card p-6 shadow-sm border-slate-100 bg-white">
                     <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-green-600 rounded-full"></span> Daftar Projek Global</h3>
                     <div class="space-y-3 mb-6">
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
@@ -218,7 +218,7 @@
 
             <!-- VIEW: SETTINGS -->
             <section id="v_settings" class="hidden space-y-8 max-w-2xl mx-auto">
-                <div class="card p-6 shadow-sm bg-slate-50/50 border-slate-100">
+                <div class="card p-6 shadow-sm bg-slate-50/50 border-slate-100 bg-white">
                     <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-blue-600 rounded-full"></span> Manajemen Akun</h3>
                     <div class="space-y-4 mb-8">
                         <div class="grid grid-cols-2 gap-2"><input type="text" id="mU" placeholder="Username" class="p-3 border rounded-xl text-sm outline-none bg-white"><input type="text" id="mP" placeholder="Password" class="p-3 border rounded-xl text-sm outline-none bg-white"></div>
@@ -792,13 +792,26 @@
                 const matchKey = l.pekerjaan.toLowerCase().includes(fK) || l.username.toLowerCase().includes(fK);
                 return matchProj && matchUser && matchKey;
             });
+
             list.innerHTML = filtered.length ? '' : '<p class="text-center py-20 text-[10px] opacity-20 font-bold italic">Belum ada data</p>';
+            
+            let lastDate = "";
+            let isWhite = true;
+
             filtered.forEach(l => {
                 const canEdit = l.username === currentUser.username || currentUser.role === 'ADMIN';
                 const timeStr = l.ts ? new Date(l.ts.seconds * 1000).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '';
                 
+                // Zebra stripping berdasarkan perubahan tanggal
+                if (l.tanggal !== lastDate) {
+                    isWhite = !isWhite;
+                    lastDate = l.tanggal;
+                }
+
+                const bgColorClass = isWhite ? 'bg-white' : 'bg-emerald-50';
+
                 list.innerHTML += `
-                    <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 transition-all">
+                    <div class="${bgColorClass} p-6 rounded-[2rem] shadow-sm border border-slate-100 transition-all">
                         <div class="flex justify-between items-start mb-4">
                             <div class="space-y-1">
                                 <span class="text-[9px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase">${l.username} &bull; ${l.project_name}</span>
