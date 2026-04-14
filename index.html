@@ -282,7 +282,33 @@
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, onSnapshot, addDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        const firebaseConfig = JSON.parse(__firebase_config);
+        // Fallback Configuration: Gunakan hardcoded config jika platform variabel tidak ada
+        let firebaseConfig;
+        try {
+            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                firebaseConfig = JSON.parse(__firebase_config);
+            } else {
+                // Konfigurasi manual agar tetap bisa jalan di Vercel atau Hosting lain
+                firebaseConfig = {
+                    apiKey: "AIzaSyD-wrKOTP046d3Ojr_pKPHEWWf7Kuk5Nco",
+                    authDomain: "workspace-tracker-b3f8a.firebaseapp.com",
+                    projectId: "workspace-tracker-b3f8a",
+                    storageBucket: "workspace-tracker-b3f8a.firebasestorage.app",
+                    messagingSenderId: "347113310211",
+                    appId: "1:347113310211:web:900680ab7b8456a0f66636"
+                };
+            }
+        } catch (e) {
+            firebaseConfig = {
+                apiKey: "AIzaSyD-wrKOTP046d3Ojr_pKPHEWWf7Kuk5Nco",
+                authDomain: "workspace-tracker-b3f8a.firebaseapp.com",
+                projectId: "workspace-tracker-b3f8a",
+                storageBucket: "workspace-tracker-b3f8a.firebasestorage.app",
+                messagingSenderId: "347113310211",
+                appId: "1:347113310211:web:900680ab7b8456a0f66636"
+            };
+        }
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
@@ -322,20 +348,29 @@
             }
 
             try {
-                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                    await signInWithCustomToken(auth, __initial_auth_token);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                
+                // Jalankan Listener Auth terlebih dahulu
                 onAuthStateChanged(auth, (user) => {
                     if (user) {
                         document.getElementById('statusDB').innerText = "✅ Cloud Connected";
                         document.getElementById('statusDB').classList.replace('text-slate-400', 'text-green-600');
                         if(currentUser) startApp();
+                    } else {
+                        document.getElementById('statusDB').innerText = "Menghubungkan Database...";
+                        document.getElementById('statusDB').classList.add('text-slate-400');
                     }
                 });
-            } catch (e) { document.getElementById('statusDB').innerText = "⚠️ Connection Error"; }
+
+                // Lakukan Sign In
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (e) { 
+                console.error("Firebase Init Error:", e);
+                document.getElementById('statusDB').innerText = "⚠️ Connection Error"; 
+                document.getElementById('statusDB').classList.replace('text-slate-400', 'text-red-500');
+            }
         };
         init();
 
@@ -500,10 +535,9 @@
             if (!auth.currentUser) return;
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'projects'), (snap) => {
                 projectsData = snap.docs.map(d => ({ name: d.id, ...d.data() }));
-                // Sort by order field primarily
                 projectsData.sort((a, b) => (a.order || 0) - (b.order || 0));
                 renderProjectList(); renderInputDropdowns(); renderSidebarDeadlines(); checkDeadlines();
-            }, (err) => {});
+            }, (err) => { console.error("Project Listener Error:", err); });
         }
 
         function calculateProgress(tasks = {}) {
@@ -602,7 +636,6 @@
             });
         };
 
-        // DRAG AND DROP HANDLERS
         window.handleDragStart = (e, name) => {
             draggedProjectName = name;
             e.currentTarget.classList.add('dragging');
@@ -628,7 +661,6 @@
 
             if (draggedProjectName === targetName) return;
 
-            // Reorder Local Array
             const fromIndex = projectsData.findIndex(p => p.name === draggedProjectName);
             const toIndex = projectsData.findIndex(p => p.name === targetName);
             
@@ -636,11 +668,9 @@
             const [draggedItem] = reordered.splice(fromIndex, 1);
             reordered.splice(toIndex, 0, draggedItem);
 
-            // Update state and Firestore
             projectsData = reordered;
             renderSidebarDeadlines();
 
-            // Persist order to Firestore
             const batch = writeBatch(db);
             reordered.forEach((p, i) => {
                 const ref = doc(db, 'artifacts', appId, 'public', 'data', 'projects', p.name);
@@ -800,7 +830,7 @@
             if (!auth.currentUser) return;
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
                 usersData = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderUserList();
-            }, (err) => {});
+            }, (err) => { console.error("User Listener Error:", err); });
         }
 
         window.renderUserList = () => {
@@ -849,7 +879,7 @@
                     return timeB - timeA;
                 });
                 renderLogs();
-            }, (err) => {});
+            }, (err) => { console.error("Logs Listener Error:", err); });
         }
 
         window.renderLogs = () => {
@@ -858,7 +888,7 @@
             const fK = document.getElementById('searchLog').value.toLowerCase();
             const filtered = logsData.filter(l => {
                 const matchProj = fP === 'ALL' || l.project_name === fP; const matchUser = fU === 'ALL' || l.username === fU;
-                const matchKey = l.pekerjaan.toLowerCase().includes(fK) || l.username.toLowerCase().includes(fK);
+                const matchKey = (l.pekerjaan || "").toLowerCase().includes(fK) || (l.username || "").toLowerCase().includes(fK);
                 return matchProj && matchUser && matchKey;
             });
 
@@ -891,7 +921,7 @@
                                 <button onclick="deleteLog('${l.id}')" class="p-2 border rounded-full text-slate-300 hover:text-red-500 transition-all"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2.032 0 0116.138 21H7.862a2 2.032 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
                             </div>` : ''}
                         </div>
-                        <div class="log-content text-[13px] text-slate-600 leading-relaxed font-semibold">${l.pekerjaan}</div>
+                        <div class="log-content text-[13px] text-slate-600 leading-relaxed font-semibold">${l.pekerjaan || ""}</div>
                     </div>`;
             });
         };
