@@ -3,23 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WORKSPACE Tracker - Master Stable Version 9.1</title>
+    <title>WORKSPACE Tracker - Stable V1 (Drag & Drop)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
-        
-        /* --- GLOBAL UI STYLE --- */
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; color: #1e293b; transition: all 0.3s; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; }
         .tab-active { color: #2563eb; border-bottom: 3px solid #2563eb; }
-        .card { border-radius: 1.5rem; border: 1px solid #e2e8f0; background: white; transition: transform 0.2s; }
+        .card { border-radius: 1.5rem; border: 1px solid #e2e8f0; }
+        #toast { transition: opacity 0.3s; pointer-events: none; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
-        
-        /* --- BUTTONS & ACTIONS --- */
-        .btn-primary { background-color: #0f172a; color: white; transition: all 0.2s; cursor: pointer; }
+        .btn-primary { background-color: #0f172a; color: white; transition: all 0.2s; }
         .btn-primary:active { transform: scale(0.95); }
-        .modal-overlay { background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); }
+        .modal-overlay { background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); }
         
-        /* --- ANIMATIONS --- */
         @keyframes pulse-red {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
             70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
@@ -27,75 +23,75 @@
         }
         .notif-badge-active { animation: pulse-red 2s infinite; }
 
-        /* --- PROJECT ELEMENTS --- */
         .task-checkbox:checked + label { color: #2563eb; font-weight: 800; text-decoration: line-through; opacity: 0.6; }
-        .sticky-note { background-color: #fef9c3; border-left: 6px solid #facc15; border-radius: 1rem; padding: 1.25rem; position: relative; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
-        .sticky-note-textarea { background: transparent; border: none; outline: none; width: 100%; font-size: 13px; font-weight: 600; color: #854d0e; resize: none; line-height: 1.5; min-height: 120px; }
+        .sticky-note { background-color: #fef9c3; border-left: 6px solid #facc15; border-radius: 1rem; padding: 1.25rem; position: relative; }
+        .sticky-note-textarea { background: transparent; border: none; outline: none; width: 100%; font-size: 13px; font-weight: 600; color: #854d0e; resize: none; line-height: 1.5; min-height: 150px; }
 
-        /* --- TOGGLE FINISH STYLE --- */
         .switch-finish { position: relative; display: inline-block; width: 44px; height: 22px; }
         .switch-finish input { opacity: 0; width: 0; height: 0; }
-        .slider-finish { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #cbd5e1; transition: .4s; border-radius: 34px; }
+        .slider-finish { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e2e8f0; transition: .4s; border-radius: 34px; }
         .slider-finish:before { position: absolute; content: ""; height: 16px; width: 16px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider-finish { background-color: #10b981; }
         input:checked + .slider-finish:before { transform: translateX(22px); }
 
         .rotate-180 { transform: rotate(180deg); }
 
-        /* --- RICH TEXT EDITOR (LENGKAP) --- */
         .editor-container { border: 1px solid #e2e8f0; border-radius: 1rem; overflow: hidden; background: white; }
         .editor-toolbar { display: flex; gap: 0.25rem; padding: 0.5rem; background: #f8fafc; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap; }
-        .toolbar-btn { padding: 0.4rem 0.6rem; border-radius: 0.5rem; transition: all 0.2s; color: #64748b; font-size: 11px; font-weight: 700; border: 1px solid transparent; }
-        .toolbar-btn:hover { background: #e2e8f0; color: #0f172a; border-color: #cbd5e1; }
-        .editor-content { padding: 1rem; min-height: 180px; max-height: 400px; overflow-y: auto; outline: none; font-size: 13px; line-height: 1.6; color: #334155; }
+        .toolbar-btn { padding: 0.4rem; border-radius: 0.5rem; transition: all 0.2s; color: #64748b; }
+        .toolbar-btn:hover { background: #e2e8f0; color: #0f172a; }
+        .toolbar-btn.active { background: #dbeafe; color: #2563eb; }
+        .editor-content { padding: 1rem; min-height: 200px; max-height: 400px; overflow-y: auto; outline: none; font-size: 13px; line-height: 1.6; color: #334155; }
         .editor-content ul { list-style-type: disc; padding-left: 1.5rem; }
 
-        /* --- LOGS & IMAGES --- */
-        .badge-notes { background-color: #facc15; color: #713f12; font-size: 7px; font-weight: 900; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; }
-        .log-content img { max-width: 100%; height: auto; border-radius: 0.75rem; border: 1px solid #e2e8f0; margin: 8px 0; cursor: zoom-in; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .badge-notes { background-color: #facc15; color: #713f12; font-size: 7px; font-weight: 900; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 2px 4px rgba(234, 179, 8, 0.2); }
         
-        /* --- DRAG & DROP INTERACTION --- */
-        .dragging { opacity: 0.5; border: 2px dashed #3b82f6 !important; background-color: #eff6ff !important; }
+        #f_work_editor img { max-width: 100%; height: auto; border-radius: 0.75rem; border: 2px solid #e2e8f0; margin: 10px 0; display: block; }
+        
+        .log-content img { 
+            max-width: 150px; 
+            height: auto; 
+            border-radius: 0.75rem; 
+            border: 1px solid #e2e8f0; 
+            margin: 8px 0; 
+            display: inline-block; 
+            cursor: zoom-in; 
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+        .log-content img:hover { transform: scale(1.05); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+
+        /* Drag & Drop Feedback */
+        .dragging { opacity: 0.5; border: 2px dashed #3b82f6; }
         .drag-over { border-top: 4px solid #3b82f6 !important; }
-        
-        /* --- PAGINATION & TOAST --- */
-        .page-btn { padding: 0.5rem 1rem; border-radius: 0.75rem; border: 1px solid #e2e8f0; font-size: 10px; font-weight: 800; text-transform: uppercase; transition: all 0.2s; background: white; }
-        .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-        #toast { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; }
-        
-        .user-pill { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe; }
     </style>
 </head>
 <body class="pb-10">
 
-    <!-- 1. HALAMAN LOGIN -->
+    <!-- LOGIN PAGE -->
     <div id="loginPage" class="flex items-center justify-center min-h-screen p-4 bg-slate-50">
-        <div class="bg-white w-full max-w-md p-10 rounded-[2.5rem] shadow-2xl border border-slate-100 text-center">
+        <div class="bg-white w-full max-w-md p-10 rounded-[2.5rem] shadow-2xl border-none text-center border border-slate-100">
             <h1 class="text-3xl font-extrabold text-slate-900 mb-1 tracking-tighter italic uppercase">WORKSPACE</h1>
             <p class="text-slate-400 text-[10px] mb-8 font-bold tracking-[0.3em] uppercase">Architecture Studio System</p>
             <form id="loginForm" class="space-y-4 text-left">
-                <input type="text" id="u" placeholder="Username" required class="w-full p-4 border rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 text-sm font-semibold">
-                <input type="password" id="p" placeholder="Password" required class="w-full p-4 border rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 text-sm font-semibold">
-                <button type="submit" id="btnLogin" class="w-full btn-primary font-bold py-4 rounded-2xl shadow-lg uppercase tracking-widest text-xs transition-all hover:bg-slate-800">Masuk Sekarang</button>
+                <input type="text" id="u" placeholder="Username" required class="w-full p-4 border rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 text-sm">
+                <input type="password" id="p" placeholder="Password" required class="w-full p-4 border rounded-2xl outline-none focus:ring-2 focus:ring-blue-500 bg-slate-50 text-sm">
+                <button type="submit" id="btnLogin" class="w-full btn-primary font-bold py-4 rounded-2xl shadow-lg uppercase tracking-widest text-xs">Masuk Sekarang</button>
             </form>
             <p id="statusDB" class="mt-6 text-[9px] text-slate-400 uppercase font-bold tracking-widest italic">Menghubungkan Database...</p>
         </div>
     </div>
 
-    <!-- 2. APLIKASI UTAMA (MAIN APP) -->
+    <!-- MAIN APP -->
     <div id="mainApp" class="hidden max-w-4xl mx-auto">
         <header class="p-6 bg-white/80 backdrop-blur border-b flex justify-between items-center sticky top-0 z-50 shadow-sm">
             <div class="flex items-center gap-4">
-                <div class="p-2 bg-blue-600 rounded-xl text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
-                </div>
                 <div>
                     <h2 id="uDisp" class="font-bold text-slate-800 text-lg uppercase tracking-tight italic text-blue-600">User</h2>
                     <span id="rDisp" class="text-[9px] bg-slate-900 text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Role</span>
                 </div>
             </div>
             <div class="flex items-center gap-3">
-                <!-- NOTIFICATION SYSTEM -->
                 <div class="relative">
                     <button onclick="toggleNotifPanel()" class="p-2.5 bg-slate-50 rounded-full border border-slate-100 text-slate-400 hover:text-blue-600 transition-colors relative">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
@@ -106,11 +102,10 @@
                         <div id="notifList" class="max-h-80 overflow-y-auto p-2 space-y-2"></div>
                     </div>
                 </div>
-                <button onclick="logout()" class="text-[10px] font-bold text-red-500 bg-red-50 px-4 py-2 rounded-full border border-red-100 uppercase transition-all hover:bg-red-100">Logout</button>
+                <button onclick="logout()" class="text-[10px] font-bold text-red-500 bg-red-50 px-4 py-2 rounded-full border border-red-100 uppercase">Logout</button>
             </div>
         </header>
 
-        <!-- TAB NAVIGATION -->
         <nav class="flex bg-white border-b sticky top-[77px] z-40 overflow-x-auto no-scrollbar">
             <button onclick="tab('input')" id="t_input" class="flex-1 py-4 text-[11px] font-bold tab-active uppercase tracking-widest">Input</button>
             <button onclick="tab('logs')" id="t_logs" class="flex-1 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Pantauan</button>
@@ -122,54 +117,55 @@
             <!-- VIEW: INPUT PROGRES -->
             <section id="v_input" class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="md:col-span-2 space-y-6">
-                    <!-- Form Input Log -->
-                    <div class="card p-6 shadow-sm border-blue-50">
+                    <div class="card p-6 shadow-sm border-blue-50 bg-white">
                         <form id="progressForm" class="space-y-4">
                             <label class="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Tanggal Kerja</label>
-                            <input type="date" id="f_date" required class="w-full p-3 border rounded-xl bg-slate-50 outline-none text-sm font-semibold border-slate-200">
-                            
+                            <input type="date" id="f_date" required class="w-full p-3 border rounded-xl bg-slate-50 outline-none text-sm font-semibold">
                             <label class="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Pilih Projek</label>
                             <select id="f_proj" required class="w-full p-3 border rounded-xl bg-white font-bold text-slate-700 text-sm outline-none border-slate-200"></select>
                             
-                            <label class="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-wider uppercase">Laporan Pekerjaan & Dokumentasi</label>
+                            <label class="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Detail Pekerjaan (Progres & Gambar)</label>
                             <div class="editor-container">
-                                <div class="editor-toolbar">
-                                    <button type="button" onclick="formatDoc('bold')" class="toolbar-btn font-bold">B</button>
-                                    <button type="button" onclick="formatDoc('italic')" class="toolbar-btn italic">I</button>
-                                    <button type="button" onclick="formatDoc('underline')" class="toolbar-btn underline">U</button>
-                                    <button type="button" onclick="formatDoc('strikeThrough')" class="toolbar-btn line-through">S</button>
-                                    <div class="w-px h-6 bg-slate-200 mx-1"></div>
-                                    <button type="button" onclick="insertBullet('f_work_editor')" class="toolbar-btn">• List</button>
-                                    <button type="button" onclick="triggerImageInput()" class="toolbar-btn">📷 Gambar</button>
-                                    <div class="w-px h-6 bg-slate-200 mx-1"></div>
-                                    <button type="button" onclick="formatDoc('undo')" class="toolbar-btn">↶</button>
-                                    <button type="button" onclick="formatDoc('redo')" class="toolbar-btn">↷</button>
+                                <div id="f_work_toolbar" class="editor-toolbar">
+                                    <button type="button" onclick="insertBullet('f_work_editor')" class="toolbar-btn" title="Bullet List">• List</button>
+                                    <button type="button" onclick="triggerImageInput()" class="toolbar-btn" title="Insert Image">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                    </button>
                                     <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
                                 </div>
-                                <div id="f_work_editor" contenteditable="true" class="editor-content" placeholder="Ceritakan progres hari ini (Bisa copas gambar ke sini)..."></div>
+                                <div id="f_work_editor" contenteditable="true" class="editor-content w-full p-3 min-h-[150px] focus:ring-2 focus:ring-blue-100" placeholder="Tuliskan progres kerja hari ini... (Ctrl+V untuk tempel gambar)"></div>
                             </div>
                             
-                            <button type="submit" id="btnSubmitLog" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg uppercase text-[10px] tracking-widest transition-all hover:bg-blue-700 active:scale-95">Simpan Progres</button>
+                            <button type="submit" id="btnSubmitLog" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg uppercase text-[10px] tracking-widest active:scale-95 transition-all">Simpan Progres</button>
                         </form>
                     </div>
 
-                    <!-- Catatan Pribadi -->
-                    <div class="card p-6 shadow-sm border-slate-100">
+                    <div class="card p-6 shadow-sm border-slate-100 bg-white">
                         <h3 class="text-[10px] font-extrabold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-purple-600 rounded-full"></span> Catatan Pribadi Akun</h3>
                         <div class="editor-container">
-                            <div id="personalNoteEditor" contenteditable="true" class="editor-content" placeholder="Tulis pengingat pribadi kamu di sini..."></div>
+                            <div class="editor-toolbar">
+                                <button type="button" onclick="formatDoc('bold')" class="toolbar-btn" title="Bold"><b>B</b></button>
+                                <button type="button" onclick="formatDoc('italic')" class="toolbar-btn" title="Italic"><i>I</i></button>
+                                <button type="button" onclick="formatDoc('underline')" class="toolbar-btn" title="Underline"><u>U</u></button>
+                                <button type="button" onclick="formatDoc('strikeThrough')" class="toolbar-btn" title="Strikethrough"><s>S</s></button>
+                                <div class="w-px h-6 bg-slate-200 mx-1"></div>
+                                <button type="button" onclick="insertBullet('personalNoteEditor')" class="toolbar-btn" title="List">• List</button>
+                                <div class="w-px h-6 bg-slate-200 mx-1"></div>
+                                <button type="button" onclick="formatDoc('undo')" class="toolbar-btn" title="Undo"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg></button>
+                                <button type="button" onclick="formatDoc('redo')" class="toolbar-btn" title="Redo"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 10h-10a8 8 0 01-8 8v2m18-10l-6 6m6-6l-6-6"/></svg></button>
+                            </div>
+                            <div id="personalNoteEditor" contenteditable="true" class="editor-content" placeholder="Tulis catatan pribadi kamu di sini..."></div>
                         </div>
                         <div class="mt-3 flex justify-end">
-                            <button onclick="savePersonalNote()" class="bg-slate-900 text-white text-[10px] font-bold py-2.5 px-6 rounded-xl uppercase tracking-widest">Simpan Catatan</button>
+                            <button id="btnSavePersonalNote" onclick="savePersonalNote()" class="bg-slate-900 text-white text-[10px] font-bold py-2.5 px-6 rounded-xl uppercase tracking-widest shadow-md">Simpan Catatan Pribadi</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Sidebar Projek dengan Drag & Move -->
                 <div class="md:col-span-1 space-y-4">
-                    <div class="card p-5 shadow-sm bg-slate-50/50 border-slate-100 h-fit sticky top-[150px]">
-                        <h3 class="text-[10px] font-extrabold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-blue-600 rounded-full"></span> Urutan Projek (Drag)</h3>
-                        <div id="sideProjList" class="space-y-4 min-h-[100px]"></div>
+                    <div class="card p-5 shadow-sm bg-slate-50/50 border-slate-100 h-fit bg-white">
+                        <h3 class="text-[10px] font-extrabold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-blue-600 rounded-full"></span> Detail Progres Projek</h3>
+                        <div id="sideProjList" class="space-y-4"></div>
                     </div>
                 </div>
             </section>
@@ -178,108 +174,115 @@
             <section id="v_logs" class="hidden space-y-4 max-w-2xl mx-auto">
                 <div class="card p-4 space-y-3 sticky top-[140px] z-30 shadow-xl border-slate-200 bg-white">
                     <div class="relative">
-                        <input type="text" id="searchLog" oninput="renderLogs()" placeholder="Cari isi laporan..." class="w-full p-2.5 pl-9 border rounded-xl text-xs outline-none bg-slate-50 font-semibold border-slate-200 focus:ring-2 focus:ring-blue-100">
+                        <input type="text" id="searchLog" oninput="renderLogs()" placeholder="Cari isi laporan kerja..." class="w-full p-2.5 pl-9 border rounded-xl text-xs outline-none bg-slate-50 border-slate-200 font-semibold focus:ring-1 focus:ring-blue-500">
                         <svg class="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <select id="flUser" onchange="renderLogs()" class="p-2 border rounded-xl text-[10px] font-bold outline-none border-slate-200 bg-white"></select>
-                        <select id="flProj" onchange="renderLogs()" class="p-2 border rounded-xl text-[10px] font-bold outline-none border-slate-200 bg-white"></select>
-                    </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="date" id="flStartDate" onchange="renderLogs()" class="p-2 border rounded-xl text-[10px] bg-white outline-none font-bold border-slate-200">
-                        <input type="date" id="flEndDate" onchange="renderLogs()" class="p-2 border rounded-xl text-[10px] bg-white outline-none font-bold border-slate-200">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div class="flex gap-2">
+                            <select id="flUser" onchange="renderLogs()" class="flex-1 p-2 border rounded-xl text-[10px] font-bold bg-white outline-none border-slate-200"></select>
+                            <select id="flProj" onchange="renderLogs()" class="flex-1 p-2 border rounded-xl text-[10px] font-bold bg-white outline-none border-slate-200"></select>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="date" id="flStartDate" onchange="renderLogs()" class="flex-1 p-2 border rounded-xl text-[10px] bg-white outline-none font-bold border-slate-200">
+                            <input type="date" id="flEndDate" onchange="renderLogs()" class="flex-1 p-2 border rounded-xl text-[10px] bg-white outline-none font-bold border-slate-200">
+                        </div>
                     </div>
                 </div>
                 <div id="logList" class="space-y-4 pt-2"></div>
             </section>
 
-            <!-- VIEW: PROJEK GLOBAL (ADMIN) -->
+            <!-- VIEW: PROJEK GLOBAL -->
             <section id="v_projek" class="hidden space-y-6 max-w-2xl mx-auto">
                 <div class="card p-6 shadow-sm border-slate-100 bg-white">
-                    <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest">Master Projek Global</h3>
-                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 mb-6">
-                        <p id="projFormTitle" class="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Tambah / Edit Projek</p>
-                        <input type="text" id="nP" placeholder="NAMA PROJEK..." class="w-full p-3 border rounded-xl text-sm outline-none uppercase font-bold border-slate-200 bg-white">
-                        <div class="grid grid-cols-2 gap-2">
-                            <div><label class="text-[8px] font-bold text-slate-400 ml-1">START DATE</label><input type="date" id="nPStart" class="w-full p-2.5 border rounded-xl text-xs outline-none bg-white"></div>
-                            <div><label class="text-[8px] font-bold text-slate-400 ml-1">DEADLINE</label><input type="date" id="nPEnd" class="w-full p-2.5 border rounded-xl text-xs outline-none bg-white"></div>
+                    <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-green-600 rounded-full"></span> Daftar Projek Global</h3>
+                    <div class="space-y-3 mb-6">
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3">
+                            <p id="projFormTitle" class="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Tambah Projek Baru</p>
+                            <input type="text" id="nP" placeholder="NAMA PROJEK BARU..." class="w-full p-3 border rounded-xl text-sm outline-none bg-white uppercase font-bold border-slate-200">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div><label class="text-[8px] font-bold text-slate-400 uppercase ml-1">Mulai</label><input type="date" id="nPStart" class="w-full p-2.5 border rounded-xl text-xs bg-white outline-none"></div>
+                                <div><label class="text-[8px] font-bold text-slate-400 uppercase ml-1">Deadline</label><input type="date" id="nPEnd" class="w-full p-2.5 border rounded-xl text-xs bg-white outline-none"></div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="btnCancelEditProj" onclick="resetProjectForm()" class="hidden flex-1 bg-slate-200 text-slate-600 font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest">Batal</button>
+                                <button id="btnAddNewProject" onclick="addNewProject()" class="flex-[2] bg-blue-600 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-widest shadow-lg">Simpan Projek</button>
+                            </div>
                         </div>
-                        <div class="flex gap-2">
-                            <button id="btnCancelEditProj" onclick="resetProjectForm()" class="hidden flex-1 bg-slate-200 text-slate-600 font-bold py-3 rounded-xl text-[10px] uppercase">Batal</button>
-                            <button onclick="addNewProject()" id="btnAddNewProject" class="flex-[2] bg-blue-600 text-white py-3 rounded-xl font-bold text-xs uppercase shadow-lg">Simpan Projek</button>
-                        </div>
+                        <div class="relative"><input type="text" id="searchProj" oninput="handleProjSearch()" placeholder="Cari nama projek..." class="w-full p-3 pl-10 border rounded-xl text-xs outline-none bg-white border-slate-200 shadow-sm"><svg class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg></div>
                     </div>
-                    <div class="relative mb-4">
-                        <input type="text" id="searchProj" oninput="handleProjSearch()" placeholder="Cari projek..." class="w-full p-3 pl-10 border rounded-xl text-xs outline-none border-slate-200 bg-white">
-                        <svg class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </div>
-                    <div id="projListSettings" class="space-y-3 mb-6"></div>
+                    <div id="projListSettings" class="space-y-4 mb-4"></div>
                     <div id="projPagination" class="flex justify-between items-center px-1"></div>
                 </div>
             </section>
 
-            <!-- VIEW: SETTINGS (ADMIN) -->
+            <!-- VIEW: SETTINGS -->
             <section id="v_settings" class="hidden space-y-8 max-w-2xl mx-auto">
-                <div class="card p-6 shadow-sm border-slate-100 bg-white">
-                    <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest">Manajemen Pengguna</h3>
+                <div class="card p-6 shadow-sm bg-slate-50/50 border-slate-100 bg-white">
+                    <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-blue-600 rounded-full"></span> Manajemen Akun</h3>
                     <div class="space-y-4 mb-8">
-                        <div class="grid grid-cols-2 gap-2"><input type="text" id="mU" placeholder="User" class="p-3 border rounded-xl text-sm outline-none bg-slate-50"><input type="text" id="mP" placeholder="Pass" class="p-3 border rounded-xl text-sm outline-none bg-slate-50"></div>
-                        <select id="mR" class="w-full p-3 border rounded-xl text-sm outline-none bg-slate-50"><option value="USER">TIM (USER)</option><option value="ADMIN">ADMINISTRATOR</option></select>
+                        <div class="grid grid-cols-2 gap-2"><input type="text" id="mU" placeholder="Username" class="p-3 border rounded-xl text-sm outline-none bg-white"><input type="text" id="mP" placeholder="Password" class="p-3 border rounded-xl text-sm outline-none bg-white"></div>
+                        <select id="mR" class="w-full p-3 border rounded-xl text-sm outline-none"><option value="USER">TIM (USER)</option><option value="ADMIN">ADMINISTRATOR</option></select>
                         <div class="flex gap-2">
-                            <button id="btnCancelEdit" onclick="resetUserForm()" class="hidden flex-1 bg-slate-200 text-slate-600 font-bold py-3 rounded-xl text-[10px] uppercase">Batal</button>
-                            <button onclick="saveUser()" id="btnSaveUser" class="flex-[2] bg-slate-900 text-white font-bold py-3 rounded-xl text-[10px] uppercase">Simpan Akun</button>
+                            <button id="btnCancelEdit" onclick="resetUserForm()" class="hidden flex-1 bg-slate-200 text-slate-600 font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest">Batal</button>
+                            <button id="btnSaveUser" onclick="saveUser()" class="flex-[2] bg-slate-900 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-widest">Simpan Akun</button>
                         </div>
                     </div>
-                    <div id="userListSettings" class="space-y-2 mb-4"></div>
+                    <div class="space-y-2 mb-4" id="userListSettings"></div>
                     <div id="userPagination" class="flex justify-between items-center px-1"></div>
                 </div>
             </section>
         </main>
     </div>
 
-    <!-- MODALS SECTION -->
-    <div id="modalZoom" class="hidden fixed inset-0 z-[110] modal-overlay flex items-center justify-center p-4 cursor-zoom-out" onclick="closeZoomModal()">
-        <img id="zoomedImg" src="" class="max-w-full max-h-full rounded-2xl shadow-2xl bg-white p-2 transition-all duration-300">
-    </div>
-
+    <!-- MODAL EDIT LOG -->
     <div id="modalEdit" class="hidden fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-md p-6 rounded-3xl shadow-2xl">
-            <h3 class="text-xs font-bold text-slate-800 uppercase mb-4">Perbarui Progres</h3>
-            <div id="editLogWork" contenteditable="true" class="editor-content w-full p-4 border rounded-2xl bg-slate-50 min-h-[150px] outline-none"></div>
-            <div class="flex gap-2 mt-4">
-                <button onclick="closeEditModal()" class="flex-1 py-3 bg-slate-100 rounded-xl font-bold text-xs uppercase text-slate-500">Batal</button>
-                <button onclick="confirmEditLog()" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-xs uppercase">Simpan Perubahan</button>
+            <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest">Edit Progres</h3>
+            <div class="space-y-4">
+                <input type="hidden" id="editLogId">
+                <div id="editLogWork" contenteditable="true" class="editor-content w-full p-4 border rounded-2xl bg-slate-50 min-h-[150px]"></div>
+                <div class="flex gap-2"><button onclick="closeEditModal()" class="flex-1 py-3 bg-slate-100 text-slate-500 rounded-xl font-bold text-xs uppercase">Batal</button><button onclick="confirmEditLog()" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-xs uppercase">Simpan Perubahan</button></div>
             </div>
         </div>
     </div>
 
+    <!-- MODAL ZOOM GAMBAR -->
+    <div id="modalZoom" class="hidden fixed inset-0 z-[110] modal-overlay flex items-center justify-center p-4 cursor-zoom-out" onclick="closeZoomModal()">
+        <div class="relative max-w-5xl w-full h-full flex items-center justify-center pointer-events-none">
+            <img id="zoomedImg" src="" class="max-w-full max-h-full rounded-2xl shadow-2xl object-contain bg-white p-2 pointer-events-auto">
+            <button class="absolute top-4 right-4 bg-white/20 hover:bg-white/40 text-white p-3 rounded-full backdrop-blur-md transition-all pointer-events-auto">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL STICKY NOTE ZOOM -->
     <div id="modalSticky" class="hidden fixed inset-0 z-[110] modal-overlay flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col">
-            <div class="p-6 bg-yellow-400 flex justify-between items-center text-yellow-900 font-black uppercase text-xs">
-                <div class="flex items-center gap-2">
-                    <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path d="M2 6a2 2 0 012-2h4l2 2H4v10h10v-4l2-2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" /></svg>
-                    <span id="stickyProjName">Catatan Detail</span>
-                </div>
-                <button onclick="closeStickyModal()" class="bg-yellow-500/50 p-1 rounded hover:scale-110 transition-transform">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+            <div class="p-6 bg-yellow-400 flex justify-between items-center">
+                <h3 id="stickyProjName" class="text-sm font-black text-yellow-900 uppercase tracking-widest">Catatan Projek</h3>
+                <button onclick="closeStickyModal()" class="text-yellow-900 hover:scale-110 transition-transform">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
                 </button>
             </div>
-            <div class="p-6 bg-yellow-50 flex-grow"><textarea id="stickyZoomArea" class="w-full h-[60vh] bg-transparent border-none outline-none font-bold text-slate-800 leading-relaxed text-base shadow-inner p-4"></textarea></div>
-            <div class="p-4 bg-white border-t flex justify-end">
-                <button id="btnSaveStickyModal" class="bg-yellow-400 text-yellow-900 px-8 py-3 rounded-full font-black text-[10px] uppercase shadow-md transition-all active:scale-95">Simpan & Tutup</button>
+            <div class="p-6 bg-yellow-50 flex-grow">
+                <textarea id="stickyZoomArea" class="w-full h-[60vh] bg-transparent border-none outline-none font-bold text-slate-800 text-base leading-relaxed resize-none" placeholder="Tuliskan catatan detail di sini..."></textarea>
+            </div>
+            <div class="p-4 bg-white border-t flex justify-between items-center">
+                <button onclick="insertBullet('stickyZoomArea')" class="text-xs font-bold bg-slate-100 text-slate-600 px-4 py-2 rounded-full border border-slate-200 uppercase tracking-widest shadow-sm">• List</button>
+                <button id="btnSaveStickyModal" class="bg-yellow-400 text-yellow-900 px-8 py-3 rounded-full font-black text-xs uppercase tracking-widest shadow-lg active:scale-95 transition-all">Simpan & Tutup</button>
             </div>
         </div>
     </div>
 
-    <!-- TOAST NOTIFICATION -->
     <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl opacity-0 z-[100] text-[10px] font-bold uppercase tracking-widest text-center"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, onSnapshot, addDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // --- FIREBASE CONFIGURATION ---
+        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyD-wrKOTP046d3Ojr_pKPHEWWf7Kuk5Nco",
             authDomain: "workspace-tracker-b3f8a.firebaseapp.com",
@@ -288,57 +291,84 @@
             messagingSenderId: "347113310211",
             appId: "1:347113310211:web:900680ab7b8456a0f66636"
         };
+
         const app = initializeApp(firebaseConfig);
         const auth = getAuth(app);
         const db = getFirestore(app);
         const appId = 'workspace-tracker-final-v2';
 
-        // --- GLOBAL STATE ---
         let currentUser = null;
         let logsData = [];
         let usersData = [];
         let projectsData = [];
-        let openProjectAccordions = new Set();
-        let draggedProjectName = null;
+        let isEditingUser = false;
         let isEditingProject = false;
         let editingProjectOldName = "";
         let openAdminProjName = null;
         
-        let usersCurrentPage = 1, usersPerPage = 5;
-        let projsCurrentPage = 1, projsPerPage = 3;
-        let projSearchQuery = "";
+        let openProjectAccordions = new Set();
+        let draggedProjectName = null;
 
-        const TASKS = [
+        const PROGRESS_TASKS = [
             { key: "drafting", label: "Drafting" }, { key: "layouting", label: "Layouting" }, { key: "moodboard", label: "Moodboard" },
-            { key: "design_ars", label: "Design ARS" }, { key: "design_int", label: "Design INT" }, { key: "gambar_ars", label: "Gmbr ARS" },
-            { key: "gambar_elk", label: "Gmbr ELK" }, { key: "gambar_int", label: "Gmbr INT" }
+            { key: "design_ars", label: "Design Arsitektur" }, { key: "design_int", label: "Design Interior" }, { key: "gambar_ars", label: "Gmbr Kerja ARS" },
+            { key: "gambar_elk", label: "Gmbr Kerja ELK" }, { key: "gambar_int", label: "Gmbr Kerja INT" }
         ];
 
-        // --- SISTEM AUTHENTICATION ---
+        let usersCurrentPage = 1; const usersPerPage = 5;
+        let projsCurrentPage = 1; const projsPerPage = 3;
+        let projSearchQuery = "";
+
+        const getLocalDateString = () => {
+            const now = new Date();
+            return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        };
+
         const init = async () => {
-            const saved = localStorage.getItem('ws_user'); 
-            if (saved) currentUser = JSON.parse(saved);
-            
+            const savedUser = localStorage.getItem('ws_user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+            }
+
             try {
                 onAuthStateChanged(auth, (user) => {
-                    if (user) { 
-                        document.getElementById('statusDB').innerText = "✅ Cloud Connected"; 
-                        if(currentUser) startApp(); 
+                    if (user) {
+                        document.getElementById('statusDB').innerText = "✅ Cloud Connected";
+                        document.getElementById('statusDB').classList.replace('text-slate-400', 'text-green-600');
+                        if(currentUser) startApp();
+                    } else {
+                        document.getElementById('statusDB').innerText = "Menghubungkan Database...";
+                        document.getElementById('statusDB').classList.add('text-slate-400');
                     }
                 });
-                await signInAnonymously(auth);
-            } catch (e) { document.getElementById('statusDB').innerText = "⚠️ Connection Error"; }
+
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (e) { 
+                console.error("Firebase Init Error:", e);
+                document.getElementById('statusDB').innerText = "⚠️ Connection Error"; 
+                document.getElementById('statusDB').classList.replace('text-slate-400', 'text-red-500');
+            }
         };
         init();
 
         document.getElementById('loginForm').onsubmit = async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('btnLogin'); btn.disabled = true; btn.innerText = "...";
+            const btn = document.getElementById('btnLogin'); btn.disabled = true; btn.innerText = "MENGECEK...";
             const u = document.getElementById('u').value.trim().toLowerCase();
-            const p = document.getElementById('p').value;
-            const snap = await getDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u));
-            if(snap.exists() && snap.data().password === p) {
-                currentUser = { username: u, ...snap.data() };
+            const p = document.getElementById('p').value.trim();
+            const userRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', u);
+            const userSnap = await getDoc(userRef);
+            if (userSnap.exists() && userSnap.data().password === p) {
+                currentUser = { username: u, ...userSnap.data() };
+                localStorage.setItem('ws_user', JSON.stringify(currentUser));
+                startApp();
+            } else if (u === 'admin' && p === 'admin123') {
+                currentUser = { username: 'admin', role: 'ADMIN' };
+                await setDoc(userRef, { password: 'admin123', role: 'ADMIN' });
                 localStorage.setItem('ws_user', JSON.stringify(currentUser));
                 startApp();
             } else { msg("❌ LOGIN GAGAL"); btn.disabled = false; btn.innerText = "Masuk Sekarang"; }
@@ -349,370 +379,435 @@
             document.getElementById('mainApp').classList.remove('hidden');
             document.getElementById('uDisp').innerText = currentUser.username.toUpperCase();
             document.getElementById('rDisp').innerText = currentUser.role;
-            document.getElementById('f_date').value = new Date().toISOString().split('T')[0];
-            if(currentUser.privateNotes) document.getElementById('personalNoteEditor').innerHTML = currentUser.privateNotes;
-            if(currentUser.role === 'ADMIN') { 
-                document.getElementById('t_projek').classList.remove('hidden'); 
-                document.getElementById('t_settings').classList.remove('hidden'); 
+            document.getElementById('f_date').value = getLocalDateString();
+            if (currentUser.privateNotes) document.getElementById('personalNoteEditor').innerHTML = currentUser.privateNotes;
+            if (currentUser.role === 'ADMIN') {
+                document.getElementById('t_projek').classList.remove('hidden');
+                document.getElementById('t_settings').classList.remove('hidden');
             }
-            // Listeners
             listenUsers(); listenProjects(); listenLogs(); tab('input');
         }
 
-        // --- DATA LISTENERS ---
-        function listenProjects() {
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'projects'), (snap) => {
-                projectsData = snap.docs.map(d => ({ name: d.id, ...d.data() })).sort((a,b) => (a.order || 0) - (b.order || 0));
-                renderInputDropdowns(); renderSidebarDeadlines(); checkDeadlines(); renderProjectList();
-            }, (err) => console.error(err));
-        }
-        function listenLogs() {
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), (snap) => {
-                logsData = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => (b.ts?.seconds || 0) - (a.ts?.seconds || 0) || new Date(b.tanggal) - new Date(a.tanggal));
-                renderLogs();
-            }, (err) => console.error(err));
-        }
-        function listenUsers() {
-            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
-                usersData = snap.docs.map(d => ({ id: d.id, ...d.data() })); 
-                renderUserList();
-                renderFilterDropdowns(); // Update dropdown filter Admin
-            }, (err) => console.error(err));
+        window.logout = () => {
+            if (confirm("Keluar dari aplikasi?")) {
+                localStorage.removeItem('ws_user'); 
+                location.reload();
+            }
+        };
+
+        window.formatDoc = (cmd, val) => { document.execCommand(cmd, false, val); document.getElementById('personalNoteEditor').focus(); };
+        window.savePersonalNote = async () => {
+            if (!auth.currentUser) return;
+            const content = document.getElementById('personalNoteEditor').innerHTML;
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.username), { privateNotes: content });
+            currentUser.privateNotes = content; 
+            localStorage.setItem('ws_user', JSON.stringify(currentUser));
+            msg("✅ CATATAN TERSIMPAN");
+        };
+
+        window.insertBullet = (id) => {
+            const el = document.getElementById(id); el.focus();
+            if (el.tagName === 'TEXTAREA') {
+                const start = el.selectionStart;
+                const end = el.selectionEnd;
+                const value = el.value;
+                el.value = value.substring(0, start) + "• " + value.substring(end);
+                el.selectionStart = el.selectionEnd = start + 2;
+            } else {
+                document.execCommand('insertUnorderedList', false, null);
+            }
+        };
+
+        window.openZoomModal = (src) => {
+            document.getElementById('zoomedImg').src = src;
+            document.getElementById('modalZoom').classList.remove('hidden');
+        };
+        window.closeZoomModal = () => document.getElementById('modalZoom').classList.add('hidden');
+
+        window.openStickyZoom = (projName) => {
+            const proj = projectsData.find(p => p.name === projName);
+            if (!proj) return;
+            document.getElementById('stickyProjName').innerText = "CATATAN: " + proj.name;
+            document.getElementById('stickyZoomArea').value = proj.notes || "";
+            document.getElementById('btnSaveStickyModal').onclick = () => saveStickyZoom(projName);
+            document.getElementById('modalSticky').classList.remove('hidden');
+        };
+
+        window.closeStickyModal = () => document.getElementById('modalSticky').classList.add('hidden');
+
+        window.saveStickyZoom = async (projName) => {
+            if (!auth.currentUser) return;
+            const newVal = document.getElementById('stickyZoomArea').value;
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', projName), { notes: newVal });
+            closeStickyModal();
+            msg("✅ CATATAN DISIMPAN");
+        };
+
+        function compressAndResizeImage(file, maxWidth = 800, maxHeight = 800, quality = 0.7) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = () => {
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > height) {
+                            if (width > maxWidth) { height = height * (maxWidth / width); width = maxWidth; }
+                        } else {
+                            if (height > maxHeight) { width = width * (maxHeight / height); height = maxHeight; }
+                        }
+                        const canvas = document.createElement('canvas');
+                        canvas.width = width; canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        canvas.toBlob((blob) => resolve(blob), 'image/jpeg', quality);
+                    };
+                    img.onerror = error => reject(error);
+                };
+                reader.onerror = error => reject(error);
+            });
         }
 
-        // --- SIDEBAR & PROJECT LOGIC ---
+        window.triggerImageInput = () => document.getElementById('imageInput').click();
+        window.handleImageUpload = async (event) => {
+            const file = event.target.files[0]; if (!file) return;
+            try {
+                const compressedBlob = await compressAndResizeImage(file);
+                const reader = new FileReader();
+                reader.readAsDataURL(compressedBlob);
+                reader.onload = (e) => {
+                    const dataUrl = e.target.result;
+                    document.getElementById('f_work_editor').focus();
+                    document.execCommand('insertImage', false, dataUrl);
+                };
+            } catch (error) { msg("❌ GAGAL MEMPROSES GAMBAR"); }
+            event.target.value = ''; 
+        };
+
+        function listenProjects() {
+            if (!auth.currentUser) return;
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'projects'), (snap) => {
+                projectsData = snap.docs.map(d => ({ name: d.id, ...d.data() }));
+                projectsData.sort((a, b) => (a.order || 0) - (b.order || 0));
+                renderProjectList(); renderInputDropdowns(); renderSidebarDeadlines(); checkDeadlines();
+            }, (err) => { console.error("Project Listener Error:", err); });
+        }
+
+        function calculateProgress(tasks = {}) {
+            return (PROGRESS_TASKS.filter(t => tasks[t.key]).length / PROGRESS_TASKS.length) * 100;
+        }
+
+        function renderInputDropdowns() {
+            const fP = document.getElementById('f_proj'); const flP = document.getElementById('flProj');
+            if(!fP || !flP) return;
+            fP.innerHTML = '<option value="" disabled selected>-- Pilih Projek --</option>';
+            flP.innerHTML = '<option value="ALL">SEMUA PROJEK</option>';
+            projectsData.forEach(proj => {
+                if (currentUser.role === 'ADMIN' || (proj.assignedUsers || []).includes(currentUser.username)) {
+                    fP.add(new Option(proj.name, proj.name)); flP.add(new Option(proj.name, proj.name));
+                }
+            });
+        }
+
         window.renderSidebarDeadlines = () => {
-            const side = document.getElementById('sideProjList'); if(!side) return;
-            const userProjs = projectsData.filter(p => currentUser.role === 'ADMIN' || (p.assignedUsers || []).includes(currentUser.username));
-            side.innerHTML = userProjs.length ? '' : '<p class="text-[9px] text-slate-400 text-center py-10 italic uppercase tracking-widest">Belum ada projek aktif</p>';
+            const sideList = document.getElementById('sideProjList'); if(!sideList) return;
+            const userProjects = projectsData.filter(proj => currentUser.role === 'ADMIN' || (proj.assignedUsers || []).includes(currentUser.username));
             
-            userProjs.forEach(proj => {
-                const progress = calculateProgress(proj.tasks); 
-                const isFin = proj.isFinished; 
-                const safe = proj.name.replace(/\s+/g, '_');
+            sideList.innerHTML = userProjects.length ? '' : '<p class="text-[9px] text-slate-400 text-center py-4">Belum ada projek aktif</p>';
+            
+            userProjects.forEach((proj, idx) => {
+                const deadlineStr = proj.endDate ? new Date(proj.endDate).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) : 'No Deadline';
+                const progress = calculateProgress(proj.tasks); const isFinished = proj.isFinished || false; const safeName = proj.name.replace(/\s+/g, '_');
+                const hasNotes = proj.notes && proj.notes.trim().length > 0;
                 const isOpen = openProjectAccordions.has(proj.name);
-                const diff = proj.endDate ? Math.ceil((new Date(proj.endDate) - new Date().setHours(0,0,0,0)) / 86400000) : 99;
-                
-                let dateClass = "bg-white border-slate-200 text-slate-800";
-                if(diff <= 0) dateClass = "bg-black text-white border-black"; 
-                else if(diff <= 3) dateClass = "bg-red-500 text-white border-red-500 shadow-lg shadow-red-100";
-                
-                let checkHtml = ''; 
-                TASKS.forEach(t => { 
-                    const ok = proj.tasks?.[t.key]; 
-                    checkHtml += `
-                        <div class="flex items-center gap-2 py-0.5">
-                            <input type="checkbox" id="t_${safe}_${t.key}" class="task-checkbox w-3.5 h-3.5 rounded-lg border-slate-300" ${ok?'checked':''} onchange="toggleTask('${proj.name}','${t.key}',this.checked)">
-                            <label for="t_${safe}_${t.key}" class="text-[8.5px] font-bold uppercase ${isFin?'line-through opacity-40':'text-slate-500'} cursor-pointer">${t.label}</label>
-                        </div>`; 
+
+                let dateBoxClass = "bg-white border-slate-200 text-slate-800"; 
+                if (proj.endDate) {
+                    const today = new Date(); today.setHours(0,0,0,0); const end = new Date(proj.endDate);
+                    const diff = Math.ceil((end - today) / 86400000);
+                    if (diff <= 0) dateBoxClass = "bg-black text-white border-black";
+                    else if (diff <= 3) dateBoxClass = "bg-red-500 text-white border-red-500";
+                }
+
+                let checklistHtml = '';
+                PROGRESS_TASKS.forEach(t => {
+                    const isChecked = proj.tasks && proj.tasks[t.key];
+                    checklistHtml += `<div class="flex items-center gap-2 py-0.5"><input type="checkbox" id="task_${safeName}_${t.key}" class="task-checkbox w-3 h-3 rounded" ${isChecked ? 'checked' : ''} onchange="toggleTask('${proj.name}', '${t.key}', this.checked)"><label for="task_${safeName}_${t.key}" class="text-[8px] font-bold uppercase ${isFinished ? 'text-slate-400 line-through' : 'text-slate-500'} cursor-pointer">${t.label}</label></div>`;
                 });
 
-                side.innerHTML += `
-                    <div class="project-card rounded-2xl border ${isFin?'bg-slate-800 border-slate-700':'bg-white shadow-sm border-slate-100'} overflow-hidden cursor-move transition-all duration-300 hover:shadow-md" draggable="true" data-name="${proj.name}" ondragstart="handleDragStart(event,'${proj.name}')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event,'${proj.name}')">
+                const cardHtml = `
+                    <div class="project-card rounded-2xl border ${isFinished ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100 shadow-sm'} overflow-hidden transition-all cursor-move" 
+                         draggable="true" 
+                         data-name="${proj.name}"
+                         ondragstart="handleDragStart(event, '${proj.name}')"
+                         ondragover="handleDragOver(event)"
+                         ondragleave="handleDragLeave(event)"
+                         ondrop="handleDrop(event, '${proj.name}')">
                         <div class="p-4">
                             <div class="flex justify-between items-start mb-3 pointer-events-none">
                                 <div class="flex-grow space-y-1">
                                     <div class="flex items-center gap-2 flex-wrap">
-                                        <span class="text-[10px] font-extrabold uppercase ${isFin?'text-white':'text-slate-800'}">${proj.name}</span>
-                                        <span class="text-[9px] font-black ${isFin?'text-green-400':'text-blue-600'}">${progress}%</span>
-                                        ${proj.notes ? `<span class="badge-notes">Notes</span>` : ''}
+                                        <span class="text-[10px] font-extrabold uppercase truncate ${isFinished ? 'text-white' : 'text-slate-800'}">${proj.name}</span>
+                                        <span class="text-[9px] font-black ${isFinished ? 'text-green-400' : 'text-blue-600'}">${Math.round(progress)}%</span>
+                                        ${hasNotes ? `<span class="badge-notes">NOTES</span>` : ''}
                                     </div>
-                                    <div class="inline-block px-2.5 py-1 rounded-lg border text-[9px] font-extrabold ${isFin?'opacity-30':dateClass}">${proj.endDate || 'No Deadline'}</div>
+                                    <div class="inline-block px-2 py-1 rounded-lg border text-[9px] font-extrabold ${isFinished ? 'opacity-50' : dateBoxClass}">${deadlineStr}</div>
                                 </div>
-                                <div class="flex flex-col items-end gap-1 pointer-events-auto">
-                                    <span class="text-[7px] font-black uppercase tracking-widest ${isFin?'text-green-400':'text-slate-400'}">Finish</span>
-                                    <label class="switch-finish"><input type="checkbox" ${isFin?'checked':''} onchange="toggleFinishProject('${proj.name}',this.checked)"><span class="slider-finish"></span></label>
+                                <div class="flex flex-col items-end gap-1 shrink-0 ml-2 pointer-events-auto">
+                                    <span class="text-[7px] font-black uppercase tracking-widest ${isFinished ? 'text-green-400' : 'text-slate-400'}">Finish</span>
+                                    <label class="switch-finish"><input type="checkbox" ${isFinished ? 'checked' : ''} onchange="toggleFinishProject('${proj.name}', this.checked)"><span class="slider-finish"></span></label>
                                 </div>
                             </div>
                             <div class="flex items-center gap-3">
-                                <div class="flex-grow ${isFin?'bg-slate-700':'bg-slate-100'} h-2 rounded-full overflow-hidden shadow-inner"><div class="${isFin?'bg-green-500':'bg-blue-600'} h-full transition-all duration-1000" style="width: ${progress}%"></div></div>
-                                <button onclick="toggleAccordion(this,'${proj.name}')" class="p-1 text-slate-400 hover:text-blue-600 transition-colors"><svg class="w-4 h-4 arrow-icon ${isOpen?'rotate-180':''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"/></svg></button>
+                                <div class="flex-grow ${isFinished ? 'bg-slate-700' : 'bg-slate-100'} h-1.5 rounded-full overflow-hidden pointer-events-none"><div class="${isFinished ? 'bg-green-500' : 'bg-blue-600'} h-full transition-all duration-500" style="width: ${progress}%"></div></div>
+                                <button onclick="toggleAccordion(this, '${proj.name}')" class="p-1 rounded-full hover:bg-slate-50 transition-colors group">
+                                    <svg class="w-4 h-4 text-slate-300 group-hover:text-blue-500 transition-transform arrow-icon ${isOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
+                                </button>
                             </div>
                         </div>
-                        <div class="${isOpen?'':'hidden'} px-4 pb-4 border-t ${isFin?'border-slate-700':'border-slate-50'} accordion-body">
-                            <div class="grid grid-cols-2 gap-x-2 bg-slate-50/50 p-2.5 rounded-xl my-4">${checkHtml}</div>
-                            <div class="sticky-note">
-                                <button onclick="openStickyZoom('${proj.name}')" class="absolute top-2 right-2 p-1 bg-white/60 rounded shadow-sm text-yellow-900 transition-all z-10 hover:bg-white text-[10px] font-black uppercase">Zoom</button>
-                                <textarea id="note_${safe}" class="sticky-note-textarea" placeholder="Tulis catatan projek...">${proj.notes || ""}</textarea>
-                                <div class="flex gap-2 mt-2">
-                                    <button onclick="insertBullet('note_${safe}')" class="flex-1 text-[9px] font-black bg-white/50 text-slate-600 py-2 rounded-full border border-slate-200 uppercase tracking-widest hover:bg-white transition-all">• List</button>
-                                    <button onclick="saveProjectNote('${proj.name}','note_${safe}')" class="flex-[2] text-[9px] font-black bg-yellow-400 text-yellow-900 py-2 rounded-full uppercase shadow-sm active:scale-95 transition-all">Simpan Catatan</button>
+                        <div class="${isOpen ? '' : 'hidden'} px-4 pb-4 border-t ${isFinished ? 'border-slate-700 bg-slate-800/50' : 'border-slate-50'} mt-1 accordion-body">
+                             <p class="text-[7px] font-black uppercase mb-2 mt-3 tracking-widest ${isFinished ? 'text-slate-500' : 'text-slate-300'}">Daftar Checklist Progress:</p>
+                             <div class="grid grid-cols-2 gap-x-2 ${isFinished ? 'bg-slate-900/40' : 'bg-slate-50/50'} p-2 rounded-xl mb-4">${checklistHtml}</div>
+                             <p class="text-[7px] font-black uppercase mb-2 tracking-widest ${isFinished ? 'text-slate-500' : 'text-slate-300'}">Catatan Projek:</p>
+                             <div class="sticky-note ${isFinished ? 'opacity-50 grayscale' : ''}">
+                                <button onclick="openStickyZoom('${proj.name}')" class="absolute top-2 right-2 p-1.5 bg-white/50 hover:bg-white rounded-lg shadow-sm text-yellow-900 transition-all z-10">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
+                                </button>
+                                <textarea id="note_${safeName}" class="sticky-note-textarea" rows="6" placeholder="Tulis catatan penting di sini...">${proj.notes || ""}</textarea>
+                                <div class="flex justify-between items-center mt-2">
+                                    <button onclick="insertBullet('note_${safeName}')" class="text-[10px] font-bold bg-white text-slate-600 px-3 py-1.5 rounded-full border border-slate-200 uppercase tracking-widest shadow-sm active:scale-95 transition-all">• List</button>
+                                    <button onclick="saveProjectNote('${proj.name}', 'note_${safeName}')" class="text-[10px] font-bold bg-yellow-400 text-yellow-900 px-4 py-2 rounded-full uppercase tracking-widest shadow-sm active:scale-95 transition-all">Simpan Catatan</button>
                                 </div>
-                            </div>
+                             </div>
                         </div>
                     </div>`;
+                sideList.insertAdjacentHTML('beforeend', cardHtml);
             });
         };
 
-        // --- PANTAUAN LOGS RENDERING (ZEBRA STRIPPING) ---
-        window.renderLogs = () => {
-            const list = document.getElementById('logList'); if(!list) return;
-            const userSelect = document.getElementById('flUser');
-            
-            const fU = (currentUser.role === 'ADMIN') ? (userSelect ? userSelect.value : 'ALL') : currentUser.username;
-            const fP = document.getElementById('flProj').value;
-            const fK = document.getElementById('searchLog').value.toLowerCase();
-            const sD = document.getElementById('flStartDate').value, eD = document.getElementById('flEndDate').value;
-
-            const filtered = logsData.filter(l => {
-                const matchProj = fP === 'ALL' || l.project_name === fP;
-                const matchUser = fU === 'ALL' || fU === "" || l.username === fU; // Tambahkan "" agar tidak filter kosong
-                const matchKey = (l.pekerjaan || "").toLowerCase().includes(fK) || (l.username || "").toLowerCase().includes(fK);
-                const matchDate = (!sD || l.tanggal >= sD) && (!eD || l.tanggal <= eD);
-                return matchProj && matchUser && matchKey && matchDate;
-            });
-
-            list.innerHTML = filtered.length ? '' : '<div class="text-center py-24 opacity-20 font-black uppercase italic tracking-[0.5em] text-xs">No Data Log Found</div>';
-            let lastDate = "", isWhite = true;
-            
-            filtered.forEach(l => {
-                const canEdit = l.username === currentUser.username || currentUser.role === 'ADMIN';
-                if (l.tanggal !== lastDate) { isWhite = !isWhite; lastDate = l.tanggal; }
-                const bgColor = isWhite ? 'bg-white' : 'bg-emerald-50';
-                const logTime = l.ts ? new Date(l.ts.seconds * 1000).toLocaleTimeString('id-ID', {hour:'2-digit', minute:'2-digit'}) : '';
-
-                list.innerHTML += `
-                    <div class="${bgColor} p-6 rounded-[2.5rem] shadow-sm border border-slate-100 transition-all hover:shadow-lg">
-                        <div class="flex justify-between items-start mb-4">
-                            <div class="space-y-1">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-[9px] font-black bg-blue-600 text-white px-3 py-1 rounded-full uppercase">${l.username}</span>
-                                    <span class="text-[9px] font-black bg-slate-900 text-white px-3 py-1 rounded-full uppercase">${l.project_name}</span>
-                                </div>
-                                <p class="text-sm font-extrabold text-slate-800">${new Date(l.tanggal).toLocaleDateString('id-ID',{day:'2-digit',month:'long',year:'numeric'})} <span class="text-[10px] text-slate-300 ml-1 font-bold">@ ${logTime}</span></p>
-                            </div>
-                            ${canEdit ? `
-                            <div class="flex gap-1.5">
-                                <button onclick="editLogPrompt('${l.id}')" class="p-2.5 border rounded-full text-slate-300 hover:text-blue-600 hover:bg-blue-50 transition-all"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button>
-                                <button onclick="deleteLog('${l.id}')" class="p-2.5 border rounded-full text-slate-300 hover:text-red-600 hover:bg-red-50 transition-all"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path d="M19 7l-.867 12.142A2 2.032 0 0116.138 21H7.862a2 2.032 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button>
-                            </div>` : ''}
-                        </div>
-                        <div class="log-content text-[13px] text-slate-600 leading-relaxed font-semibold">${l.pekerjaan || ""}</div>
-                    </div>`;
-            });
-        };
-
-        // --- MANAJEMEN ADMIN (CRUD) ---
-        window.saveUser = async () => {
-            const u = document.getElementById('mU').value.trim().toLowerCase(), p = document.getElementById('mP').value, r = document.getElementById('mR').value;
-            if(!u || !p) return msg("LENGKAPI USERNAME & PASSWORD!");
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u), { password: p, role: r }, { merge: true });
-            resetUserForm(); msg("✅ AKUN TIM DIPERBARUI");
-        };
-        window.editUserPrompt = (u, p, r) => { document.getElementById('mU').value = u; document.getElementById('mU').disabled = true; document.getElementById('mP').value = p; document.getElementById('mR').value = r; document.getElementById('btnSaveUser').innerText = "Update Akun"; document.getElementById('btnCancelEdit').classList.remove('hidden'); tab('settings'); };
-        window.resetUserForm = () => { document.getElementById('mU').value = ''; document.getElementById('mU').disabled = false; document.getElementById('mP').value = ''; document.getElementById('mR').value = 'USER'; document.getElementById('btnSaveUser').innerText = "Simpan Akun"; document.getElementById('btnCancelEdit').classList.add('hidden'); };
-        window.deleteUser = async (u) => { if(u !== 'admin' && confirm("Hapus akun ini dari sistem?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u)); };
-
-        window.addNewProject = async () => {
-            const name = document.getElementById('nP').value.toUpperCase().trim(), start = document.getElementById('nPStart').value, end = document.getElementById('nPEnd').value;
-            if(!name) return msg("NAMA PROJEK WAJIB DIISI!");
-            
-            if(isEditingProject) {
-                const old = editingProjectOldName;
-                if(name !== old) {
-                    const p = projectsData.find(x => x.name === old);
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { ...p, startDate: start, endDate: end });
-                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', old));
-                    // Update logs yang merujuk ke nama projek lama
-                    logsData.filter(l => l.project_name === old).forEach(async log => {
-                        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', log.id), { project_name: name });
-                    });
-                } else await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', old), { startDate: start, endDate: end });
-            } else await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { startDate: start, endDate: end, order: projectsData.length, assignedUsers: [], tasks: {}, notes: "", isFinished: false });
-            
-            resetProjectForm(); msg("✅ DATA PROJEK DISIMPAN");
-        };
-        window.editProjectPrompt = (name, start, end) => { isEditingProject = true; editingProjectOldName = name; document.getElementById('nP').value = name; document.getElementById('nPStart').value = start || ''; document.getElementById('nPEnd').value = end || ''; document.getElementById('btnAddNewProject').innerText = "Update Projek"; document.getElementById('btnCancelEditProj').classList.remove('hidden'); tab('projek'); window.scrollTo({top: 0, behavior: 'smooth'}); };
-        window.resetProjectForm = () => { isEditingProject = false; editingProjectOldName = ""; document.getElementById('nP').value = ''; document.getElementById('nPStart').value = ''; document.getElementById('nPEnd').value = ''; document.getElementById('btnAddNewProject').innerText = "Simpan Projek"; document.getElementById('btnCancelEditProj').classList.add('hidden'); };
-        window.deleteProject = async (n) => { if(confirm("Hapus seluruh data projek ini secara permanen?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', n)); };
-
-        // --- SISTEM DRAG & MOVE ---
         window.handleDragStart = (e, name) => { draggedProjectName = name; e.currentTarget.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; };
         window.handleDragOver = (e) => { e.preventDefault(); const card = e.currentTarget; if (card.dataset.name !== draggedProjectName) card.classList.add('drag-over'); };
-        window.handleDragLeave = (e) => e.currentTarget.classList.remove('drag-over');
+        window.handleDragLeave = (e) => { e.currentTarget.classList.remove('drag-over'); };
         window.handleDrop = async (e, targetName) => {
             e.preventDefault(); e.currentTarget.classList.remove('drag-over');
             document.querySelectorAll('.project-card').forEach(c => c.classList.remove('dragging'));
             if (draggedProjectName === targetName) return;
-            
-            const fromIdx = projectsData.findIndex(p => p.name === draggedProjectName), toIdx = projectsData.findIndex(p => p.name === targetName);
-            const reordered = [...projectsData]; 
-            const [draggedItem] = reordered.splice(fromIdx, 1); 
-            reordered.splice(toIdx, 0, draggedItem);
-            
+            const fromIndex = projectsData.findIndex(p => p.name === draggedProjectName);
+            const toIndex = projectsData.findIndex(p => p.name === targetName);
+            const reordered = [...projectsData]; const [draggedItem] = reordered.splice(fromIndex, 1); reordered.splice(toIndex, 0, draggedItem);
             projectsData = reordered; renderSidebarDeadlines();
-            
             const batch = writeBatch(db);
-            reordered.forEach((p, i) => batch.update(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p.name), { order: i }));
+            reordered.forEach((p, i) => { const ref = doc(db, 'artifacts', appId, 'public', 'data', 'projects', p.name); batch.update(ref, { order: i }); });
             await batch.commit(); msg("✅ URUTAN PROJEK DIPERBARUI");
         };
 
-        // --- UTILITIES ---
-        window.tab = (t) => { 
-            ['input','logs','projek','settings'].forEach(k => { 
-                const v = document.getElementById('v_'+k), b = document.getElementById('t_'+k); 
-                if(v) v.classList.toggle('hidden', k !== t); 
-                if(b) { 
-                    b.classList.toggle('tab-active', k === t); 
-                    b.classList.toggle('text-slate-400', k !== t); 
-                    if(k === t) b.classList.add('text-blue-600'); 
-                } 
-            }); 
-            if(t==='logs') renderLogs();
+        window.toggleAccordion = (btn, projName) => {
+            const card = btn.closest('.rounded-2xl'); const body = card.querySelector('.accordion-body'); const icon = btn.querySelector('.arrow-icon');
+            const isClosing = !body.classList.contains('hidden');
+            body.classList.toggle('hidden', isClosing); icon.classList.toggle('rotate-180', !isClosing);
+            isClosing ? openProjectAccordions.delete(projName) : openProjectAccordions.add(projName);
         };
-        
-        window.msg = (m) => { 
-            const t = document.getElementById('toast'); t.innerText = m; 
-            t.style.opacity = "1"; t.style.bottom = "40px"; 
-            setTimeout(() => { t.style.opacity = "0"; t.style.bottom = "10px"; }, 3000); 
+
+        window.saveProjectNote = async (projName, textareaId) => {
+            if (!auth.currentUser) return;
+            const val = document.getElementById(textareaId).value;
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', projName), { notes: val });
+            msg("✅ CATATAN PROJEK DISIMPAN");
         };
-        
-        window.formatDoc = (cmd, val) => {
-            document.execCommand(cmd, false, val);
-            // Re-focus editor to keep typing
-            document.getElementById('f_work_editor').focus();
+
+        window.toggleFinishProject = async (projName, isChecked) => {
+            if (!auth.currentUser) return;
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', projName), { isFinished: isChecked });
+            msg(isChecked ? `✅ PROJEK ${projName} SELESAI!` : `🔄 PROJEK ${projName} AKTIF KEMBALI`);
         };
-        
-        window.insertBullet = (id) => { 
-            const el = document.getElementById(id); el.focus(); 
-            if (el.tagName === 'TEXTAREA') { 
-                const s = el.selectionStart; el.value = el.value.substring(0, s) + "• " + el.value.substring(s); 
-            } else { document.execCommand('insertUnorderedList', false, null); } 
+
+        window.toggleTask = async (projName, taskKey, isChecked) => {
+            if (!auth.currentUser) return;
+            const proj = projectsData.find(p => p.name === projName); const tasks = { ...(proj.tasks || {}) }; tasks[taskKey] = isChecked;
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', projName), { tasks });
         };
-        
-        window.toggleAccordion = (btn, name) => { 
-            const b = btn.closest('.project-card').querySelector('.accordion-body'), i = btn.querySelector('.arrow-icon'); 
-            const close = !b.classList.contains('hidden'); 
-            b.classList.toggle('hidden', close); i.classList.toggle('rotate-180', !close); 
-            close ? openProjectAccordions.delete(name) : openProjectAccordions.add(name); 
+
+        window.checkDeadlines = () => {
+            const badge = document.getElementById('notifCount'); const list = document.getElementById('notifList'); if(!badge || !currentUser) return;
+            const today = new Date(); today.setHours(0,0,0,0); let alerts = 0; let html = '';
+            projectsData.forEach(proj => {
+                if (proj.isFinished) return;
+                const assigned = proj.assignedUsers || [];
+                if ((currentUser.role === 'ADMIN' || assigned.includes(currentUser.username)) && proj.endDate) {
+                    const diff = Math.ceil((new Date(proj.endDate) - today) / 86400000);
+                    let msgNotif = '', color = '';
+                    if (diff <= 0) { msgNotif = 'DEADLINE TERLEWAT!'; color = 'bg-black text-white border-black'; }
+                    else if (diff <= 3) { msgNotif = `Deadline ${diff} hari lagi!`; color = 'bg-red-50 text-red-600 border-red-200'; }
+                    
+                    if (msgNotif) { alerts++; html += `<div class="p-3 rounded-xl border ${color} shadow-sm"><p class="text-[8px] font-black uppercase mb-0.5">${msgNotif}</p><p class="text-[10px] font-extrabold uppercase truncate">${proj.name}</p></div>`; }
+                }
+            });
+            badge.innerText = alerts; badge.classList.toggle('hidden', alerts === 0);
+            list.innerHTML = html || '<p class="text-[9px] text-slate-300 text-center py-6 font-bold uppercase italic">Tidak ada deadline mendesak</p>';
         };
-        
+
         window.toggleNotifPanel = () => document.getElementById('notifPanel').classList.toggle('hidden');
-        window.logout = () => { if(confirm("Keluar dari WORKSPACE?")) { localStorage.removeItem('ws_user'); location.reload(); } };
-        window.openZoomModal = (src) => { document.getElementById('zoomedImg').src = src; document.getElementById('modalZoom').classList.remove('hidden'); };
-        window.closeZoomModal = () => document.getElementById('modalZoom').classList.add('hidden');
-        window.openStickyZoom = (p) => { 
-            const proj = projectsData.find(x => x.name === p); 
-            document.getElementById('stickyProjName').innerText = p; 
-            document.getElementById('stickyZoomArea').value = proj.notes || ""; 
-            document.getElementById('btnSaveStickyModal').onclick = () => saveProjectNote(p, 'stickyZoomArea', true); 
-            document.getElementById('modalSticky').classList.remove('hidden'); 
-        };
-        window.closeStickyModal = () => document.getElementById('modalSticky').classList.add('hidden');
-        
-        window.saveProjectNote = async (p, id, close = false) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { notes: document.getElementById(id).value }); msg("✅ CATATAN DISIMPAN"); if(close) closeStickyModal(); };
-        window.toggleFinishProject = async (p, c) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { isFinished: c }); msg(c ? "✅ PROJEK SELESAI" : "🔄 PROJEK AKTIF"); };
-        window.toggleTask = async (p, k, c) => { const tasks = { ...(projectsData.find(x => x.name === p).tasks || {}) }; tasks[k] = c; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { tasks }); };
-        window.savePersonalNote = async () => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.username), { privateNotes: document.getElementById('personalNoteEditor').innerHTML }); msg("✅ CATATAN PRIBADI DISIMPAN"); };
-        
-        window.triggerImageInput = () => document.getElementById('imageInput').click();
-        window.handleImageUpload = (e) => { 
-            const f = e.target.files[0]; if(!f) return; 
-            const r = new FileReader(); 
-            r.onload = (ev) => { 
-                document.getElementById('f_work_editor').focus(); 
-                document.execCommand('insertImage', false, ev.target.result); 
-            }; 
-            r.readAsDataURL(f); 
-        };
-        
-        window.toggleAdminAccordion = (h, name) => { 
-            const parent = h.closest('.bg-white');
-            const body = parent.querySelector('.p-4.bg-slate-50'), i = h.querySelector('.arrow-icon'); 
-            const close = !body.classList.contains('hidden'); 
-            body.classList.toggle('hidden', close); i.classList.toggle('rotate-180', !close); 
-            openAdminProjName = close ? null : name; 
-        };
 
         window.renderProjectList = () => {
-            const list = document.getElementById('projListSettings'); if(!list) return;
+            const list = document.getElementById('projListSettings'); const pag = document.getElementById('projPagination'); if(!list) return;
             const filtered = projectsData.filter(p => p.name.includes(projSearchQuery.toUpperCase()));
             const total = Math.ceil(filtered.length / projsPerPage) || 1;
-            const start = (projsCurrentPage - 1) * projsPerPage;
+            const startIndex = (projsCurrentPage - 1) * projsPerPage;
             list.innerHTML = '';
-            filtered.slice(start, start + projsPerPage).forEach(proj => {
-                const isOpen = openAdminProjName === proj.name; 
-                const assigned = proj.assignedUsers || [];
-                let pills = ''; assigned.forEach(u => pills += `<div class="user-pill flex items-center gap-1.5 px-3 py-1 rounded-xl text-[9px] font-extrabold uppercase"><span>${u}</span><button onclick="toggleUserAssignment('${proj.name}','${u}')" class="hover:text-red-500 font-black transition-all">×</button></div>`);
-                const available = usersData.filter(u => !assigned.includes(u.id));
-                let opts = '<option disabled selected>-- Tambah Anggota Tim --</option>'; available.forEach(u => opts += `<option value="${u.id}">${u.id.toUpperCase()}</option>`);
-                list.innerHTML += `
-                    <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm transition-all duration-300">
-                        <div class="p-4 cursor-pointer hover:bg-slate-50 flex justify-between items-center" onclick="toggleAdminAccordion(this,'${proj.name}')">
-                            <div class="flex flex-col"><span class="text-xs font-black uppercase text-slate-800">${proj.name}</span><span class="text-[8px] font-bold text-slate-400 tracking-widest">${proj.startDate || '-'} s/d ${proj.endDate || '-'}</span></div>
-                            <svg class="w-4 h-4 text-slate-300 transition-transform arrow-icon ${isOpen?'rotate-180':''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                        </div>
-                        <div class="${isOpen?'':'hidden'} p-4 bg-slate-50 border-t space-y-4">
-                            <div class="bg-white p-3.5 rounded-xl border border-slate-200"><p class="text-[8px] font-black text-slate-400 uppercase mb-3 tracking-widest">TIM PENANGGUNG JAWAB:</p><div class="flex flex-wrap gap-2 mb-4">${pills || '<p class="text-[8px] italic text-slate-300">Belum ada tim yang ditugaskan</p>'}</div><select onchange="addUserToProject('${proj.name}',this.value)" class="w-full p-2.5 border rounded-xl text-[10px] uppercase font-bold outline-none border-slate-200 bg-white">${opts}</select></div>
-                            <div class="flex justify-end gap-4"><button onclick="editProjectPrompt('${proj.name}','${proj.startDate}','${proj.endDate}')" class="text-blue-600 font-black text-[9px] uppercase hover:underline tracking-widest">Edit Progres & Tanggal</button><button onclick="deleteProject('${proj.name}')" class="text-red-500 font-black text-[9px] uppercase hover:underline tracking-widest">Hapus Seluruh Projek</button></div>
-                        </div>
-                    </div>`;
+            filtered.slice(startIndex, startIndex + projsPerPage).forEach(proj => {
+                const isOpen = openAdminProjName === proj.name;
+                const assigned = proj.assignedUsers || []; const progress = calculateProgress(proj.tasks);
+                let pills = ''; assigned.sort().forEach(uid => pills += `<div class="user-pill flex items-center gap-1 px-2 py-1 rounded-xl text-[9px] font-bold uppercase"><span>${uid}</span><button onclick="toggleUserAssignment('${proj.name}', '${uid}', false)" class="hover:text-red-500">×</button></div>`);
+                const available = usersData.filter(u => !assigned.includes(u.id)).sort((a,b) => a.id.localeCompare(b.id));
+                let opts = '<option value="" disabled selected>Pilih Anggota Tim...</option>'; available.forEach(u => opts += `<option value="${u.id}">${u.id.toUpperCase()}</option>`);
+                list.innerHTML += `<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all ${proj.isFinished ? 'opacity-60' : ''}"><div class="p-5 cursor-pointer hover:bg-slate-50 transition-colors" onclick="toggleAdminAccordion(this, '${proj.name}')"><div class="flex justify-between items-start"><div class="flex-grow space-y-1"><div class="flex items-center gap-2"><span class="text-xs font-extrabold uppercase text-slate-800">${proj.name}</span><span class="text-[9px] font-black text-blue-600">${Math.round(progress)}%</span></div><div class="text-[10px] text-slate-400 font-bold uppercase">${proj.startDate || '-'} &rarr; <span class="text-red-500">${proj.endDate || '-'}</span></div><div class="w-full bg-slate-100 h-1 rounded-full mt-2"><div class="bg-blue-600 h-full transition-all" style="width: ${progress}%"></div></div></div><svg class="w-4 h-4 text-slate-400 transition-transform arrow-icon ${isOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></div></div><div class="${isOpen ? '' : 'hidden'} px-5 pb-5 border-t border-slate-50 bg-slate-50/30 admin-accordion-body"><div class="flex justify-end gap-2 my-3"><button onclick="editProjectPrompt('${proj.name}', '${proj.startDate}', '${proj.endDate}')" class="text-blue-500 font-bold text-[9px] uppercase hover:underline">Edit Info</button><button onclick="deleteProject('${proj.name}')" class="text-red-400 font-bold text-[9px] uppercase hover:underline">Hapus Projek</button></div><div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm"><p class="text-[9px] font-extrabold text-slate-400 uppercase mb-2">Tim Penanggung Jawab:</p><div class="flex flex-wrap gap-1.5 mb-3">${pills || '<p class="text-[8px] italic text-slate-300">Belum ada tim</p>'}</div><div class="flex gap-2"><select id="selAddUser_${proj.name.replace(/\s+/g, '_')}" class="flex-grow p-2 border rounded-xl text-[10px] font-bold bg-white outline-none">${opts}</select><button onclick="addUserToProject('${proj.name}')" class="bg-blue-600 text-white px-4 rounded-xl font-bold active:scale-90 transition-transform">+</button></div></div></div></div>`;
             });
-            document.getElementById('projPagination').innerHTML = `<button onclick="changeProjPage(-1)" ${projsCurrentPage===1?'disabled':''} class="page-btn">Prev</button><span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Hal ${projsCurrentPage} / ${total}</span><button onclick="changeProjPage(1)" ${projsCurrentPage===total?'disabled':''} class="page-btn">Next</button>`;
+            pag.innerHTML = `<button onclick="changeProjPage(-1)" ${projsCurrentPage === 1 ? 'disabled' : ''} class="page-btn">Sebelumnya</button><span class="text-[10px] font-bold text-slate-400">Hal ${projsCurrentPage} dari ${total}</span><button onclick="changeProjPage(1)" ${projsCurrentPage === total ? 'disabled' : ''} class="page-btn">Selanjutnya</button>`;
         };
+
+        window.toggleAdminAccordion = (header, name) => {
+            const body = header.closest('.rounded-2xl').querySelector('.admin-accordion-body');
+            const arrow = header.querySelector('.arrow-icon'); const isHidden = body.classList.contains('hidden');
+            body.classList.toggle('hidden', !isHidden); arrow.classList.toggle('rotate-180', isHidden);
+            openAdminProjName = isHidden ? name : null;
+        };
+
+        window.addNewProject = async () => {
+            if (!auth.currentUser) return;
+            const name = document.getElementById('nP').value.toUpperCase().trim();
+            const start = document.getElementById('nPStart').value; const end = document.getElementById('nPEnd').value;
+            if(!name) return msg("NAMA PROJEK KOSONG!");
+            const maxOrder = projectsData.length > 0 ? Math.max(...projectsData.map(p => p.order || 0)) : 0;
+            if (isEditingProject) {
+                const old = editingProjectOldName;
+                if (name !== old) {
+                    const p = projectsData.find(x => x.name === old);
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { ...p, startDate: start, endDate: end });
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', old));
+                } else { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', old), { startDate: start, endDate: end }); }
+            } else { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { assignedUsers: [], startDate: start, endDate: end, tasks: {}, notes: "", isFinished: false, order: maxOrder + 1 }); }
+            resetProjectForm(); msg("✅ DATA TERSIMPAN");
+        };
+
+        window.resetProjectForm = () => { isEditingProject = false; editingProjectOldName = ""; document.getElementById('nP').value = ''; document.getElementById('nPStart').value = ''; document.getElementById('nPEnd').value = ''; document.getElementById('btnAddNewProject').innerText = "Simpan Projek"; document.getElementById('btnCancelEditProj').classList.add('hidden'); };
+        window.editProjectPrompt = (name, start, end) => { isEditingProject = true; editingProjectOldName = name; document.getElementById('nP').value = name; document.getElementById('nPStart').value = start || ''; document.getElementById('nPEnd').value = end || ''; document.getElementById('btnAddNewProject').innerText = "Update Projek"; document.getElementById('btnCancelEditProj').classList.remove('hidden'); };
+        window.deleteProject = async (name) => { if(!auth.currentUser) return; if(confirm("Hapus projek ini?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name)); };
+        
+        window.addUserToProject = async (name) => {
+            if (!auth.currentUser) return;
+            const uid = document.getElementById(`selAddUser_${name.replace(/\s+/g, '_')}`).value; if(!uid) return;
+            const p = projectsData.find(x => x.name === name); let assigned = p.assignedUsers || []; assigned.push(uid);
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { assignedUsers: assigned });
+        };
+
+        window.toggleUserAssignment = async (name, uid) => {
+            if (!auth.currentUser) return;
+            const p = projectsData.find(x => x.name === name); let assigned = (p.assignedUsers || []).filter(x => x !== uid);
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { assignedUsers: assigned });
+        };
+
+        function listenUsers() {
+            if (!auth.currentUser) return;
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
+                usersData = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderUserList();
+            }, (err) => { console.error("User Listener Error:", err); });
+        }
 
         window.renderUserList = () => {
-            const list = document.getElementById('userListSettings'); if(!list) return;
-            const start = (usersCurrentPage - 1) * usersPerPage;
-            const sorted = [...usersData].sort((a,b) => a.id.localeCompare(b.id));
-            const total = Math.ceil(sorted.length / usersPerPage) || 1;
+            if(currentUser.role !== 'ADMIN') return;
+            const flU = document.getElementById('flUser'); const list = document.getElementById('userListSettings'); const pag = document.getElementById('userPagination');
+            flU.innerHTML = '<option value="ALL">SEMUA TIM</option>';
+            const sorted = [...usersData].sort((a,b) => a.id.localeCompare(b.id)); sorted.forEach(u => flU.add(new Option(u.id.toUpperCase(), u.id)));
+            const total = Math.ceil(sorted.length / usersPerPage) || 1; const startIndex = (usersCurrentPage - 1) * usersPerPage;
             list.innerHTML = '';
-            sorted.slice(start, start + usersPerPage).forEach(u => {
-                list.innerHTML += `<div class="bg-white p-4 rounded-xl border border-slate-200 flex justify-between items-center shadow-sm mb-2 transition-all hover:border-blue-200"><div class="flex flex-col"><span class="text-xs font-black uppercase">${u.id}</span><span class="text-[9px] text-slate-400 font-bold tracking-widest">ROLE: ${u.role} &bull; PASS: ${u.password}</span></div><div class="flex gap-2"><button onclick="editUserPrompt('${u.id}','${u.password}','${u.role}')" class="text-blue-600 font-black text-[10px] p-2 hover:bg-blue-50 rounded-lg">EDIT</button><button onclick="deleteUser('${u.id}')" class="text-red-500 font-black text-[10px] p-2 hover:bg-red-50 rounded-lg">HAPUS</button></div></div>`;
-            });
-            document.getElementById('userPagination').innerHTML = `<button onclick="changeUserPage(-1)" ${usersCurrentPage===1?'disabled':''} class="page-btn">Prev</button><span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Hal ${usersCurrentPage} / ${total}</span><button onclick="changeUserPage(1)" ${usersCurrentPage===total?'disabled':''} class="page-btn">Next</button>`;
+            sorted.slice(startIndex, startIndex + usersPerPage).forEach(u => { list.innerHTML += `<div class="bg-white p-3 rounded-xl border border-slate-200 flex justify-between items-center"><div class="flex-grow"><p class="text-xs font-extrabold uppercase">${u.id} <span class="text-[9px] text-blue-500">(${u.role})</span></p><p class="text-[9px] font-bold text-slate-400">PASS: ${u.password}</p></div><div class="flex gap-2"><button onclick="editUserPrompt('${u.id}', '${u.password}', '${u.role}')" class="text-[10px] font-bold text-blue-500">EDIT</button><button onclick="deleteUser('${u.id}')" class="text-[10px] font-bold text-red-500">HAPUS</button></div></div>`; });
+            pag.innerHTML = `<button onclick="changeUserPage(-1)" ${usersCurrentPage === 1 ? 'disabled' : ''} class="page-btn">Sebelumnya</button><span class="text-[10px] font-bold text-slate-400 uppercase">Hal ${usersCurrentPage} dari ${total}</span><button onclick="changeUserPage(1)" ${usersCurrentPage === total ? 'disabled' : ''} class="page-btn">Next</button>`;
         };
 
-        // Fungsi khusus untuk mengisi dropdown filter di tab Pantauan
-        function renderFilterDropdowns() {
-            const flu = document.getElementById('flUser');
-            if(!flu || currentUser.role !== 'ADMIN') return;
-            
-            flu.innerHTML = '<option value="ALL">SEMUA USER</option>';
-            usersData.forEach(u => {
-                flu.add(new Option(u.id.toUpperCase(), u.id));
-            });
+        window.saveUser = async () => {
+            if (!auth.currentUser) return;
+            const u = document.getElementById('mU').value.trim().toLowerCase(); const p = document.getElementById('mP').value.trim(); const r = document.getElementById('mR').value;
+            if(!u || !p) return msg("ISI USER & PASS!");
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u), { password: p, role: r }, { merge: true });
+            resetUserForm(); msg("✅ AKUN DISIMPAN");
+        };
+
+        window.resetUserForm = () => { isEditingUser = false; document.getElementById('mU').value = ''; document.getElementById('mU').disabled = false; document.getElementById('mP').value = ''; document.getElementById('mR').value = 'USER'; document.getElementById('btnSaveUser').innerText = "Simpan Akun"; document.getElementById('btnCancelEdit').classList.add('hidden'); };
+        window.editUserPrompt = (u, p, r) => { isEditingUser = true; document.getElementById('mU').value = u; document.getElementById('mU').disabled = true; document.getElementById('mP').value = p; document.getElementById('mR').value = r; document.getElementById('btnSaveUser').innerText = "Update Akun"; document.getElementById('btnCancelEdit').classList.remove('hidden'); };
+        window.deleteUser = async (u) => { if(!auth.currentUser) return; if(u !== 'admin' && confirm("Hapus akun ini?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u)); };
+
+        function listenLogs() {
+            if (!auth.currentUser) return;
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), (snap) => {
+                logsData = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => {
+                    const timeA = a.ts ? (a.ts.seconds * 1000 + a.ts.nanoseconds / 1000000) : 0;
+                    const timeB = b.ts ? (b.ts.seconds * 1000 + b.ts.nanoseconds / 1000000) : 0;
+                    if (timeB === timeA) return new Date(b.tanggal) - new Date(a.tanggal);
+                    return timeB - timeA;
+                });
+                renderLogs();
+            }, (err) => { console.error("Logs Listener Error:", err); });
         }
 
-        window.addUserToProject = async (p, u) => { const proj = projectsData.find(x => x.name === p); let ass = proj.assignedUsers || []; if(!ass.includes(u)) { ass.push(u); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { assignedUsers: ass }); } };
-        window.toggleUserAssignment = async (p, u) => { const proj = projectsData.find(x => x.name === p); let ass = (proj.assignedUsers || []).filter(x => x !== u); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { assignedUsers: ass }); };
-        window.changeProjPage = (d) => { projsCurrentPage += d; renderProjectList(); };
-        window.changeUserPage = (d) => { usersCurrentPage += d; renderUserList(); };
-        window.handleProjSearch = () => { projSearchQuery = document.getElementById('searchProj').value; projsCurrentPage = 1; renderProjectList(); };
+        window.renderLogs = () => {
+            const list = document.getElementById('logList'); if(!list) return;
+            const fP = document.getElementById('flProj').value; 
+            const fU = (currentUser.role === 'ADMIN') ? document.getElementById('flUser').value : 'ALL';
+            const fK = document.getElementById('searchLog').value.toLowerCase();
+            const fStart = document.getElementById('flStartDate').value;
+            const fEnd = document.getElementById('flEndDate').value;
+
+            const filtered = logsData.filter(l => {
+                const matchProj = fP === 'ALL' || l.project_name === fP; 
+                const matchUser = fU === 'ALL' || l.username === fU;
+                const matchKey = (l.pekerjaan || "").toLowerCase().includes(fK) || (l.username || "").toLowerCase().includes(fK);
+                
+                let matchDate = true;
+                if (fStart && l.tanggal < fStart) matchDate = false;
+                if (fEnd && l.tanggal > fEnd) matchDate = false;
+
+                return matchProj && matchUser && matchKey && matchDate;
+            });
+
+            list.innerHTML = filtered.length ? '' : '<p class="text-center py-20 text-[10px] opacity-20 font-bold italic">Belum ada data</p>';
+            let lastDate = ""; let isWhite = true;
+            filtered.forEach(l => {
+                const canEdit = l.username === currentUser.username || currentUser.role === 'ADMIN';
+                const timeStr = l.ts ? new Date(l.ts.seconds * 1000).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '';
+                if (l.tanggal !== lastDate) { isWhite = !isWhite; lastDate = l.tanggal; }
+                const bgColorClass = isWhite ? 'bg-white' : 'bg-emerald-50';
+                list.innerHTML += `<div class="${bgColorClass} p-6 rounded-[2rem] shadow-sm border border-slate-100 transition-all"><div class="flex justify-between items-start mb-4"><div class="space-y-1"><span class="text-[9px] font-black bg-blue-50 text-blue-600 px-3 py-1 rounded-full uppercase">${l.username} &bull; ${l.project_name}</span><p class="text-sm font-extrabold text-slate-800">${new Date(l.tanggal).toLocaleDateString('id-ID', {day:'2-digit', month:'long', year:'numeric'})} ${timeStr ? `<span class="text-[10px] text-slate-300 font-bold">@ ${timeStr}</span>` : ''}</p></div>${canEdit ? `<div class="flex gap-1"><button onclick="editLogPrompt('${l.id}')" class="p-2 border rounded-full text-slate-300 hover:text-blue-500 transition-all"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg></button><button onclick="deleteLog('${l.id}')" class="p-2 border rounded-full text-slate-300 hover:text-red-500 transition-all"><svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path d="M19 7l-.867 12.142A2 2.032 0 0116.138 21H7.862a2 2.032 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div>` : ''}</div><div class="log-content text-[13px] text-slate-600 leading-relaxed font-semibold">${l.pekerjaan || ""}</div></div>`;
+            });
+        };
 
         document.getElementById('progressForm').onsubmit = async (e) => {
-            e.preventDefault(); const work = document.getElementById('f_work_editor').innerHTML;
-            if(!document.getElementById('f_proj').value) return msg("PILIH PROJEK TERLEBIH DAHULU!");
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), { tanggal: document.getElementById('f_date').value, username: currentUser.username, project_name: document.getElementById('f_proj').value, pekerjaan: work, ts: serverTimestamp() });
-            document.getElementById('f_work_editor').innerHTML = ''; msg("✅ LAPORAN KERJA BERHASIL DISIMPAN");
+            e.preventDefault(); 
+            if (!auth.currentUser) return;
+            const btn = document.getElementById('btnSubmitLog'); btn.disabled = true;
+            const workHtml = document.getElementById('f_work_editor').innerHTML;
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), { tanggal: document.getElementById('f_date').value, username: currentUser.username, project_name: document.getElementById('f_proj').value, pekerjaan: workHtml, ts: serverTimestamp() });
+            document.getElementById('f_work_editor').innerHTML = ''; msg("✅ PROGRES TERSIMPAN"); btn.disabled = false;
         };
 
-        window.editLogPrompt = (id) => { const log = logsData.find(l => l.id === id); document.getElementById('modalEdit').classList.remove('hidden'); document.getElementById('editLogWork').innerHTML = log.pekerjaan; window.editingLogId = id; };
-        window.confirmEditLog = async () => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', window.editingLogId), { pekerjaan: document.getElementById('editLogWork').innerHTML }); closeEditModal(); msg("✅ DATA LOG DIPERBARUI"); };
+        window.deleteLog = async (id) => { if(!auth.currentUser) return; if(confirm("Hapus progres ini?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', id)); };
+        window.editLogPrompt = (id) => { const log = logsData.find(l => l.id === id); if (!log) return; document.getElementById('editLogId').value = id; document.getElementById('editLogWork').innerHTML = log.pekerjaan; document.getElementById('modalEdit').classList.remove('hidden'); };
+        window.confirmEditLog = async () => { if (!auth.currentUser) return; const updatedWorkHtml = document.getElementById('editLogWork').innerHTML; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', document.getElementById('editLogId').value), { pekerjaan: updatedWorkHtml }); closeEditModal(); msg("✅ UPDATE BERHASIL"); };
         window.closeEditModal = () => document.getElementById('modalEdit').classList.add('hidden');
-        window.deleteLog = async (id) => { if(confirm("Hapus laporan kerja ini dari history?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', id)); };
 
-        function calculateProgress(t = {}) { return Math.round((TASKS.filter(x => t[x.key]).length / TASKS.length) * 100); }
-        function renderInputDropdowns() { const fp = document.getElementById('f_proj'), flp = document.getElementById('flProj'); if(!fp || !flp) return; fp.innerHTML = '<option disabled selected>-- Pilih Projek --</option>'; flp.innerHTML = '<option value="ALL">SEMUA PROJEK</option>'; projectsData.forEach(p => { if(currentUser.role==='ADMIN' || (p.assignedUsers||[]).includes(currentUser.username)) { fp.add(new Option(p.name, p.name)); flp.add(new Option(p.name, p.name)); } }); }
-        
-        function checkDeadlines() {
-            const b = document.getElementById('notifCount'), l = document.getElementById('notifList'); if(!b || !currentUser) return;
-            let c = 0, h = ''; projectsData.forEach(p => { 
-                if(p.isFinished) return; 
-                if(currentUser.role==='ADMIN' || (p.assignedUsers||[]).includes(currentUser.username)) { 
-                    const diff = Math.ceil((new Date(p.endDate) - new Date().setHours(0,0,0,0))/86400000); 
-                    if(diff <= 3) { 
-                        c++; 
-                        const status = diff <= 0 ? 'DEADLINE TERLEWAT!' : `DL ${diff} HARI LAGI`;
-                        h += `<div class="p-3 rounded-xl border ${diff<=0?'bg-black text-white':'bg-red-50 text-red-600'} text-[9px] uppercase font-black tracking-widest mb-1 shadow-sm">${status}: ${p.name}</div>`; 
-                    } 
-                } 
+        window.tab = (t) => {
+            ['input','logs','projek','settings'].forEach(k => {
+                const v = document.getElementById('v_'+k); const b = document.getElementById('t_'+k);
+                if(v) v.classList.toggle('hidden', k !== t);
+                if(b) { b.classList.toggle('tab-active', k === t); b.classList.toggle('text-slate-400', k !== t); if(k === t) b.classList.add('text-blue-600'); }
             });
-            b.innerText = c; b.classList.toggle('hidden', c===0); 
-            l.innerHTML = h || '<div class="text-[9px] text-center p-8 text-slate-300 font-bold italic uppercase">Aman, Tidak Ada Deadline Terdekat</div>';
-        }
+        };
 
-        document.addEventListener('click', (e) => { if(e.target.tagName === 'IMG' && e.target.closest('.log-content')) openZoomModal(e.target.src); });
+        window.msg = (m) => { const t = document.getElementById('toast'); t.innerText = m; t.style.opacity = "1"; setTimeout(() => t.style.opacity = "0", 3000); };
+        window.handleProjSearch = () => { projSearchQuery = document.getElementById('searchProj').value; projsCurrentPage = 1; renderProjectList(); };
+        window.changeProjPage = (d) => { projsCurrentPage += d; renderProjectList(); };
+        window.changeUserPage = (d) => { usersCurrentPage += d; renderUserList(); };
     </script>
 </body>
 </html>
