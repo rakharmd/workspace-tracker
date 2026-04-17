@@ -452,8 +452,6 @@
         let meetingsData = [];
         let isEditingUser = false;
         let isEditingProject = false;
-        
-        // PERUBAHAN: Penambahan state untuk editing logs
         let isEditingLog = false;
         let editingLogId = null;
 
@@ -526,7 +524,6 @@
             } else { msg("❌ LOGIN GAGAL"); btn.disabled = false; btn.innerText = "Masuk Sekarang"; }
         };
 
-        // PERUBAHAN: Penyesuaian Handler Simpan Laporan
         document.getElementById('progressForm').onsubmit = async (e) => {
             e.preventDefault();
             const btn = document.getElementById('btnSubmitLog');
@@ -548,7 +545,7 @@
                         pekerjaan: pekerjaan
                     });
                     msg("✅ LAPORAN DIPERBARUI");
-                    cancelEditLog(); // Reset form dan mode
+                    cancelEditLog();
                 } else {
                     await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), {
                         tanggal: tanggal,
@@ -559,7 +556,6 @@
                     });
                     document.getElementById('f_work_editor').innerHTML = "";
                     msg("✅ LAPORAN TERSIMPAN");
-                    // HAPUS pemanggilan tab('logs'); agar tetap di tab input
                 }
             } catch (err) {
                 msg("❌ GAGAL MENYIMPAN");
@@ -667,7 +663,6 @@
             filtered.forEach(l => {
                 const timeStr = l.ts ? new Date(l.ts.seconds * 1000).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '';
                 
-                // PERUBAHAN: Penambahan tombol Edit disamping Hapus
                 const actionButtons = (l.username === currentUser.username || currentUser.role === 'ADMIN') ? `
                     <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
                         <button onclick="editLog('${l.id}')" class="p-3 bg-blue-50 text-blue-500 rounded-2xl hover:bg-blue-500 hover:text-white transition-all shadow-sm" title="Edit Laporan">
@@ -699,7 +694,6 @@
             });
         };
 
-        // PERUBAHAN: Fungsi untuk menghandle klik tombol edit
         window.editLog = (id) => {
             const log = logsData.find(l => l.id === id);
             if(!log) return;
@@ -707,31 +701,25 @@
             isEditingLog = true;
             editingLogId = id;
 
-            // Masukkan data ke form
             document.getElementById('f_date').value = log.tanggal;
             document.getElementById('f_proj').value = log.project_name;
             document.getElementById('f_work_editor').innerHTML = log.pekerjaan || "";
 
-            // Update UI tombol
             document.getElementById('btnSubmitLog').innerText = "Update Laporan";
             document.getElementById('btnCancelEditLog').classList.remove('hidden');
 
-            // Pindah ke tab input
             tab('input');
             window.scrollTo(0,0);
         };
 
-        // PERUBAHAN: Fungsi untuk membatalkan mode edit log
         window.cancelEditLog = () => {
             isEditingLog = false;
             editingLogId = null;
 
-            // Reset form
             document.getElementById('f_date').value = getLocalDateString();
             document.getElementById('f_proj').value = "";
             document.getElementById('f_work_editor').innerHTML = "";
 
-            // Update UI tombol
             document.getElementById('btnSubmitLog').innerText = "Simpan Laporan Harian";
             document.getElementById('btnCancelEditLog').classList.add('hidden');
         };
@@ -973,6 +961,10 @@
                 const ds = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const isToday = ds === todayStr;
                 const inRange = proj.startDate && proj.endDate && ds >= proj.startDate && ds <= proj.endDate;
+                
+                // PERUBAHAN: Mengecek apakah ada laporan progress (log) di tanggal ini
+                const hasLog = logsData.some(l => l.tanggal === ds && l.project_name === proj.name);
+
                 let taskColors = [];
                 if(proj.taskTimelines) {
                     Object.keys(proj.taskTimelines).forEach(k => {
@@ -983,6 +975,7 @@
                 const rangeBg = inRange ? 'background:rgba(219,234,254,0.5)' : '';
                 const todayStyle = isToday ? 'outline:2px solid #2563eb;outline-offset:-2px;' : '';
                 grid.innerHTML += `<div class="cal-day" style="${rangeBg};${todayStyle}" onclick="showDayLogs('${ds}', '${calCurrentProjName}')">
+                    ${hasLog ? '<div class="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full shadow-sm"></div>' : ''}
                     <span class="cal-day-num ${isToday ? 'text-blue-600 font-black' : ''}">${day}</span>
                     ${taskColors.length ? `<div class="cal-overlay">${taskColors.map(c=>`<div class="cal-event-dot" style="background:${c};opacity:0.8"></div>`).join('')}</div>` : ''}
                 </div>`;
