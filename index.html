@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WORKSPACE Tracker - Admin Enabled</title>
+    <title>WORKSPACE Tracker - Auto-Log Enabled</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
@@ -641,7 +641,31 @@
         window.savePersonalNote = async () => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.username), { privateNotes: document.getElementById('personalNoteEditor').innerHTML }); msg("✅ CATATAN DISIMPAN"); };
         window.saveProjectNote = async (p, id) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { notes: document.getElementById(id).value }); msg("✅ CATATAN PROJEK DISIMPAN"); };
         window.toggleFinishProject = async (p, c) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { isFinished: c }); msg(c ? "✅ PROJEK FINISH" : "🔄 PROJEK AKTIF"); };
-        window.toggleTask = async (p, k, c) => { const proj = projectsData.find(x=>x.name===p); const tasks = {...(proj.tasks||{})}; tasks[k]=c; await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { tasks }); };
+        
+        // FITUR BARU: AUTO-LOG SAAT CHECKLIST DITEKAN
+        window.toggleTask = async (p, k, c) => { 
+            const proj = projectsData.find(x=>x.name===p); 
+            const tasks = {...(proj.tasks||{})}; 
+            tasks[k]=c; 
+            
+            // Simpan perubahan checklist ke projek
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { tasks }); 
+            
+            // Jika dicentang (selesai), otomatis buat log di Pantauan
+            if (c === true) {
+                const taskLabel = PROGRESS_TASKS.find(t => t.key === k)?.label || k;
+                const autoWorkMsg = `✅ Progress <b>${taskLabel}</b> projek <b>${p}</b> telah selesai.`;
+                
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), { 
+                    tanggal: getLocalDateString(), 
+                    username: currentUser.username, 
+                    project_name: p, 
+                    pekerjaan: autoWorkMsg, 
+                    ts: serverTimestamp() 
+                });
+                msg(`✅ PROGRESS ${taskLabel.toUpperCase()} DICATAT`);
+            }
+        };
 
         window.formatDoc = (cmd) => { document.execCommand(cmd, false, null); };
         window.insertBullet = (id) => { const el = document.getElementById(id); el.focus(); document.execCommand('insertUnorderedList', false, null); };
