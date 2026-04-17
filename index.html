@@ -66,7 +66,8 @@
 
         /* Calendar Styles */
         .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #e2e8f0; border: 1px solid #e2e8f0; border-radius: 0.5rem; overflow: hidden; }
-        .cal-day { background: white; min-height: 40px; padding: 4px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+        .cal-day { background: white; min-height: 40px; padding: 4px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; cursor: pointer; transition: background 0.2s; }
+        .cal-day:hover { background: #f1f5f9; }
         .cal-header { background: #f8fafc; font-size: 8px; font-weight: 900; color: #64748b; text-align: center; padding: 6px 0; text-transform: uppercase; }
         .cal-day-num { font-size: 10px; font-weight: 700; color: #1e293b; z-index: 10; }
         .cal-overlay { position: absolute; left: 0; right: 0; height: 100%; pointer-events: none; z-index: 5; }
@@ -284,7 +285,7 @@
         <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col">
             <div class="p-6 bg-yellow-400 flex justify-between items-center text-yellow-900 font-black uppercase text-xs">
                 <div class="flex items-center gap-2">
-                    <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path d="M2 6a2 2 0 012-2h4l2 2H4v10h10v-4l2-2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" /></svg>
+                    <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path d="M2 6a2 2 0 012-2h4l2 2H4v10h10v-4l2-2v6a2 2 0 01-2-2H4a2 2 0 01-2-2V6z" /></svg>
                     <span id="stickyProjName">Catatan Detail</span>
                 </div>
                 <button onclick="closeStickyModal()" class="bg-yellow-500/50 p-1 rounded hover:scale-110 transition-transform">
@@ -328,6 +329,22 @@
                     </div>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL DETAIL PANTUAN HARIAN -->
+    <div id="modalDayLogs" class="hidden fixed inset-0 z-[130] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+            <div class="p-5 border-b flex justify-between items-center bg-blue-600 text-white">
+                <div>
+                    <h3 id="dayLogsTitle" class="text-xs font-black uppercase tracking-widest">Detail Pantauan</h3>
+                    <p id="dayLogsDate" class="text-[10px] font-bold opacity-80"></p>
+                </div>
+                <button onclick="closeDayLogs()" class="bg-white/20 p-2 rounded-full hover:bg-white/30 transition-colors">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div id="dayLogsList" class="p-6 overflow-y-auto flex-grow space-y-4 bg-slate-50"></div>
         </div>
     </div>
 
@@ -779,7 +796,7 @@
                 }
 
                 grid.innerHTML += `
-                    <div class="cal-day">
+                    <div class="cal-day" onclick="showDayLogs('${dayStr}', '${proj.name}')">
                         <span class="cal-day-num">${day}</span>
                         <div class="cal-overlay">${overlays}</div>
                     </div>
@@ -791,8 +808,35 @@
 
         window.closeCalendar = () => document.getElementById('modalCalendar').classList.add('hidden');
 
-        // --- SEMUA LOGIKA LAIN TETAP SAMA ---
+        // --- SISTEM DETAIL PANTUAN HARIAN ---
+        window.showDayLogs = (dateStr, projName) => {
+            const list = document.getElementById('dayLogsList');
+            const titleDate = document.getElementById('dayLogsDate');
+            titleDate.innerText = new Date(dateStr).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'});
+            
+            const filtered = logsData.filter(l => l.tanggal === dateStr && l.project_name === projName);
+            
+            list.innerHTML = filtered.length ? '' : '<p class="text-center py-20 text-[10px] opacity-30 font-bold italic uppercase tracking-widest">Tidak ada pantauan di tanggal ini</p>';
+            
+            filtered.forEach(l => {
+                const timeStr = l.ts ? new Date(l.ts.seconds * 1000).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '';
+                list.innerHTML += `
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-[8px] font-black bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full uppercase">${l.username}</span>
+                            ${timeStr ? `<span class="text-[9px] text-slate-400 font-bold uppercase">Pukul ${timeStr}</span>` : ''}
+                        </div>
+                        <div class="log-content text-xs text-slate-600 leading-relaxed font-semibold">${l.pekerjaan || ""}</div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('modalDayLogs').classList.remove('hidden');
+        };
 
+        window.closeDayLogs = () => document.getElementById('modalDayLogs').classList.add('hidden');
+
+        // --- MANAJEMEN PROJEK ---
         window.renderProjectList = () => {
             const list = document.getElementById('projListSettings'); const pag = document.getElementById('projPagination'); if(!list) return;
             const filtered = projectsData.filter(p => p.name.includes(projSearchQuery.toUpperCase())).sort((a,b) => (a.order || 0) - (b.order || 0));
