@@ -673,7 +673,12 @@
                 const matchProj = fP === 'ALL' || l.project_name === fP; 
                 const matchUser = fU === 'ALL' || l.username === fU;
                 const matchKey = (l.pekerjaan || "").toLowerCase().includes(fK) || (l.username || "").toLowerCase().includes(fK);
-                const roleGuard = currentUser.role === 'ADMIN' || l.username === currentUser.username;
+                
+                // PERBAIKAN: Jika user ini ter-assign di project, maka dia bisa melihat laporannya (walau laporan admin/user lain)
+                const proj = projectsData.find(p => p.name === l.project_name);
+                const isAssigned = proj && (proj.assignedUsers || []).includes(currentUser.username);
+                const roleGuard = currentUser.role === 'ADMIN' || l.username === currentUser.username || isAssigned;
+                
                 const matchFrom = !fFrom || l.tanggal >= fFrom;
                 const matchTo = !fTo || l.tanggal <= fTo;
                 return matchProj && matchUser && matchKey && roleGuard && matchFrom && matchTo;
