@@ -617,6 +617,8 @@
                         if(activeProj) viewProjectDetail(activeProj);
                     }
                 }
+                // Refresh list meeting karena filter bergantung pada penugasan projek
+                renderMeetings();
             });
         }
 
@@ -872,7 +874,18 @@
         window.renderMeetings = () => {
             const list = document.getElementById('meetingList');
             const now = new Date().toISOString().split('T')[0];
-            const upcoming = meetingsData.filter(m => m.date >= now);
+            
+            // Filter berdasarkan tanggal dulu (hari ini atau ke depannya)
+            let upcoming = meetingsData.filter(m => m.date >= now);
+            
+            // Filter tambahan: Jika dia bukan ADMIN, dia hanya melihat meeting projek yang dia pegang
+            if (currentUser && currentUser.role !== 'ADMIN') {
+                upcoming = upcoming.filter(m => {
+                    const proj = projectsData.find(p => p.name === m.project);
+                    return proj && (proj.assignedUsers || []).includes(currentUser.username);
+                });
+            }
+
             if(upcoming.length === 0) {
                 list.innerHTML = `<div class="py-16 text-center opacity-20 italic text-[9px] font-black uppercase tracking-widest">Kosong</div>`;
                 return;
@@ -907,7 +920,14 @@
         window.openMeetingModal = () => {
             const sel = document.getElementById('meet_proj');
             sel.innerHTML = '<option value="" disabled selected>Pilih Projek...</option>';
-            projectsData.forEach(p => sel.add(new Option(p.name, p.name)));
+            
+            // Filter agar user hanya bisa membuat meeting untuk projek yang dia pegang (kecuali ADMIN)
+            projectsData.forEach(p => {
+                if (currentUser.role === 'ADMIN' || (p.assignedUsers || []).includes(currentUser.username)) {
+                    sel.add(new Option(p.name, p.name));
+                }
+            });
+            
             document.getElementById('modalMeeting').classList.remove('hidden');
         };
         window.closeMeetingModal = () => document.getElementById('modalMeeting').classList.add('hidden');
