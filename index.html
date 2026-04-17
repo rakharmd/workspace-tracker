@@ -771,9 +771,12 @@
                 grid.innerHTML += `<div class="bg-slate-50 min-h-[40px]"></div>`;
             }
 
+            const projName = proj.name;
+
             for (let day = 1; day <= daysInMonth; day++) {
-                const dayDate = new Date(year, month, day);
-                const dayStr = dayDate.toISOString().split('T')[0];
+                // Perbaikan: Buat string tanggal lokal manual (YYYY-MM-DD)
+                // Menghindari offset UTC yang menyebabkan tanggal bergeser 1 hari
+                const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 
                 let overlays = '';
                 
@@ -796,7 +799,7 @@
                 }
 
                 grid.innerHTML += `
-                    <div class="cal-day" onclick="showDayLogs('${dayStr}', '${proj.name}')">
+                    <div class="cal-day" onclick="showDayLogs('${dayStr}', '${projName}')">
                         <span class="cal-day-num">${day}</span>
                         <div class="cal-overlay">${overlays}</div>
                     </div>
