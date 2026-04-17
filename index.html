@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WORKSPACE Tracker - Auto Timeline Enabled</title>
+    <title>WORKSPACE Tracker - Auto Timeline & Meeting Card</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
@@ -16,6 +16,22 @@
         .btn-primary:active { transform: scale(0.95); }
         .modal-overlay { background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); }
         
+        /* Floating Meeting Card Style */
+        .meeting-floating {
+            position: fixed;
+            left: 2rem;
+            top: 130px;
+            width: 280px;
+            max-height: calc(100vh - 180px);
+            z-index: 45;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @media (max-width: 1280px) {
+            .meeting-floating { position: relative; left: 0; top: 0; width: 100%; margin-bottom: 1.5rem; max-height: none; }
+        }
+        .meeting-item { border-left: 4px solid #3b82f6; transition: transform 0.2s; }
+        .meeting-item:hover { transform: translateX(5px); background: #f1f5f9; }
+
         @keyframes pulse-red {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
             70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
@@ -61,7 +77,6 @@
         .btn-open-project { border: 1px solid #2563eb; color: #2563eb; padding: 6px 16px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; transition: all 0.2s; }
         .btn-open-project:hover { background: #2563eb; color: white; }
 
-        /* Timeline style */
         .timeline-date { font-size: 9px; font-weight: 800; color: #2563eb; margin-top: 1px; display: block; letter-spacing: -0.02em; }
 
         /* Calendar Styles */
@@ -91,173 +106,191 @@
     </div>
 
     <!-- 2. APLIKASI UTAMA (MAIN APP) -->
-    <div id="mainApp" class="hidden max-w-4xl mx-auto">
-        <header class="p-6 bg-white/80 backdrop-blur border-b flex justify-between items-center sticky top-0 z-50 shadow-sm">
-            <div class="flex items-center gap-4">
-                <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-100">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+    <div id="mainApp" class="hidden">
+        
+        <!-- FLOATING MEETING CARD (Left Sidebar) -->
+        <div id="meetingCard" class="meeting-floating">
+            <div class="card p-5 shadow-2xl border-blue-50 bg-white/95 backdrop-blur-md flex flex-col h-full">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-[10px] font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
+                        <span class="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span> Jadwal Meeting
+                    </h3>
+                    <button onclick="openMeetingModal()" class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold hover:scale-110 transition-transform shadow-lg shadow-blue-200">+</button>
                 </div>
-                <div>
-                    <h2 id="uDisp" class="font-bold text-slate-800 text-lg uppercase tracking-tight italic text-blue-600 leading-none mb-1">User</h2>
-                    <span id="rDisp" class="text-[8px] bg-slate-900 text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Role</span>
+                <div id="meetingList" class="space-y-3 overflow-y-auto no-scrollbar flex-grow pr-1">
+                    <p class="text-[9px] text-slate-300 italic text-center py-10 uppercase tracking-tighter">Memuat jadwal...</p>
                 </div>
             </div>
-            <div class="flex items-center gap-3">
-                <div class="relative">
-                    <button onclick="toggleNotifPanel()" class="p-2.5 bg-slate-50 rounded-full border border-slate-100 text-slate-400 hover:text-blue-600 transition-colors relative">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
-                        <span id="notifCount" class="hidden absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-white notif-badge-active">0</span>
-                    </button>
-                    <div id="notifPanel" class="hidden absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-2xl border border-slate-100 z-[60] overflow-hidden">
-                        <div class="p-4 bg-slate-50 border-b flex justify-between items-center"><span class="text-[10px] font-extrabold uppercase text-slate-500 tracking-widest">Pemberitahuan Deadline</span></div>
-                        <div id="notifList" class="max-h-80 overflow-y-auto p-2 space-y-2"></div>
+        </div>
+
+        <div class="max-w-4xl mx-auto">
+            <header class="p-6 bg-white/80 backdrop-blur border-b flex justify-between items-center sticky top-0 z-50 shadow-sm">
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-100">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                    </div>
+                    <div>
+                        <h2 id="uDisp" class="font-bold text-slate-800 text-lg uppercase tracking-tight italic text-blue-600 leading-none mb-1">User</h2>
+                        <span id="rDisp" class="text-[8px] bg-slate-900 text-white px-2 py-0.5 rounded-full font-bold uppercase tracking-widest">Role</span>
                     </div>
                 </div>
-                <button onclick="logout()" class="text-[10px] font-bold text-red-500 bg-red-50 px-4 py-2 rounded-full border border-red-100 uppercase transition-all hover:bg-red-100">Logout</button>
-            </div>
-        </header>
-
-        <nav class="flex bg-white border-b sticky top-[77px] z-40 overflow-x-auto no-scrollbar">
-            <button onclick="tab('input')" id="t_input" class="flex-1 py-4 text-[11px] font-bold tab-active uppercase tracking-widest">Input</button>
-            <button onclick="tab('logs')" id="t_logs" class="flex-1 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Pantauan</button>
-            <button onclick="tab('admin_view')" id="t_admin_view" class="hidden flex-1 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Admin</button>
-            <button onclick="tab('projek')" id="t_projek" class="hidden flex-1 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Projek</button>
-            <button onclick="tab('settings')" id="t_settings" class="hidden flex-1 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Settings</button>
-        </nav>
-
-        <main class="p-4">
-            <!-- VIEW: INPUT PROGRES -->
-            <section id="v_input" class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div class="md:col-span-2 space-y-6">
-                    <div class="card p-6 shadow-sm border-blue-50">
-                        <form id="progressForm" class="space-y-4">
-                            <label class="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Tanggal Kerja</label>
-                            <input type="date" id="f_date" required class="w-full p-3 border rounded-xl bg-slate-50 outline-none text-sm font-semibold border-slate-200">
-                            <label class="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Pilih Projek</label>
-                            <select id="f_proj" required class="w-full p-3 border rounded-xl bg-white font-bold text-slate-700 text-sm outline-none border-slate-200"></select>
-                            
-                            <label class="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-wider uppercase">Laporan Pekerjaan & Dokumentasi</label>
-                            <div class="editor-container">
-                                <div id="f_work_toolbar" class="editor-toolbar">
-                                    <button type="button" onclick="insertBullet('f_work_editor')" class="toolbar-btn" title="Bullet List">• List</button>
-                                    <button type="button" onclick="triggerImageInput()" class="toolbar-btn" title="Insert Image">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                    </button>
-                                    <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
-                                </div>
-                                <div id="f_work_editor" contenteditable="true" class="editor-content w-full focus:ring-2 focus:ring-blue-100" placeholder="Tuliskan progres kerja hari ini... (Bisa copy-paste gambar ke sini)"></div>
-                            </div>
-                            
-                            <button type="submit" id="btnSubmitLog" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg uppercase text-[10px] tracking-widest active:scale-95 transition-all">Simpan Progres</button>
-                        </form>
-                    </div>
-
-                    <div class="card p-6 shadow-sm border-slate-100">
-                        <h3 class="text-[10px] font-extrabold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-purple-600 rounded-full"></span> Catatan Pribadi Akun</h3>
-                        <div class="editor-container">
-                            <div class="editor-toolbar">
-                                <button type="button" onclick="formatDoc('bold')" class="toolbar-btn" title="Bold">B</button>
-                                <button type="button" onclick="formatDoc('italic')" class="toolbar-btn italic" title="Italic">I</button>
-                                <button type="button" onclick="formatDoc('underline')" class="toolbar-btn underline" title="Underline">U</button>
-                                <button type="button" onclick="insertBullet('personalNoteEditor')" class="toolbar-btn" title="List">• List</button>
-                            </div>
-                            <div id="personalNoteEditor" contenteditable="true" class="editor-content" placeholder="Tulis catatan pribadi kamu di sini..."></div>
-                        </div>
-                        <div class="mt-3 flex justify-end">
-                            <button id="btnSavePersonalNote" onclick="savePersonalNote()" class="bg-slate-900 text-white text-[10px] font-bold py-2.5 px-6 rounded-xl uppercase tracking-widest shadow-md">Simpan Catatan</button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="md:col-span-1 space-y-4">
-                    <div class="card p-5 shadow-sm bg-slate-50/50 border-slate-100 h-fit sticky top-[150px]">
-                        <h3 class="text-[10px] font-extrabold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-blue-600 rounded-full"></span> Urutan Projek (Drag)</h3>
-                        <div id="sideProjList" class="space-y-4 min-h-[100px]"></div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- VIEW: PANTAUAN LOGS -->
-            <section id="v_logs" class="hidden space-y-4 max-w-2xl mx-auto">
-                <div class="card p-4 space-y-3 sticky top-[140px] z-30 shadow-xl border-slate-200 bg-white">
+                <div class="flex items-center gap-3">
                     <div class="relative">
-                        <input type="text" id="searchLog" oninput="renderLogs()" placeholder="Cari isi laporan kerja..." class="w-full p-2.5 pl-9 border rounded-xl text-xs outline-none bg-slate-50 border-slate-200 font-semibold focus:ring-1 focus:ring-blue-500">
-                        <svg class="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <button onclick="toggleNotifPanel()" class="p-2.5 bg-slate-50 rounded-full border border-slate-100 text-slate-400 hover:text-blue-600 transition-colors relative">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>
+                            <span id="notifCount" class="hidden absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-[8px] font-black rounded-full flex items-center justify-center border-2 border-white notif-badge-active">0</span>
+                        </button>
+                        <div id="notifPanel" class="hidden absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-2xl border border-slate-100 z-[60] overflow-hidden">
+                            <div class="p-4 bg-slate-50 border-b flex justify-between items-center"><span class="text-[10px] font-extrabold uppercase text-slate-500 tracking-widest">Pemberitahuan Deadline</span></div>
+                            <div id="notifList" class="max-h-80 overflow-y-auto p-2 space-y-2"></div>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <select id="flUser" onchange="renderLogs()" class="p-2 border rounded-xl text-[10px] font-bold bg-white outline-none border-slate-200"></select>
-                        <select id="flProj" onchange="renderLogs()" class="p-2 border rounded-xl text-[10px] font-bold bg-white outline-none border-slate-200"></select>
+                    <button onclick="logout()" class="text-[10px] font-bold text-red-500 bg-red-50 px-4 py-2 rounded-full border border-red-100 uppercase transition-all hover:bg-red-100">Logout</button>
+                </div>
+            </header>
+
+            <nav class="flex bg-white border-b sticky top-[77px] z-40 overflow-x-auto no-scrollbar shadow-sm">
+                <button onclick="tab('input')" id="t_input" class="flex-1 py-4 text-[11px] font-bold tab-active uppercase tracking-widest">Input</button>
+                <button onclick="tab('logs')" id="t_logs" class="flex-1 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Pantauan</button>
+                <button onclick="tab('admin_view')" id="t_admin_view" class="hidden flex-1 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Admin</button>
+                <button onclick="tab('projek')" id="t_projek" class="hidden flex-1 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Projek</button>
+                <button onclick="tab('settings')" id="t_settings" class="hidden flex-1 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">Settings</button>
+            </nav>
+
+            <main class="p-6">
+                <!-- VIEW: INPUT PROGRES -->
+                <section id="v_input" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="md:col-span-2 space-y-6">
+                        <div class="card p-6 shadow-sm border-blue-50">
+                            <form id="progressForm" class="space-y-4">
+                                <label class="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Tanggal Kerja</label>
+                                <input type="date" id="f_date" required class="w-full p-3 border rounded-xl bg-slate-50 outline-none text-sm font-semibold border-slate-200">
+                                <label class="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-wider">Pilih Projek</label>
+                                <select id="f_proj" required class="w-full p-3 border rounded-xl bg-white font-bold text-slate-700 text-sm outline-none border-slate-200"></select>
+                                
+                                <label class="text-[9px] font-bold text-slate-400 uppercase ml-1 tracking-wider uppercase">Laporan Pekerjaan & Dokumentasi</label>
+                                <div class="editor-container">
+                                    <div id="f_work_toolbar" class="editor-toolbar">
+                                        <button type="button" onclick="insertBullet('f_work_editor')" class="toolbar-btn" title="Bullet List">• List</button>
+                                        <button type="button" onclick="triggerImageInput()" class="toolbar-btn" title="Insert Image">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                        </button>
+                                        <input type="file" id="imageInput" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                                    </div>
+                                    <div id="f_work_editor" contenteditable="true" class="editor-content w-full focus:ring-2 focus:ring-blue-100" placeholder="Tuliskan progres kerja hari ini..."></div>
+                                </div>
+                                
+                                <button type="submit" id="btnSubmitLog" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg uppercase text-[10px] tracking-widest active:scale-95 transition-all">Simpan Progres</button>
+                            </form>
+                        </div>
+
+                        <div class="card p-6 shadow-sm border-slate-100">
+                            <h3 class="text-[10px] font-extrabold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-purple-600 rounded-full"></span> Catatan Pribadi Akun</h3>
+                            <div class="editor-container">
+                                <div class="editor-toolbar">
+                                    <button type="button" onclick="formatDoc('bold')" class="toolbar-btn">B</button>
+                                    <button type="button" onclick="formatDoc('italic')" class="toolbar-btn italic">I</button>
+                                    <button type="button" onclick="formatDoc('underline')" class="toolbar-btn underline">U</button>
+                                    <button type="button" onclick="insertBullet('personalNoteEditor')" class="toolbar-btn">• List</button>
+                                </div>
+                                <div id="personalNoteEditor" contenteditable="true" class="editor-content" placeholder="Tulis catatan pribadi kamu di sini..."></div>
+                            </div>
+                            <div class="mt-3 flex justify-end">
+                                <button id="btnSavePersonalNote" onclick="savePersonalNote()" class="bg-slate-900 text-white text-[10px] font-bold py-2.5 px-6 rounded-xl uppercase tracking-widest shadow-md">Simpan Catatan</button>
+                            </div>
+                        </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <input type="date" id="flStartDate" onchange="renderLogs()" class="p-2 border rounded-xl text-[10px] bg-white outline-none font-bold border-slate-200">
-                        <input type="date" id="flEndDate" onchange="renderLogs()" class="p-2 border rounded-xl text-[10px] bg-white outline-none font-bold border-slate-200">
+
+                    <div class="md:col-span-1 space-y-4">
+                        <div class="card p-5 shadow-sm bg-slate-50/50 border-slate-100 h-fit sticky top-[150px]">
+                            <h3 class="text-[10px] font-extrabold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-blue-600 rounded-full"></span> Urutan Projek (Drag)</h3>
+                            <div id="sideProjList" class="space-y-4 min-h-[100px]"></div>
+                        </div>
                     </div>
-                </div>
-                <div id="logList" class="space-y-4 pt-2"></div>
-            </section>
+                </section>
 
-            <!-- VIEW: ADMIN DASHBOARD (VISUAL) -->
-            <section id="v_admin_view" class="hidden space-y-8 max-w-5xl mx-auto">
-                <div>
-                    <h3 class="text-lg font-extrabold text-slate-800 uppercase mb-6 tracking-tighter flex items-center gap-3"><span class="w-3 h-3 bg-blue-600 rounded-full"></span> On-going Project</h3>
-                    <div id="adminOngoingList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-                </div>
-                <div class="pt-10">
-                    <h3 class="text-lg font-extrabold text-slate-800 uppercase mb-6 tracking-tighter flex items-center gap-3"><span class="w-3 h-3 bg-green-500 rounded-full"></span> Finish Project</h3>
-                    <div id="adminFinishList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-                </div>
-            </section>
-
-            <!-- VIEW: DETAIL PROJEK (KHUSUS ADMIN) -->
-            <section id="v_project_detail" class="hidden space-y-6 max-w-2xl mx-auto">
-                <button onclick="tab('admin_view')" class="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors mb-4">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                    Kembali ke Dashboard
-                </button>
-                <div id="projectDetailContent"></div>
-            </section>
-
-            <!-- VIEW: PROJEK GLOBAL (ADMIN MANAGEMENT) -->
-            <section id="v_projek" class="hidden space-y-6 max-w-2xl mx-auto">
-                <div class="card p-6 shadow-sm border-slate-100 bg-white">
-                    <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-green-600 rounded-full"></span> Master Projek Global</h3>
-                    <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 mb-6">
-                        <p id="projFormTitle" class="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Tambah / Edit Projek</p>
-                        <input type="text" id="nP" placeholder="NAMA PROJEK..." class="w-full p-3 border rounded-xl text-sm outline-none uppercase font-bold border-slate-200 bg-white">
+                <!-- VIEW: PANTAUAN LOGS -->
+                <section id="v_logs" class="hidden space-y-4 max-w-2xl mx-auto">
+                    <div class="card p-4 space-y-3 sticky top-[140px] z-30 shadow-xl border-slate-200 bg-white">
+                        <div class="relative">
+                            <input type="text" id="searchLog" oninput="renderLogs()" placeholder="Cari isi laporan kerja..." class="w-full p-2.5 pl-9 border rounded-xl text-xs outline-none bg-slate-50 border-slate-200 font-semibold focus:ring-1 focus:ring-blue-500">
+                            <svg class="w-4 h-4 absolute left-3 top-2.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
                         <div class="grid grid-cols-2 gap-2">
-                            <div><label class="text-[8px] font-bold text-slate-400 ml-1">MULAI</label><input type="date" id="nPStart" class="w-full p-2.5 border rounded-xl text-xs bg-white outline-none"></div>
-                            <div><label class="text-[8px] font-bold text-slate-400 ml-1">DEADLINE</label><input type="date" id="nPEnd" class="w-full p-2.5 border rounded-xl text-xs bg-white outline-none"></div>
+                            <select id="flUser" onchange="renderLogs()" class="p-2 border rounded-xl text-[10px] font-bold bg-white outline-none border-slate-200"></select>
+                            <select id="flProj" onchange="renderLogs()" class="p-2 border rounded-xl text-[10px] font-bold bg-white outline-none border-slate-200"></select>
                         </div>
-                        <div class="flex gap-2">
-                            <button id="btnCancelEditProj" onclick="resetProjectForm()" class="hidden flex-1 bg-slate-200 text-slate-600 font-bold py-3 rounded-xl text-[10px] uppercase">Batal</button>
-                            <button id="btnAddNewProject" onclick="addNewProject()" class="flex-[2] bg-blue-600 text-white py-3 rounded-xl font-bold text-xs uppercase shadow-lg">Simpan Projek</button>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="date" id="flStartDate" onchange="renderLogs()" class="p-2 border rounded-xl text-[10px] bg-white outline-none font-bold border-slate-200">
+                            <input type="date" id="flEndDate" onchange="renderLogs()" class="p-2 border rounded-xl text-[10px] bg-white outline-none font-bold border-slate-200">
                         </div>
                     </div>
-                    <div class="relative mb-4">
-                        <input type="text" id="searchProj" oninput="handleProjSearch()" placeholder="Cari nama projek..." class="w-full p-3 pl-10 border rounded-xl text-xs outline-none bg-white border-slate-200"><svg class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                    </div>
-                    <div id="projListSettings" class="space-y-4 mb-4"></div>
-                    <div id="projPagination" class="flex justify-between items-center px-1"></div>
-                </div>
-            </section>
+                    <div id="logList" class="space-y-4 pt-2"></div>
+                </section>
 
-            <!-- VIEW: SETTINGS (ADMIN MANAGEMENT) -->
-            <section id="v_settings" class="hidden space-y-8 max-w-2xl mx-auto">
-                <div class="card p-6 shadow-sm border-slate-100 bg-white">
-                    <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-blue-600 rounded-full"></span> Manajemen Akun</h3>
-                    <div class="space-y-4 mb-8">
-                        <div class="grid grid-cols-2 gap-2"><input type="text" id="mU" placeholder="User" class="p-3 border rounded-xl text-sm outline-none bg-slate-50"><input type="text" id="mP" placeholder="Pass" class="p-3 border rounded-xl text-sm outline-none bg-slate-50"></div>
-                        <select id="mR" class="w-full p-3 border rounded-xl text-sm outline-none bg-slate-50"><option value="USER">TIM (USER)</option><option value="ADMIN">ADMINISTRATOR</option></select>
-                        <div class="flex gap-2">
-                            <button id="btnCancelEdit" onclick="resetUserForm()" class="hidden flex-1 bg-slate-200 text-slate-600 font-bold py-3 rounded-xl text-[10px] uppercase">Batal</button>
-                            <button onclick="saveUser()" id="btnSaveUser" class="flex-[2] bg-slate-900 text-white font-bold py-3 rounded-xl text-[10px] uppercase">Simpan Akun</button>
-                        </div>
+                <!-- VIEW: ADMIN DASHBOARD -->
+                <section id="v_admin_view" class="hidden space-y-8 max-w-5xl mx-auto">
+                    <div>
+                        <h3 class="text-lg font-extrabold text-slate-800 uppercase mb-6 tracking-tighter flex items-center gap-3"><span class="w-3 h-3 bg-blue-600 rounded-full"></span> On-going Project</h3>
+                        <div id="adminOngoingList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
                     </div>
-                    <div class="space-y-2 mb-4" id="userListSettings"></div>
-                    <div id="userPagination" class="flex justify-between items-center px-1"></div>
-                </div>
-            </section>
-        </main>
+                    <div class="pt-10">
+                        <h3 class="text-lg font-extrabold text-slate-800 uppercase mb-6 tracking-tighter flex items-center gap-3"><span class="w-3 h-3 bg-green-500 rounded-full"></span> Finish Project</h3>
+                        <div id="adminFinishList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                    </div>
+                </section>
+
+                <!-- VIEW: DETAIL PROJEK -->
+                <section id="v_project_detail" class="hidden space-y-6 max-w-2xl mx-auto">
+                    <button onclick="tab('admin_view')" class="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest hover:text-blue-600 transition-colors mb-4">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+                        Kembali ke Dashboard
+                    </button>
+                    <div id="projectDetailContent"></div>
+                </section>
+
+                <!-- VIEW: PROJEK GLOBAL -->
+                <section id="v_projek" class="hidden space-y-6 max-w-2xl mx-auto">
+                    <div class="card p-6 shadow-sm border-slate-100 bg-white">
+                        <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-green-600 rounded-full"></span> Master Projek Global</h3>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-3 mb-6">
+                            <p id="projFormTitle" class="text-[9px] font-extrabold text-slate-400 uppercase tracking-widest">Tambah / Edit Projek</p>
+                            <input type="text" id="nP" placeholder="NAMA PROJEK..." class="w-full p-3 border rounded-xl text-sm outline-none uppercase font-bold border-slate-200 bg-white">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div><label class="text-[8px] font-bold text-slate-400 ml-1">MULAI</label><input type="date" id="nPStart" class="w-full p-2.5 border rounded-xl text-xs bg-white outline-none"></div>
+                                <div><label class="text-[8px] font-bold text-slate-400 ml-1">DEADLINE</label><input type="date" id="nPEnd" class="w-full p-2.5 border rounded-xl text-xs bg-white outline-none"></div>
+                            </div>
+                            <div class="flex gap-2">
+                                <button id="btnCancelEditProj" onclick="resetProjectForm()" class="hidden flex-1 bg-slate-200 text-slate-600 font-bold py-3 rounded-xl text-[10px] uppercase">Batal</button>
+                                <button id="btnAddNewProject" onclick="addNewProject()" class="flex-[2] bg-blue-600 text-white py-3 rounded-xl font-bold text-xs uppercase shadow-lg">Simpan Projek</button>
+                            </div>
+                        </div>
+                        <div class="relative mb-4">
+                            <input type="text" id="searchProj" oninput="handleProjSearch()" placeholder="Cari nama projek..." class="w-full p-3 pl-10 border rounded-xl text-xs outline-none bg-white border-slate-200"><svg class="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+                        <div id="projListAdmin" class="space-y-4 mb-4"></div>
+                        <div id="projPagination" class="flex justify-between items-center px-1"></div>
+                    </div>
+                </section>
+
+                <!-- VIEW: SETTINGS -->
+                <section id="v_settings" class="hidden space-y-8 max-w-2xl mx-auto">
+                    <div class="card p-6 shadow-sm border-slate-100 bg-white">
+                        <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-blue-600 rounded-full"></span> Manajemen Akun</h3>
+                        <div class="space-y-4 mb-8">
+                            <div class="grid grid-cols-2 gap-2"><input type="text" id="mU" placeholder="User" class="p-3 border rounded-xl text-sm outline-none bg-slate-50"><input type="text" id="mP" placeholder="Pass" class="p-3 border rounded-xl text-sm outline-none bg-slate-50"></div>
+                            <select id="mR" class="w-full p-3 border rounded-xl text-sm outline-none bg-slate-50"><option value="USER">TIM (USER)</option><option value="ADMIN">ADMINISTRATOR</option></select>
+                            <div class="flex gap-2">
+                                <button id="btnCancelEdit" onclick="resetUserForm()" class="hidden flex-1 bg-slate-200 text-slate-600 font-bold py-3 rounded-xl text-[10px] uppercase">Batal</button>
+                                <button onclick="saveUser()" id="btnSaveUser" class="flex-[2] bg-slate-900 text-white font-bold py-3 rounded-xl text-[10px] uppercase">Simpan Akun</button>
+                            </div>
+                        </div>
+                        <div class="space-y-2 mb-4" id="userListSettings"></div>
+                        <div id="userPagination" class="flex justify-between items-center px-1"></div>
+                    </div>
+                </section>
+            </main>
+        </div>
     </div>
 
     <!-- MODALS SECTION -->
@@ -299,6 +332,25 @@
         </div>
     </div>
 
+    <!-- MODAL MEETING -->
+    <div id="modalMeeting" class="hidden fixed inset-0 z-[110] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md p-6 rounded-3xl shadow-2xl">
+            <h3 class="text-xs font-black text-slate-800 uppercase mb-4 tracking-widest">Buat Jadwal Meeting</h3>
+            <form id="meetingForm" class="space-y-4">
+                <input type="text" id="m_title" required placeholder="Judul Meeting..." class="w-full p-4 border rounded-2xl bg-slate-50 font-bold text-sm">
+                <div class="grid grid-cols-2 gap-2">
+                    <input type="date" id="m_date" required class="p-3 border rounded-xl text-xs">
+                    <input type="time" id="m_time" required class="p-3 border rounded-xl text-xs">
+                </div>
+                <select id="m_proj" required class="w-full p-4 border rounded-2xl bg-white font-bold text-sm"></select>
+                <div class="flex gap-2 pt-4">
+                    <button type="button" onclick="closeMeetingModal()" class="flex-1 py-3 bg-slate-100 text-slate-500 rounded-xl font-bold text-xs uppercase">Batal</button>
+                    <button type="submit" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-xs uppercase shadow-lg shadow-blue-100">Simpan Jadwal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODAL KALENDER TIMELINE -->
     <div id="modalCalendar" class="hidden fixed inset-0 z-[120] modal-overlay flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -313,7 +365,6 @@
             </div>
             <div class="p-6 overflow-y-auto flex-grow bg-slate-50/50">
                 <div id="calContainer" class="grid grid-cols-1 md:grid-cols-2 gap-8"></div>
-                
                 <div class="mt-8 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
                     <h4 class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-3">Keterangan Warna</h4>
                     <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
@@ -348,15 +399,13 @@
         </div>
     </div>
 
-    <!-- TOAST NOTIFICATION -->
     <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl opacity-0 z-[100] text-[10px] font-bold uppercase tracking-widest text-center"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, onSnapshot, addDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Firebase Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyD-wrKOTP046d3Ojr_pKPHEWWf7Kuk5Nco",
             authDomain: "workspace-tracker-b3f8a.firebaseapp.com",
@@ -375,6 +424,7 @@
         let logsData = [];
         let usersData = [];
         let projectsData = [];
+        let meetingsData = [];
         let isEditingUser = false;
         let isEditingProject = false;
         let editingProjectOldName = "";
@@ -456,10 +506,8 @@
                 document.getElementById('t_projek').classList.remove('hidden');
                 document.getElementById('t_settings').classList.remove('hidden');
                 tab('admin_view');
-            } else {
-                tab('input');
-            }
-            listenUsers(); listenProjects(); listenLogs();
+            } else { tab('input'); }
+            listenUsers(); listenProjects(); listenLogs(); listenMeetings();
         }
 
         window.logout = () => { if (confirm("Keluar dari aplikasi?")) { localStorage.removeItem('ws_user'); location.reload(); } };
@@ -495,6 +543,60 @@
                 renderLogs();
             });
         }
+
+        function listenMeetings() {
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'meetings'), (snap) => {
+                meetingsData = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a,b) => new Date(a.date) - new Date(b.date));
+                renderMeetings();
+            });
+        }
+
+        window.renderMeetings = () => {
+            const list = document.getElementById('meetingList');
+            const today = getLocalDateString();
+            const upcoming = meetingsData.filter(m => m.date >= today);
+
+            if (upcoming.length === 0) {
+                list.innerHTML = '<p class="text-[9px] text-slate-300 italic text-center py-10 uppercase tracking-tighter">Belum ada jadwal...</p>';
+                return;
+            }
+
+            list.innerHTML = '';
+            upcoming.forEach(m => {
+                const isToday = m.date === today;
+                list.innerHTML += `
+                    <div class="meeting-item bg-white p-3 rounded-xl border border-slate-100 shadow-sm relative group">
+                        <span class="text-[7px] font-black text-blue-600 uppercase mb-1 block tracking-tighter">${m.project}</span>
+                        <h4 class="text-[10px] font-extrabold text-slate-800 leading-tight mb-2">${m.title}</h4>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 rounded text-[8px] font-black ${isToday ? 'bg-red-50 text-red-500' : 'bg-slate-50 text-slate-400'} uppercase">${isToday ? 'HARI INI' : m.date}</span>
+                            <span class="text-[8px] font-bold text-slate-400">@ ${m.time}</span>
+                        </div>
+                        <button onclick="deleteMeeting('${m.id}')" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-all text-xs font-bold">×</button>
+                    </div>`;
+            });
+        };
+
+        window.openMeetingModal = () => {
+            document.getElementById('m_date').value = getLocalDateString();
+            document.getElementById('modalMeeting').classList.remove('hidden');
+        };
+
+        window.closeMeetingModal = () => document.getElementById('modalMeeting').classList.add('hidden');
+
+        document.getElementById('meetingForm').onsubmit = async (e) => {
+            e.preventDefault();
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'meetings'), {
+                title: document.getElementById('m_title').value,
+                date: document.getElementById('m_date').value,
+                time: document.getElementById('m_time').value,
+                project: document.getElementById('m_proj').value
+            });
+            closeMeetingModal(); msg("✅ MEETING TERJADWAL");
+            document.getElementById('meetingForm').reset();
+        };
+
+        window.deleteMeeting = async (id) => { if(confirm("Hapus jadwal meeting?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'meetings', id)); };
 
         window.renderLogs = () => {
             const list = document.getElementById('logList'); if(!list) return;
@@ -654,7 +756,7 @@
         window.renderSidebarDeadlines = () => {
             const sideList = document.getElementById('sideProjList'); if(!sideList) return;
             const userProjects = projectsData.filter(proj => currentUser.role === 'ADMIN' || (proj.assignedUsers || []).includes(currentUser.username));
-            sideList.innerHTML = userProjects.length ? '' : '<p class="text-[9px] text-slate-400 text-center py-10 uppercase tracking-widest font-black italic opacity-20">No Project Active</p>';
+            sideList.innerHTML = userProjects.length ? '' : '<p class="text-[9px] text-slate-300 text-center py-10 uppercase tracking-widest font-black italic opacity-20">No Project Active</p>';
             userProjects.forEach((proj) => {
                 const deadlineStr = proj.endDate ? new Date(proj.endDate).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) : 'No Deadline';
                 const progress = calculateProgress(proj.tasks); const isFinished = proj.isFinished || false; const safeName = proj.name.replace(/\s+/g, '_');
@@ -707,11 +809,9 @@
                         </div>
                         <div class="${isOpen ? '' : 'hidden'} px-4 pb-4 border-t ${isFinished ? 'border-slate-700 bg-slate-800/50' : 'border-slate-50'} mt-1 accordion-body">
                              <div class="grid grid-cols-1 gap-y-1 bg-slate-50/50 p-2.5 rounded-xl my-4">${checklistHtml}</div>
-                             
                              <div class="mb-4">
                                 <button onclick="openCalendar('${proj.name}')" class="w-full py-2.5 bg-slate-100 text-slate-800 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-200">Kalender Timeline</button>
                              </div>
-
                              <div class="sticky-note">
                                 <button onclick="openStickyZoom('${proj.name}')" class="absolute top-2 right-2 p-1.5 bg-white/50 hover:bg-white rounded-lg shadow-sm text-yellow-900 transition-all z-10"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg></button>
                                 <textarea id="note_${safeName}" class="sticky-note-textarea" placeholder="Catatan projek...">${proj.notes || ""}</textarea>
@@ -725,175 +825,73 @@
             });
         };
 
-        // --- SISTEM KALENDER TIMELINE ---
         window.openCalendar = (projName) => {
             const proj = projectsData.find(p => p.name === projName);
             if (!proj) return;
-
-            // Update Header dengan Nama dan Badge Tanggal (Gambar 1)
-            document.getElementById('calProjName').innerHTML = `
-                Timeline: ${projName} 
-                <span class="ml-2 text-[10px] text-blue-500 font-bold bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 shadow-sm">
-                    ${formatDateShort(proj.startDate)} — ${formatDateShort(proj.endDate)}
-                </span>
-            `;
-
+            document.getElementById('calProjName').innerHTML = `Timeline: ${projName} <span class="ml-2 text-[10px] text-blue-500 font-bold bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 shadow-sm">${formatDateShort(proj.startDate)} — ${formatDateShort(proj.endDate)}</span>`;
             const container = document.getElementById('calContainer');
             container.innerHTML = '';
-
-            // LOGIKA DINAMIS: Ambil semua bulan dari Start Date sampai End Date
             const startD = proj.startDate ? new Date(proj.startDate) : new Date();
             const endD = proj.endDate ? new Date(proj.endDate) : new Date(startD.getFullYear(), startD.getMonth() + 1, 1);
-            
             const monthsToShow = [];
-            // Buat iterator bulan
             let current = new Date(startD.getFullYear(), startD.getMonth(), 1);
-            // Akhir iterator adalah bulan dari End Date
             const last = new Date(endD.getFullYear(), endD.getMonth(), 1);
-
-            while (current <= last) {
-                monthsToShow.push(new Date(current));
-                current.setMonth(current.getMonth() + 1);
-            }
-
-            // Jika range bulan terlalu pendek, tampilkan minimal 2 bulan
-            if (monthsToShow.length === 1) {
-                let next = new Date(monthsToShow[0]);
-                next.setMonth(next.getMonth() + 1);
-                monthsToShow.push(next);
-            }
-
-            monthsToShow.forEach(monthDate => {
-                container.appendChild(generateMonthHTML(monthDate, proj));
-            });
-
+            while (current <= last) { monthsToShow.push(new Date(current)); current.setMonth(current.getMonth() + 1); }
+            if (monthsToShow.length === 1) { let next = new Date(monthsToShow[0]); next.setMonth(next.getMonth() + 1); monthsToShow.push(next); }
+            monthsToShow.forEach(monthDate => container.appendChild(generateMonthHTML(monthDate, proj)));
             document.getElementById('modalCalendar').classList.remove('hidden');
         };
 
         function generateMonthHTML(date, proj) {
-            const year = date.getFullYear();
-            const month = date.getMonth();
+            const year = date.getFullYear(); const month = date.getMonth();
             const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-            
             const firstDay = new Date(year, month, 1).getDay();
             const daysInMonth = new Date(year, month + 1, 0).getDate();
-
             const monthEl = document.createElement('div');
-            monthEl.innerHTML = `
-                <h4 class="text-sm font-black text-slate-800 uppercase mb-4 tracking-tighter text-center">${monthNames[month]} ${year}</h4>
-                <div class="cal-grid">
-                    <div class="cal-header">M</div><div class="cal-header">S</div><div class="cal-header">S</div><div class="cal-header">R</div><div class="cal-header">K</div><div class="cal-header">J</div><div class="cal-header">S</div>
-                </div>
-            `;
+            monthEl.innerHTML = `<h4 class="text-sm font-black text-slate-800 uppercase mb-4 tracking-tighter text-center">${monthNames[month]} ${year}</h4><div class="cal-grid"><div class="cal-header">M</div><div class="cal-header">S</div><div class="cal-header">S</div><div class="cal-header">R</div><div class="cal-header">K</div><div class="cal-header">J</div><div class="cal-header">S</div></div>`;
             const grid = monthEl.querySelector('.cal-grid');
-
-            // Padding hari kosong
-            const adjustedFirstDay = firstDay === 0 ? 0 : firstDay; 
-            for (let i = 0; i < adjustedFirstDay; i++) {
-                grid.innerHTML += `<div class="bg-slate-50 min-h-[40px]"></div>`;
-            }
-
+            for (let i = 0; i < firstDay; i++) grid.innerHTML += `<div class="bg-slate-50 min-h-[40px]"></div>`;
             const projName = proj.name;
-
             for (let day = 1; day <= daysInMonth; day++) {
                 const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                
                 let overlays = '';
-                
-                // 1. Overlay Projek (Hitam Transparan)
-                if (proj.startDate && proj.endDate) {
-                    if (dayStr >= proj.startDate && dayStr <= proj.endDate) {
-                        overlays += `<div class="cal-event-bar bg-slate-900/10" style="z-index: 1;"></div>`;
-                    }
-                }
-
-                // 2. Overlay Tugas (Warna-warni)
+                if (proj.startDate && proj.endDate && dayStr >= proj.startDate && dayStr <= proj.endDate) overlays += `<div class="cal-event-bar bg-slate-900/10" style="z-index: 1;"></div>`;
                 if (proj.taskTimelines) {
                     Object.keys(proj.taskTimelines).forEach(taskKey => {
                         const timeline = proj.taskTimelines[taskKey];
                         const taskInfo = PROGRESS_TASKS.find(t => t.key === taskKey);
-                        if (timeline && dayStr >= timeline.start && dayStr <= timeline.end) {
-                            overlays += `<div class="cal-event-bar" style="background-color: ${taskInfo.color}; z-index: 2; border-left: 2px solid ${taskInfo.color.replace('0.3', '0.6')};"></div>`;
-                        }
+                        if (timeline && dayStr >= timeline.start && dayStr <= timeline.end) overlays += `<div class="cal-event-bar" style="background-color: ${taskInfo.color}; z-index: 2; border-left: 2px solid ${taskInfo.color.replace('0.3', '0.6')};"></div>`;
                     });
                 }
-
-                grid.innerHTML += `
-                    <div class="cal-day" onclick="showDayLogs('${dayStr}', '${projName}')">
-                        <span class="cal-day-num">${day}</span>
-                        <div class="cal-overlay">${overlays}</div>
-                    </div>
-                `;
+                grid.innerHTML += `<div class="cal-day" onclick="showDayLogs('${dayStr}', '${projName}')"><span class="cal-day-num">${day}</span><div class="cal-overlay">${overlays}</div></div>`;
             }
-
             return monthEl;
         }
 
         window.closeCalendar = () => document.getElementById('modalCalendar').classList.add('hidden');
-
-        // --- SISTEM DETAIL PANTUAN HARIAN ---
         window.showDayLogs = (dateStr, projName) => {
             const list = document.getElementById('dayLogsList');
-            const titleDate = document.getElementById('dayLogsDate');
-            titleDate.innerText = new Date(dateStr).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'});
-            
+            document.getElementById('dayLogsDate').innerText = new Date(dateStr).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'});
             const filtered = logsData.filter(l => l.tanggal === dateStr && l.project_name === projName);
-            
-            list.innerHTML = filtered.length ? '' : '<p class="text-center py-20 text-[10px] opacity-30 font-bold italic uppercase tracking-widest">Tidak ada pantauan di tanggal ini</p>';
-            
-            filtered.forEach(l => {
-                const timeStr = l.ts ? new Date(l.ts.seconds * 1000).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '';
-                list.innerHTML += `
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                        <div class="flex justify-between items-center mb-3">
-                            <span class="text-[8px] font-black bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full uppercase">${l.username}</span>
-                            ${timeStr ? `<span class="text-[9px] text-slate-400 font-bold uppercase">Pukul ${timeStr}</span>` : ''}
-                        </div>
-                        <div class="log-content text-xs text-slate-600 leading-relaxed font-semibold">${l.pekerjaan || ""}</div>
-                    </div>
-                `;
-            });
-            
+            list.innerHTML = filtered.length ? '' : '<p class="text-center py-20 text-[10px] opacity-30 font-bold italic uppercase tracking-widest">Tidak ada pantauan</p>';
+            filtered.forEach(l => list.innerHTML += `<div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100"><div class="flex justify-between items-center mb-3"><span class="text-[8px] font-black bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full uppercase">${l.username}</span></div><div class="log-content text-xs text-slate-600 leading-relaxed font-semibold">${l.pekerjaan || ""}</div></div>`);
             document.getElementById('modalDayLogs').classList.remove('hidden');
         };
-
         window.closeDayLogs = () => document.getElementById('modalDayLogs').classList.add('hidden');
 
-        // --- MANAJEMEN PROJEK ---
         window.renderProjectList = () => {
-            const list = document.getElementById('projListSettings'); const pag = document.getElementById('projPagination'); if(!list) return;
-            const filtered = projectsData.filter(p => p.name.includes(projSearchQuery.toUpperCase())).sort((a,b) => (a.order || 0) - (b.order || 0));
+            const list = document.getElementById('projListAdmin'); const pag = document.getElementById('projPagination'); if(!list) return;
+            const filtered = projectsData.filter(p => p.name.includes(projSearchQuery.toUpperCase()));
             const total = Math.ceil(filtered.length / projsPerPage) || 1;
             const startIndex = (projsCurrentPage - 1) * projsPerPage;
             list.innerHTML = '';
             filtered.slice(startIndex, startIndex + projsPerPage).forEach(proj => {
                 const isOpen = openAdminProjName === proj.name;
                 const assigned = proj.assignedUsers || []; const progress = calculateProgress(proj.tasks);
-                let pills = ''; assigned.sort().forEach(uid => pills += `<div class="user-pill flex items-center gap-1 px-2 py-1 rounded-xl text-[9px] font-bold uppercase"><span>${uid}</span><button onclick="toggleUserAssignment('${proj.name}', '${uid}')" class="hover:text-red-500 font-black">×</button></div>`);
-                const available = usersData.filter(u => !assigned.includes(u.id)).sort((a,b) => a.id.localeCompare(b.id));
+                let pills = ''; assigned.forEach(uid => pills += `<div class="user-pill flex items-center gap-1 px-2 py-1 rounded-xl text-[9px] font-bold uppercase"><span>${uid}</span><button onclick="toggleUserAssignment('${proj.name}', '${uid}')" class="font-black">×</button></div>`);
+                const available = usersData.filter(u => !assigned.includes(u.id));
                 let opts = '<option value="" disabled selected>Pilih Anggota Tim...</option>'; available.forEach(u => opts += `<option value="${u.id}">${u.id.toUpperCase()}</option>`);
-                
-                list.innerHTML += `
-                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all ${proj.isFinished ? 'opacity-60' : ''}">
-                        <div class="p-5 cursor-pointer hover:bg-slate-50 transition-colors" onclick="toggleAdminAccordion(this, '${proj.name}')">
-                            <div class="flex justify-between items-start">
-                                <div class="flex-grow space-y-1">
-                                    <div class="flex items-center gap-2"><span class="text-xs font-extrabold uppercase text-slate-800">${proj.name}</span><span class="text-[9px] font-black text-blue-600">${Math.round(progress)}%</span></div>
-                                    <div class="text-[10px] text-slate-400 font-bold uppercase">${proj.startDate || '-'} &rarr; <span class="text-red-500">${proj.endDate || '-'}</span></div>
-                                    <div class="w-full bg-slate-100 h-1 rounded-full mt-2"><div class="bg-blue-600 h-full transition-all" style="width: ${progress}%"></div></div>
-                                </div>
-                                <svg class="w-4 h-4 text-slate-400 transition-transform arrow-icon ${isOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
-                        </div>
-                        <div class="${isOpen ? '' : 'hidden'} px-5 pb-5 border-t border-slate-50 bg-slate-50/30 admin-accordion-body">
-                            <div class="flex justify-end gap-2 my-3"><button onclick="editProjectPrompt('${proj.name}', '${proj.startDate}', '${proj.endDate}')" class="text-blue-500 font-bold text-[9px] uppercase hover:underline">Edit Info</button><button onclick="deleteProject('${proj.name}')" class="text-red-400 font-bold text-[9px] uppercase hover:underline">Hapus Projek</button></div>
-                            <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-                                <p class="text-[9px] font-extrabold text-slate-400 uppercase mb-2">Tim Penanggung Jawab:</p>
-                                <div class="flex flex-wrap gap-1.5 mb-3">${pills || '<p class="text-[8px] italic text-slate-300">Belum ada tim</p>'}</div>
-                                <div class="flex gap-2"><select id="selAddUser_${proj.name.replace(/\s+/g, '_')}" class="flex-grow p-2 border rounded-xl text-[10px] font-bold bg-white outline-none">${opts}</select><button onclick="addUserToProject('${proj.name}')" class="bg-blue-600 text-white px-4 rounded-xl font-bold active:scale-90 transition-transform shadow-lg shadow-blue-100">+</button></div>
-                            </div>
-                        </div>
-                    </div>`;
+                list.innerHTML += `<div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden"><div class="p-5 cursor-pointer" onclick="toggleAdminAccordion(this, '${proj.name}')"><div class="flex justify-between items-start"><div class="flex-grow space-y-1"><div class="flex items-center gap-2 font-extrabold uppercase text-slate-800 text-xs">${proj.name}</div><div class="text-[10px] text-slate-400 font-bold uppercase">${proj.startDate || '-'} &rarr; <span class="text-red-500">${proj.endDate || '-'}</span></div></div><svg class="w-4 h-4 text-slate-400 transition-transform arrow-icon ${isOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg></div></div><div class="${isOpen ? '' : 'hidden'} px-5 pb-5 border-t border-slate-50 bg-slate-50/30 admin-accordion-body"><div class="flex justify-end gap-2 my-3"><button onclick="editProjectPrompt('${proj.name}', '${proj.startDate}', '${proj.endDate}')" class="text-blue-500 font-bold text-[9px] uppercase hover:underline">Edit Info</button><button onclick="deleteProject('${proj.name}')" class="text-red-400 font-bold text-[9px] uppercase hover:underline">Hapus Projek</button></div><div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm"><p class="text-[9px] font-extrabold text-slate-400 uppercase mb-2">Tim Penanggung Jawab:</p><div class="flex flex-wrap gap-1.5 mb-3">${pills || '<p class="text-[8px] italic text-slate-300">Belum ada tim</p>'}</div><div class="flex gap-2"><select id="selAddUser_${proj.name.replace(/\s+/g, '_')}" class="flex-grow p-2 border rounded-xl text-[10px] font-bold bg-white outline-none">${opts}</select><button onclick="addUserToProject('${proj.name}')" class="bg-blue-600 text-white px-4 rounded-xl font-bold active:scale-90 shadow-lg shadow-blue-100">+</button></div></div></div></div>`;
             });
             pag.innerHTML = `<button onclick="changeProjPage(-1)" ${projsCurrentPage === 1 ? 'disabled' : ''} class="page-btn">Sebelumnya</button><span class="text-[10px] font-bold text-slate-400 uppercase">Hal ${projsCurrentPage} dari ${total}</span><button onclick="changeProjPage(1)" ${projsCurrentPage === total ? 'disabled' : ''} class="page-btn">Selanjutnya</button>`;
         };
@@ -905,17 +903,7 @@
             const startIndex = (usersCurrentPage - 1) * usersPerPage;
             list.innerHTML = '';
             sorted.slice(startIndex, startIndex + usersPerPage).forEach(u => {
-                list.innerHTML += `
-                    <div class="bg-white p-4 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm">
-                        <div class="flex-grow">
-                            <p class="text-xs font-extrabold uppercase text-slate-800">${u.id} <span class="text-[9px] text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full ml-1">${u.role}</span></p>
-                            <p class="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tighter italic">Password: <span class="text-slate-600 font-black">${u.password}</span></p>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="editUserPrompt('${u.id}', '${u.password}', '${u.role}')" class="text-[9px] font-bold text-blue-500 uppercase px-3 py-1.5 border border-blue-100 rounded-lg hover:bg-blue-50 transition-all">Edit</button>
-                            <button onclick="deleteUser('${u.id}')" class="text-[9px] font-bold text-red-500 uppercase px-3 py-1.5 border border-red-100 rounded-lg hover:bg-red-50 transition-all">Hapus</button>
-                        </div>
-                    </div>`;
+                list.innerHTML += `<div class="bg-white p-4 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm"><div class="flex-grow"><p class="text-xs font-extrabold uppercase text-slate-800">${u.id} <span class="text-[9px] text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full ml-1">${u.role}</span></p><p class="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tighter italic">Password: <span class="text-slate-600 font-black">${u.password}</span></p></div><div class="flex gap-2"><button onclick="editUserPrompt('${u.id}', '${u.password}', '${u.role}')" class="text-[9px] font-bold text-blue-500 uppercase px-3 py-1.5 border border-blue-100 rounded-lg">Edit</button><button onclick="deleteUser('${u.id}')" class="text-[9px] font-bold text-red-500 uppercase px-3 py-1.5 border border-red-100 rounded-lg">Hapus</button></div></div>`;
             });
             pag.innerHTML = `<button onclick="changeUserPage(-1)" ${usersCurrentPage === 1 ? 'disabled' : ''} class="page-btn">Sebelumnya</button><span class="text-[10px] font-bold text-slate-400 uppercase">Hal ${usersCurrentPage} dari ${total}</span><button onclick="changeUserPage(1)" ${usersCurrentPage === total ? 'disabled' : ''} class="page-btn">Selanjutnya</button>`;
         };
@@ -929,127 +917,12 @@
             if(t === 'admin_view') renderAdminDashboard();
         };
 
-        window.triggerImageInput = () => document.getElementById('imageInput').click();
-        window.handleImageUpload = (e) => {
-            const file = e.target.files[0]; if(!file) return;
-            const reader = new FileReader();
-            reader.onload = (ev) => {
-                document.getElementById('f_work_editor').focus();
-                document.execCommand('insertImage', false, ev.target.result);
-            };
-            reader.readAsDataURL(file);
-        };
-
-        window.openZoomModal = (src) => {
-            const modal = document.getElementById('modalZoom');
-            const img = document.getElementById('zoomedImg');
-            img.src = src;
-            modal.classList.remove('hidden');
-        };
-        window.closeZoomModal = () => document.getElementById('modalZoom').classList.add('hidden');
-
-        document.addEventListener('click', (e) => {
-            const img = e.target.closest('.log-content img');
-            if (img) {
-                e.preventDefault(); e.stopPropagation();
-                openZoomModal(img.src);
-            }
-        });
-
-        window.msg = (m) => { const t = document.getElementById('toast'); t.innerText = m; t.style.opacity = "1"; t.style.bottom = "40px"; setTimeout(() => { t.style.opacity = "0"; t.style.bottom = "10px"; }, 3000); };
-
-        function calculateProgress(t = {}) { return (PROGRESS_TASKS.filter(x => t[x.key]).length / PROGRESS_TASKS.length) * 100; }
-
-        function renderInputDropdowns() {
-            const fp = document.getElementById('f_proj'), flp = document.getElementById('flProj'), flu = document.getElementById('flUser');
-            if(!fp || !flp) return;
-            fp.innerHTML = '<option value="" disabled selected>-- Pilih Projek --</option>';
-            flp.innerHTML = '<option value="ALL">SEMUA PROJEK</option>';
-            if(currentUser.role==='ADMIN' && flu) {
-                flu.innerHTML = '<option value="ALL">SEMUA TIM</option>';
-                usersData.sort((a,b)=>a.id.localeCompare(b.id)).forEach(u => flu.add(new Option(u.id.toUpperCase(), u.id)));
-            }
-            projectsData.forEach(p => {
-                if(currentUser.role==='ADMIN' || (p.assignedUsers||[]).includes(currentUser.username)) {
-                    fp.add(new Option(p.name, p.name)); flp.add(new Option(p.name, p.name));
-                }
-            });
-        }
-
-        function checkDeadlines() {
-            const b = document.getElementById('notifCount'), l = document.getElementById('notifList'); if(!b || !currentUser) return;
-            let c = 0, h = '';
-            projectsData.forEach(p => {
-                if(p.isFinished) return;
-                const ass = p.assignedUsers || [];
-                if(currentUser.role==='ADMIN' || ass.includes(currentUser.username)) {
-                    const diff = Math.ceil((new Date(p.endDate) - new Date().setHours(0,0,0,0)) / 86400000);
-                    if(diff <= 3) {
-                        c++;
-                        const clr = diff <= 0 ? 'bg-black text-white' : 'bg-red-50 text-red-600 border-red-100';
-                        h += `<div class="p-3 rounded-xl border ${clr} text-[9px] uppercase font-black tracking-widest shadow-sm">${diff <= 0 ? 'OVERDUE' : diff+' HARI LAGI'}: ${p.name}</div>`;
-                    }
-                }
-            });
-            b.innerText = c; b.classList.toggle('hidden', c===0);
-            l.innerHTML = h || '<p class="text-[9px] text-slate-300 text-center py-6 font-bold uppercase italic">Aman, No Deadlines</p>';
-        }
-
-        document.getElementById('progressForm').onsubmit = async (e) => {
-            e.preventDefault(); 
-            const work = document.getElementById('f_work_editor').innerHTML;
-            if(!document.getElementById('f_proj').value) return msg("PILIH PROJEK!");
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), { 
-                tanggal: document.getElementById('f_date').value, 
-                username: currentUser.username, 
-                project_name: document.getElementById('f_proj').value, 
-                pekerjaan: work, 
-                ts: serverTimestamp() 
-            });
-            document.getElementById('f_work_editor').innerHTML = ''; msg("✅ PROGRES DISIMPAN");
-        };
-
-        window.deleteLog = async (id) => { if(confirm("Hapus log ini?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', id)); };
-        window.savePersonalNote = async () => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.username), { privateNotes: document.getElementById('personalNoteEditor').innerHTML }); msg("✅ CATATAN DISIMPAN"); };
-        window.saveProjectNote = async (p, id) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { notes: document.getElementById(id).value }); msg("✅ CATATAN PROJEK DISIMPAN"); };
-        window.toggleFinishProject = async (p, c) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { isFinished: c }); msg(c ? "✅ PROJEK FINISH" : "🔄 PROJEK AKTIF"); };
-        
-        window.toggleTask = async (p, k, c) => { 
-            const proj = projectsData.find(x=>x.name===p); 
-            const tasks = {...(proj.tasks||{})}; 
-            const timelines = {...(proj.taskTimelines||{})};
-            const today = getLocalDateString();
-            
-            tasks[k] = c; 
-            
-            if (c === true) {
-                let startDate = proj.startDate || today;
-                const idx = PROGRESS_TASKS.findIndex(t => t.key === k);
-                if (idx > 0) {
-                    const prevTaskKey = PROGRESS_TASKS[idx - 1].key;
-                    if (timelines[prevTaskKey]) {
-                        const prevEnd = new Date(timelines[prevTaskKey].end);
-                        prevEnd.setDate(prevEnd.getDate() + 1);
-                        startDate = prevEnd.toISOString().split('T')[0];
-                    }
-                }
-                if (new Date(startDate) > new Date(today)) startDate = today;
-                timelines[k] = { start: startDate, end: today };
-                const taskLabel = PROGRESS_TASKS.find(t => t.key === k)?.label || k;
-                const autoWorkMsg = `✅ Progress <b>${taskLabel}</b> projek <b>${p}</b> telah selesai. <br><span style="font-size:10px; color:#64748b;">Timeline: ${formatDateShort(startDate)} — ${formatDateShort(today)}</span>`;
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), { tanggal: today, username: currentUser.username, project_name: p, pekerjaan: autoWorkMsg, ts: serverTimestamp() });
-            } else { delete timelines[k]; }
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { tasks, taskTimelines: timelines }); 
-            msg(c ? "✅ PROGRESS DICATAT" : "🔄 PROGRESS DIBUKA");
-        };
-
         window.formatDoc = (cmd) => { document.execCommand(cmd, false, null); };
         window.insertBullet = (id) => { const el = document.getElementById(id); el.focus(); document.execCommand('insertUnorderedList', false, null); };
         window.toggleAccordion = (btn, name) => { const body = btn.closest('.project-card').querySelector('.accordion-body'), icon = btn.querySelector('.arrow-icon'); const close = !body.classList.contains('hidden'); body.classList.toggle('hidden', close); icon.classList.toggle('rotate-180', !close); close ? openProjectAccordions.delete(name) : openProjectAccordions.add(name); };
         window.toggleNotifPanel = () => document.getElementById('notifPanel').classList.toggle('hidden');
         window.openStickyZoom = (p) => { const proj = projectsData.find(x=>x.name===p); document.getElementById('stickyProjName').innerText = p; document.getElementById('stickyZoomArea').value = proj.notes||""; document.getElementById('btnSaveStickyModal').onclick = () => { saveProjectNote(p, 'stickyZoomArea'); closeStickyModal(); }; document.getElementById('modalSticky').classList.remove('hidden'); };
         window.closeStickyModal = () => document.getElementById('modalSticky').classList.add('hidden');
-
         window.toggleAdminAccordion = (header, name) => {
             const body = header.closest('.rounded-2xl').querySelector('.admin-accordion-body');
             const arrow = header.querySelector('.arrow-icon'); const isHidden = body.classList.contains('hidden');
@@ -1127,6 +1000,53 @@
             reordered.forEach((p, i) => batch.update(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p.name), { order: i }));
             await batch.commit(); msg("✅ URUTAN DIPERBARUI");
         };
+
+        window.toggleTask = async (p, k, c) => { 
+            const proj = projectsData.find(x=>x.name===p); 
+            const tasks = {...(proj.tasks||{})}; 
+            const timelines = {...(proj.taskTimelines||{})};
+            const today = getLocalDateString();
+            tasks[k] = c; 
+            if (c === true) {
+                let startDate = proj.startDate || today;
+                const idx = PROGRESS_TASKS.findIndex(t => t.key === k);
+                if (idx > 0) {
+                    const prevTaskKey = PROGRESS_TASKS[idx - 1].key;
+                    if (timelines[prevTaskKey]) {
+                        const prevEnd = new Date(timelines[prevTaskKey].end);
+                        prevEnd.setDate(prevEnd.getDate() + 1);
+                        startDate = prevEnd.toISOString().split('T')[0];
+                    }
+                }
+                if (new Date(startDate) > new Date(today)) startDate = today;
+                timelines[k] = { start: startDate, end: today };
+                const taskLabel = PROGRESS_TASKS.find(t => t.key === k)?.label || k;
+                const autoWorkMsg = `✅ Progress <b>${taskLabel}</b> projek <b>${p}</b> telah selesai. <br><span style="font-size:10px; color:#64748b;">Timeline: ${formatDateShort(startDate)} — ${formatDateShort(today)}</span>`;
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), { tanggal: today, username: currentUser.username, project_name: p, pekerjaan: autoWorkMsg, ts: serverTimestamp() });
+            } else { delete timelines[k]; }
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { tasks, taskTimelines: timelines }); 
+            msg(c ? "✅ PROGRESS DICATAT" : "🔄 PROGRESS DIBUKA");
+        };
+
+        function renderInputDropdowns() {
+            const fp = document.getElementById('f_proj'), flp = document.getElementById('flProj'), flu = document.getElementById('flUser'), mp = document.getElementById('m_proj');
+            if(!fp || !flp) return;
+            fp.innerHTML = '<option value="" disabled selected>-- Pilih Projek --</option>';
+            flp.innerHTML = '<option value="ALL">SEMUA PROJEK</option>';
+            if(mp) mp.innerHTML = '<option value="" disabled selected>Pilih Projek...</option>';
+            if(currentUser.role==='ADMIN' && flu) {
+                flu.innerHTML = '<option value="ALL">SEMUA TIM</option>';
+                usersData.forEach(u => flu.add(new Option(u.id.toUpperCase(), u.id)));
+            }
+            projectsData.forEach(p => {
+                const opt = new Option(p.name, p.name);
+                if(currentUser.role==='ADMIN' || (p.assignedUsers||[]).includes(currentUser.username)) {
+                    fp.add(opt); 
+                }
+                flp.add(new Option(p.name, p.name));
+                if(mp) mp.add(new Option(p.name, p.name));
+            });
+        }
     </script>
 </body>
 </html>
