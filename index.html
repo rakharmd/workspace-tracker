@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WORKSPACE Tracker - Stable V1 (Thumbnail Mode)</title>
+    <title>WORKSPACE Tracker - Admin Enabled</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
@@ -45,40 +45,18 @@
 
         .badge-notes { background-color: #facc15; color: #713f12; font-size: 7px; font-weight: 900; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 2px 4px rgba(234, 179, 8, 0.2); }
         
-        /* CSS GAMBAR DI EDITOR (TETAP BESAR) */
-        #f_work_editor img { 
-            max-width: 100%; 
-            height: auto; 
-            border-radius: 1rem; 
-            border: 1px solid #e2e8f0; 
-            margin: 12px 0; 
-            display: block; 
-        }
+        #f_work_editor img { max-width: 100%; height: auto; border-radius: 1rem; border: 1px solid #e2e8f0; margin: 12px 0; display: block; }
 
-        /* CSS GAMBAR DI PANTAUAN (JADI THUMBNAIL) */
-        .log-content img { 
-            width: 140px; 
-            height: 140px; 
-            object-fit: cover;
-            border-radius: 1rem; 
-            border: 1px solid #e2e8f0; 
-            margin: 8px 4px; 
-            display: inline-block; 
-            cursor: zoom-in; 
-            transition: all 0.2s;
-            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-            vertical-align: top;
-        }
-        .log-content img:hover { 
-            transform: scale(1.05); 
-            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); 
-            border-color: #2563eb;
-        }
+        .log-content img { width: 140px; height: 140px; object-fit: cover; border-radius: 1rem; border: 1px solid #e2e8f0; margin: 8px 4px; display: inline-block; cursor: zoom-in; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); vertical-align: top; }
+        .log-content img:hover { transform: scale(1.05); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); border-color: #2563eb; }
 
         .dragging { opacity: 0.5; border: 2px dashed #3b82f6; }
         .drag-over { border-top: 4px solid #3b82f6 !important; }
         
         .user-pill { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe; }
+        .page-btn { padding: 0.5rem 1rem; border-radius: 0.75rem; background: white; border: 1px solid #e2e8f0; font-size: 0.75rem; font-weight: 700; color: #64748b; transition: all 0.2s; }
+        .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .page-btn:not(:disabled):hover { border-color: #2563eb; color: #2563eb; }
     </style>
 </head>
 <body class="pb-10">
@@ -202,7 +180,7 @@
                 <div id="logList" class="space-y-4 pt-2"></div>
             </section>
 
-            <!-- VIEW: PROJEK GLOBAL -->
+            <!-- VIEW: PROJEK GLOBAL (ADMIN) -->
             <section id="v_projek" class="hidden space-y-6 max-w-2xl mx-auto">
                 <div class="card p-6 shadow-sm border-slate-100 bg-white">
                     <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-green-600 rounded-full"></span> Master Projek Global</h3>
@@ -226,7 +204,7 @@
                 </div>
             </section>
 
-            <!-- VIEW: SETTINGS -->
+            <!-- VIEW: SETTINGS (ADMIN) -->
             <section id="v_settings" class="hidden space-y-8 max-w-2xl mx-auto">
                 <div class="card p-6 shadow-sm border-slate-100 bg-white">
                     <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-blue-600 rounded-full"></span> Manajemen Akun</h3>
@@ -507,6 +485,67 @@
             });
         };
 
+        // --- ADMIN RENDERING FUNCTIONS ---
+        window.renderProjectList = () => {
+            const list = document.getElementById('projListSettings'); const pag = document.getElementById('projPagination'); if(!list) return;
+            const filtered = projectsData.filter(p => p.name.includes(projSearchQuery.toUpperCase())).sort((a,b) => (a.order || 0) - (b.order || 0));
+            const total = Math.ceil(filtered.length / projsPerPage) || 1;
+            const startIndex = (projsCurrentPage - 1) * projsPerPage;
+            list.innerHTML = '';
+            filtered.slice(startIndex, startIndex + projsPerPage).forEach(proj => {
+                const isOpen = openAdminProjName === proj.name;
+                const assigned = proj.assignedUsers || []; const progress = calculateProgress(proj.tasks);
+                let pills = ''; assigned.sort().forEach(uid => pills += `<div class="user-pill flex items-center gap-1 px-2 py-1 rounded-xl text-[9px] font-bold uppercase"><span>${uid}</span><button onclick="toggleUserAssignment('${proj.name}', '${uid}')" class="hover:text-red-500 font-black">×</button></div>`);
+                const available = usersData.filter(u => !assigned.includes(u.id)).sort((a,b) => a.id.localeCompare(b.id));
+                let opts = '<option value="" disabled selected>Pilih Anggota Tim...</option>'; available.forEach(u => opts += `<option value="${u.id}">${u.id.toUpperCase()}</option>`);
+                
+                list.innerHTML += `
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all ${proj.isFinished ? 'opacity-60' : ''}">
+                        <div class="p-5 cursor-pointer hover:bg-slate-50 transition-colors" onclick="toggleAdminAccordion(this, '${proj.name}')">
+                            <div class="flex justify-between items-start">
+                                <div class="flex-grow space-y-1">
+                                    <div class="flex items-center gap-2"><span class="text-xs font-extrabold uppercase text-slate-800">${proj.name}</span><span class="text-[9px] font-black text-blue-600">${Math.round(progress)}%</span></div>
+                                    <div class="text-[10px] text-slate-400 font-bold uppercase">${proj.startDate || '-'} &rarr; <span class="text-red-500">${proj.endDate || '-'}</span></div>
+                                    <div class="w-full bg-slate-100 h-1 rounded-full mt-2"><div class="bg-blue-600 h-full transition-all" style="width: ${progress}%"></div></div>
+                                </div>
+                                <svg class="w-4 h-4 text-slate-400 transition-transform arrow-icon ${isOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                            </div>
+                        </div>
+                        <div class="${isOpen ? '' : 'hidden'} px-5 pb-5 border-t border-slate-50 bg-slate-50/30 admin-accordion-body">
+                            <div class="flex justify-end gap-2 my-3"><button onclick="editProjectPrompt('${proj.name}', '${proj.startDate}', '${proj.endDate}')" class="text-blue-500 font-bold text-[9px] uppercase hover:underline">Edit Info</button><button onclick="deleteProject('${proj.name}')" class="text-red-400 font-bold text-[9px] uppercase hover:underline">Hapus Projek</button></div>
+                            <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
+                                <p class="text-[9px] font-extrabold text-slate-400 uppercase mb-2">Tim Penanggung Jawab:</p>
+                                <div class="flex flex-wrap gap-1.5 mb-3">${pills || '<p class="text-[8px] italic text-slate-300">Belum ada tim</p>'}</div>
+                                <div class="flex gap-2"><select id="selAddUser_${proj.name.replace(/\s+/g, '_')}" class="flex-grow p-2 border rounded-xl text-[10px] font-bold bg-white outline-none">${opts}</select><button onclick="addUserToProject('${proj.name}')" class="bg-blue-600 text-white px-4 rounded-xl font-bold active:scale-90 transition-transform shadow-lg shadow-blue-100">+</button></div>
+                            </div>
+                        </div>
+                    </div>`;
+            });
+            pag.innerHTML = `<button onclick="changeProjPage(-1)" ${projsCurrentPage === 1 ? 'disabled' : ''} class="page-btn">Sebelumnya</button><span class="text-[10px] font-bold text-slate-400 uppercase">Hal ${projsCurrentPage} dari ${total}</span><button onclick="changeProjPage(1)" ${projsCurrentPage === total ? 'disabled' : ''} class="page-btn">Selanjutnya</button>`;
+        };
+
+        window.renderUserList = () => {
+            const list = document.getElementById('userListSettings'); const pag = document.getElementById('userPagination'); if(!list) return;
+            const sorted = usersData.sort((a,b) => a.id.localeCompare(b.id));
+            const total = Math.ceil(sorted.length / usersPerPage) || 1;
+            const startIndex = (usersCurrentPage - 1) * usersPerPage;
+            list.innerHTML = '';
+            sorted.slice(startIndex, startIndex + usersPerPage).forEach(u => {
+                list.innerHTML += `
+                    <div class="bg-white p-4 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm">
+                        <div class="flex-grow">
+                            <p class="text-xs font-extrabold uppercase text-slate-800">${u.id} <span class="text-[9px] text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full ml-1">${u.role}</span></p>
+                            <p class="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tighter italic">Password: <span class="text-slate-600 font-black">${u.password}</span></p>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="editUserPrompt('${u.id}', '${u.password}', '${u.role}')" class="text-[9px] font-bold text-blue-500 uppercase px-3 py-1.5 border border-blue-100 rounded-lg hover:bg-blue-50 transition-all">Edit</button>
+                            <button onclick="deleteUser('${u.id}')" class="text-[9px] font-bold text-red-500 uppercase px-3 py-1.5 border border-red-100 rounded-lg hover:bg-red-50 transition-all">Hapus</button>
+                        </div>
+                    </div>`;
+            });
+            pag.innerHTML = `<button onclick="changeUserPage(-1)" ${usersCurrentPage === 1 ? 'disabled' : ''} class="page-btn">Sebelumnya</button><span class="text-[10px] font-bold text-slate-400 uppercase">Hal ${usersCurrentPage} dari ${total}</span><button onclick="changeUserPage(1)" ${usersCurrentPage === total ? 'disabled' : ''} class="page-btn">Selanjutnya</button>`;
+        };
+
         // --- CORE FUNCTIONS ---
         window.tab = (t) => {
             ['input','logs','projek','settings'].forEach(k => {
@@ -535,7 +574,6 @@
         };
         window.closeZoomModal = () => document.getElementById('modalZoom').classList.add('hidden');
 
-        // FIXED ZOOM IMAGE DELEGATION (UNTUK THUMBNAIL)
         document.addEventListener('click', (e) => {
             const img = e.target.closest('.log-content img');
             if (img) {
@@ -612,6 +650,71 @@
         window.openStickyZoom = (p) => { const proj = projectsData.find(x=>x.name===p); document.getElementById('stickyProjName').innerText = p; document.getElementById('stickyZoomArea').value = proj.notes||""; document.getElementById('btnSaveStickyModal').onclick = () => { saveProjectNote(p, 'stickyZoomArea'); closeStickyModal(); }; document.getElementById('modalSticky').classList.remove('hidden'); };
         window.closeStickyModal = () => document.getElementById('modalSticky').classList.add('hidden');
 
+        // --- ADMIN HELPERS ---
+        window.toggleAdminAccordion = (header, name) => {
+            const body = header.closest('.rounded-2xl').querySelector('.admin-accordion-body');
+            const arrow = header.querySelector('.arrow-icon'); const isHidden = body.classList.contains('hidden');
+            body.classList.toggle('hidden', !isHidden); arrow.classList.toggle('rotate-180', isHidden);
+            openAdminProjName = isHidden ? name : null;
+        };
+        window.changeProjPage = (d) => { projsCurrentPage += d; renderProjectList(); };
+        window.changeUserPage = (d) => { usersCurrentPage += d; renderUserList(); };
+        window.handleProjSearch = () => { projSearchQuery = document.getElementById('searchProj').value.toUpperCase(); projsCurrentPage = 1; renderProjectList(); };
+        
+        window.addNewProject = async () => {
+            const name = document.getElementById('nP').value.toUpperCase().trim();
+            const start = document.getElementById('nPStart').value; const end = document.getElementById('nPEnd').value;
+            if(!name) return msg("NAMA PROJEK KOSONG!");
+            if (isEditingProject) {
+                const old = editingProjectOldName;
+                if (name !== old) {
+                    const p = projectsData.find(x => x.name === old);
+                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { ...p, startDate: start, endDate: end });
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', old));
+                } else { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', old), { startDate: start, endDate: end }); }
+            } else { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { assignedUsers: [], startDate: start, endDate: end, tasks: {}, notes: "", isFinished: false, order: projectsData.length }); }
+            resetProjectForm(); msg("✅ DATA TERSIMPAN");
+        };
+        window.editProjectPrompt = (name, start, end) => {
+            isEditingProject = true; editingProjectOldName = name; document.getElementById('nP').value = name; document.getElementById('nPStart').value = start || ''; document.getElementById('nPEnd').value = end || '';
+            document.getElementById('btnAddNewProject').innerText = "Update Projek"; document.getElementById('btnCancelEditProj').classList.remove('hidden');
+            document.getElementById('projFormTitle').innerText = "Edit Projek: " + name;
+        };
+        window.resetProjectForm = () => {
+            isEditingProject = false; editingProjectOldName = ""; document.getElementById('nP').value = ''; document.getElementById('nPStart').value = ''; document.getElementById('nPEnd').value = '';
+            document.getElementById('btnAddNewProject').innerText = "Simpan Projek"; document.getElementById('btnCancelEditProj').classList.add('hidden');
+            document.getElementById('projFormTitle').innerText = "Tambah Projek Baru";
+        };
+        window.deleteProject = async (name) => { if(confirm("Hapus projek " + name + "?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name)); };
+        
+        window.addUserToProject = async (name) => {
+            const uid = document.getElementById(`selAddUser_${name.replace(/\s+/g, '_')}`).value; if(!uid) return;
+            const p = projectsData.find(x => x.name === name); let assigned = p.assignedUsers || []; assigned.push(uid);
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { assignedUsers: assigned });
+        };
+        window.toggleUserAssignment = async (name, uid) => {
+            const p = projectsData.find(x => x.name === name); let assigned = (p.assignedUsers || []).filter(x => x !== uid);
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { assignedUsers: assigned });
+        };
+
+        window.saveUser = async () => {
+            const u = document.getElementById('mU').value.trim().toLowerCase(); const p = document.getElementById('mP').value.trim(); const r = document.getElementById('mR').value;
+            if(!u || !p) return msg("ISI USER & PASS!");
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u), { password: p, role: r }, { merge: true });
+            resetUserForm(); msg("✅ AKUN DISIMPAN");
+        };
+        window.editUserPrompt = (u, p, r) => {
+            isEditingUser = true; document.getElementById('mU').value = u; document.getElementById('mU').disabled = true;
+            document.getElementById('mP').value = p; document.getElementById('mR').value = r;
+            document.getElementById('btnSaveUser').innerText = "Update Akun"; document.getElementById('btnCancelEdit').classList.remove('hidden');
+        };
+        window.resetUserForm = () => {
+            isEditingUser = false; document.getElementById('mU').value = ''; document.getElementById('mU').disabled = false;
+            document.getElementById('mP').value = ''; document.getElementById('mR').value = 'USER';
+            document.getElementById('btnSaveUser').innerText = "Simpan Akun"; document.getElementById('btnCancelEdit').classList.add('hidden');
+        };
+        window.deleteUser = async (u) => { if(u === 'admin') return msg("TIDAK BISA HAPUS ADMIN!"); if(confirm("Hapus akun " + u + "?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u)); };
+
         // --- DRAG & DROP URUTAN ---
         window.handleDragStart = (e, name) => { draggedProjectName = name; e.currentTarget.classList.add('dragging'); };
         window.handleDragOver = (e) => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); };
@@ -626,10 +729,6 @@
             reordered.forEach((p, i) => batch.update(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p.name), { order: i }));
             await batch.commit(); msg("✅ URUTAN DIPERBARUI");
         };
-
-        // --- ADMIN ACTIONS (PROJEK & SETTINGS) ---
-        window.renderProjectList = () => { /* Logic render master projek setting */ };
-        window.renderUserList = () => { /* Logic render master user setting */ };
 
     </script>
 </body>
