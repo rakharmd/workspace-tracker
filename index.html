@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WORKSPACE Tracker - Auto Timeline Enabled</title>
+    <title>WORKSPACE Tracker - Meeting & Timeline</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
@@ -61,7 +61,6 @@
         .btn-open-project { border: 1px solid #2563eb; color: #2563eb; padding: 6px 16px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; transition: all 0.2s; }
         .btn-open-project:hover { background: #2563eb; color: white; }
 
-        /* Timeline style */
         .timeline-date { font-size: 9px; font-weight: 800; color: #2563eb; margin-top: 1px; display: block; letter-spacing: -0.02em; }
 
         /* Calendar Styles */
@@ -72,6 +71,29 @@
         .cal-day-num { font-size: 10px; font-weight: 700; color: #1e293b; z-index: 10; }
         .cal-overlay { position: absolute; left: 0; right: 0; height: 100%; pointer-events: none; z-index: 5; }
         .cal-event-bar { height: 100%; width: 100%; position: absolute; }
+
+        /* Floating Meeting Card Style */
+        .meeting-floating {
+            position: fixed;
+            left: 2rem;
+            top: 150px;
+            width: 280px;
+            max-height: calc(100vh - 200px);
+            z-index: 45;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        @media (max-width: 1280px) {
+            .meeting-floating { 
+                position: relative; 
+                left: 0; 
+                top: 0; 
+                width: 100%; 
+                margin-bottom: 1.5rem; 
+                max-height: none;
+            }
+        }
+        .meeting-item { border-left: 4px solid #3b82f6; transition: transform 0.2s; }
+        .meeting-item:hover { transform: translateX(4px); }
     </style>
 </head>
 <body class="pb-10">
@@ -92,6 +114,23 @@
 
     <!-- 2. APLIKASI UTAMA (MAIN APP) -->
     <div id="mainApp" class="hidden max-w-4xl mx-auto">
+        
+        <!-- CARD MEETING FLOATING -->
+        <div id="meetingContainer" class="meeting-floating hidden xl:block">
+            <div class="card p-5 shadow-xl border-blue-100 bg-white/90 backdrop-blur-md overflow-hidden flex flex-col h-full">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-[10px] font-black text-slate-800 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <span class="w-2 h-2 bg-blue-600 rounded-full animate-pulse"></span> Jadwal Meeting
+                    </h3>
+                    <button onclick="openMeetingModal()" class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center text-xs font-bold hover:scale-110 transition-transform shadow-lg shadow-blue-200">+</button>
+                </div>
+                <div id="meetingList" class="space-y-3 overflow-y-auto no-scrollbar flex-grow pr-1">
+                    <!-- Meeting items load here -->
+                    <p class="text-[9px] text-slate-300 italic text-center py-10">Belum ada jadwal...</p>
+                </div>
+            </div>
+        </div>
+
         <header class="p-6 bg-white/80 backdrop-blur border-b flex justify-between items-center sticky top-0 z-50 shadow-sm">
             <div class="flex items-center gap-4">
                 <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-100">
@@ -126,6 +165,10 @@
         </nav>
 
         <main class="p-4">
+            
+            <!-- MOBILE ONLY MEETING HOLDER -->
+            <div class="xl:hidden" id="mobileMeetingHolder"></div>
+
             <!-- VIEW: INPUT PROGRES -->
             <section id="v_input" class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="md:col-span-2 space-y-6">
@@ -260,6 +303,37 @@
         </main>
     </div>
 
+    <!-- MODAL MEETING INPUT -->
+    <div id="modalMeeting" class="hidden fixed inset-0 z-[110] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md p-6 rounded-3xl shadow-2xl">
+            <h3 class="text-xs font-bold text-slate-800 uppercase mb-4 tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-blue-600 rounded-full"></span> Buat Jadwal Meeting</h3>
+            <form id="meetingForm" class="space-y-4">
+                <div>
+                    <label class="text-[8px] font-bold text-slate-400 uppercase ml-1">JUDUL MEETING</label>
+                    <input type="text" id="m_title" required placeholder="Contoh: Diskusi Layout Fasad" class="w-full p-3 border rounded-xl text-sm outline-none font-bold bg-slate-50 border-slate-200">
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <label class="text-[8px] font-bold text-slate-400 uppercase ml-1">TANGGAL</label>
+                        <input type="date" id="m_date" required class="w-full p-2.5 border rounded-xl text-xs bg-white outline-none">
+                    </div>
+                    <div>
+                        <label class="text-[8px] font-bold text-slate-400 uppercase ml-1">JAM</label>
+                        <input type="time" id="m_time" required class="w-full p-2.5 border rounded-xl text-xs bg-white outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-[8px] font-bold text-slate-400 uppercase ml-1">PROJEK TERKAIT</label>
+                    <select id="m_proj" required class="w-full p-3 border rounded-xl text-sm outline-none bg-white border-slate-200"></select>
+                </div>
+                <div class="flex gap-2 mt-4">
+                    <button type="button" onclick="closeMeetingModal()" class="flex-1 py-3 bg-slate-100 text-slate-500 rounded-xl font-bold text-xs uppercase">Batal</button>
+                    <button type="submit" class="flex-1 py-3 bg-blue-600 text-white rounded-xl font-bold text-xs uppercase shadow-lg shadow-blue-100">Simpan Jadwal</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- MODALS SECTION -->
     <div id="modalZoom" class="hidden fixed inset-0 z-[110] modal-overlay flex items-center justify-center p-4 cursor-zoom-out" onclick="closeZoomModal()">
         <div class="relative max-w-5xl w-full h-full flex items-center justify-center pointer-events-none">
@@ -299,7 +373,6 @@
         </div>
     </div>
 
-    <!-- MODAL KALENDER TIMELINE -->
     <div id="modalCalendar" class="hidden fixed inset-0 z-[120] modal-overlay flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div class="p-6 border-b flex justify-between items-center bg-slate-50">
@@ -313,26 +386,10 @@
             </div>
             <div class="p-6 overflow-y-auto flex-grow bg-slate-50/50">
                 <div id="calContainer" class="grid grid-cols-1 md:grid-cols-2 gap-8"></div>
-                
-                <div class="mt-8 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
-                    <h4 class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-3">Keterangan Warna</h4>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
-                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-slate-900/10 border border-slate-900/20"></div><span class="text-[9px] font-bold text-slate-500 uppercase">Projek Timeline</span></div>
-                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-blue-500/30 border border-blue-500/40"></div><span class="text-[9px] font-bold text-slate-500 uppercase">Drafting</span></div>
-                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-emerald-500/30 border border-emerald-500/40"></div><span class="text-[9px] font-bold text-slate-500 uppercase">Layouting</span></div>
-                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-amber-500/30 border border-amber-500/40"></div><span class="text-[9px] font-bold text-slate-500 uppercase">Moodboard</span></div>
-                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-purple-500/30 border border-purple-500/40"></div><span class="text-[9px] font-bold text-slate-500 uppercase">Arsitektur</span></div>
-                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-pink-500/30 border border-pink-500/40"></div><span class="text-[9px] font-bold text-slate-500 uppercase">Interior</span></div>
-                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-cyan-500/30 border border-cyan-500/40"></div><span class="text-[9px] font-bold text-slate-500 uppercase">Gmbr Ars</span></div>
-                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-red-500/30 border border-red-500/40"></div><span class="text-[9px] font-bold text-slate-500 uppercase">Gmbr Elk</span></div>
-                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-slate-500/30 border border-slate-500/40"></div><span class="text-[9px] font-bold text-slate-500 uppercase">Gmbr Int</span></div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL DETAIL PANTUAN HARIAN -->
     <div id="modalDayLogs" class="hidden fixed inset-0 z-[130] modal-overlay flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
             <div class="p-5 border-b flex justify-between items-center bg-blue-600 text-white">
@@ -348,13 +405,12 @@
         </div>
     </div>
 
-    <!-- TOAST NOTIFICATION -->
-    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl opacity-0 z-[100] text-[10px] font-bold uppercase tracking-widest text-center"></div>
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl opacity-0 z-[150] text-[10px] font-bold uppercase tracking-widest text-center"></div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, onSnapshot, addDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, onSnapshot, addDoc, serverTimestamp, writeBatch, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Firebase Configuration
         const firebaseConfig = {
@@ -375,6 +431,7 @@
         let logsData = [];
         let usersData = [];
         let projectsData = [];
+        let meetingsData = [];
         let isEditingUser = false;
         let isEditingProject = false;
         let editingProjectOldName = "";
@@ -447,6 +504,7 @@
         function startApp() {
             document.getElementById('loginPage').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('meetingContainer').classList.remove('hidden');
             document.getElementById('uDisp').innerText = currentUser.username.toUpperCase();
             document.getElementById('rDisp').innerText = currentUser.role;
             document.getElementById('f_date').value = getLocalDateString();
@@ -459,11 +517,98 @@
             } else {
                 tab('input');
             }
-            listenUsers(); listenProjects(); listenLogs();
+            listenUsers(); listenProjects(); listenLogs(); listenMeetings();
         }
 
         window.logout = () => { if (confirm("Keluar dari aplikasi?")) { localStorage.removeItem('ws_user'); location.reload(); } };
 
+        // --- SISTEM MEETING ---
+        function listenMeetings() {
+            onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'meetings'), (snap) => {
+                meetingsData = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                    .sort((a, b) => new Date(a.date + 'T' + a.time) - new Date(b.date + 'T' + b.time));
+                renderMeetings();
+            });
+        }
+
+        function renderMeetings() {
+            const list = document.getElementById('meetingList');
+            if(!list) return;
+            
+            const today = getLocalDateString();
+            const upcoming = meetingsData.filter(m => m.date >= today);
+            
+            if(upcoming.length === 0) {
+                list.innerHTML = '<p class="text-[9px] text-slate-300 italic text-center py-10">Belum ada jadwal...</p>';
+            } else {
+                list.innerHTML = '';
+                upcoming.forEach(m => {
+                    const isToday = m.date === today;
+                    list.innerHTML += `
+                        <div class="meeting-item bg-white p-3 rounded-xl border border-slate-100 shadow-sm relative group">
+                            <div class="flex flex-col">
+                                <span class="text-[7px] font-black uppercase text-blue-500 mb-1">${m.project}</span>
+                                <h4 class="text-[10px] font-extrabold text-slate-800 leading-tight mb-2">${m.title}</h4>
+                                <div class="flex items-center gap-2">
+                                    <div class="px-1.5 py-0.5 rounded-md ${isToday ? 'bg-red-50 text-red-500' : 'bg-slate-50 text-slate-500'} text-[8px] font-black uppercase">${isToday ? 'HARI INI' : formatDateShort(m.date)}</div>
+                                    <div class="text-[8px] font-bold text-slate-400">Pukul ${m.time}</div>
+                                </div>
+                            </div>
+                            <button onclick="deleteMeeting('${m.id}')" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 transition-all">
+                                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2.032 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                            </button>
+                        </div>
+                    `;
+                });
+            }
+            
+            // Sync mobile version
+            const mobileHolder = document.getElementById('mobileMeetingHolder');
+            if(mobileHolder) {
+                if (window.innerWidth < 1280) {
+                    mobileHolder.innerHTML = document.getElementById('meetingContainer').innerHTML;
+                    mobileHolder.classList.remove('hidden');
+                } else {
+                    mobileHolder.innerHTML = '';
+                    mobileHolder.classList.add('hidden');
+                }
+            }
+        }
+
+        window.openMeetingModal = () => {
+            document.getElementById('m_date').value = getLocalDateString();
+            const sel = document.getElementById('m_proj');
+            sel.innerHTML = '<option value="" disabled selected>Pilih Projek...</option>';
+            projectsData.forEach(p => sel.add(new Option(p.name, p.name)));
+            document.getElementById('modalMeeting').classList.remove('hidden');
+        };
+
+        window.closeMeetingModal = () => document.getElementById('modalMeeting').classList.add('hidden');
+
+        document.getElementById('meetingForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('m_title').value;
+            const date = document.getElementById('m_date').value;
+            const time = document.getElementById('m_time').value;
+            const project = document.getElementById('m_proj').value;
+            
+            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'meetings'), {
+                title, date, time, project, ts: serverTimestamp()
+            });
+            
+            closeMeetingModal();
+            msg("✅ JADWAL MEETING DISIMPAN");
+            document.getElementById('meetingForm').reset();
+        };
+
+        window.deleteMeeting = async (id) => {
+            if(confirm("Hapus jadwal meeting ini?")) {
+                await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'meetings', id));
+                msg("🗑️ JADWAL MEETING DIHAPUS");
+            }
+        };
+
+        // --- SISTEM LOGS, USERS, PROJECTS ---
         function listenProjects() {
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'projects'), (snap) => {
                 projectsData = snap.docs.map(d => ({ name: d.id, ...d.data() })).sort((a, b) => (a.order || 0) - (b.order || 0));
@@ -707,11 +852,9 @@
                         </div>
                         <div class="${isOpen ? '' : 'hidden'} px-4 pb-4 border-t ${isFinished ? 'border-slate-700 bg-slate-800/50' : 'border-slate-50'} mt-1 accordion-body">
                              <div class="grid grid-cols-1 gap-y-1 bg-slate-50/50 p-2.5 rounded-xl my-4">${checklistHtml}</div>
-                             
                              <div class="mb-4">
                                 <button onclick="openCalendar('${proj.name}')" class="w-full py-2.5 bg-slate-100 text-slate-800 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-200">Kalender Timeline</button>
                              </div>
-
                              <div class="sticky-note">
                                 <button onclick="openStickyZoom('${proj.name}')" class="absolute top-2 right-2 p-1.5 bg-white/50 hover:bg-white rounded-lg shadow-sm text-yellow-900 transition-all z-10"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg></button>
                                 <textarea id="note_${safeName}" class="sticky-note-textarea" placeholder="Catatan projek...">${proj.notes || ""}</textarea>
@@ -725,201 +868,60 @@
             });
         };
 
-        // --- SISTEM KALENDER TIMELINE ---
         window.openCalendar = (projName) => {
             const proj = projectsData.find(p => p.name === projName);
             if (!proj) return;
-
-            // Update Header dengan Nama dan Badge Tanggal (Gambar 1)
-            document.getElementById('calProjName').innerHTML = `
-                Timeline: ${projName} 
-                <span class="ml-2 text-[10px] text-blue-500 font-bold bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 shadow-sm">
-                    ${formatDateShort(proj.startDate)} — ${formatDateShort(proj.endDate)}
-                </span>
-            `;
-
+            document.getElementById('calProjName').innerHTML = `Timeline: ${projName} <span class="ml-2 text-[10px] text-blue-500 font-bold bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 shadow-sm">${formatDateShort(proj.startDate)} — ${formatDateShort(proj.endDate)}</span>`;
             const container = document.getElementById('calContainer');
             container.innerHTML = '';
-
-            // LOGIKA DINAMIS: Ambil semua bulan dari Start Date sampai End Date
             const startD = proj.startDate ? new Date(proj.startDate) : new Date();
             const endD = proj.endDate ? new Date(proj.endDate) : new Date(startD.getFullYear(), startD.getMonth() + 1, 1);
-            
             const monthsToShow = [];
-            // Buat iterator bulan
             let current = new Date(startD.getFullYear(), startD.getMonth(), 1);
-            // Akhir iterator adalah bulan dari End Date
             const last = new Date(endD.getFullYear(), endD.getMonth(), 1);
-
-            while (current <= last) {
-                monthsToShow.push(new Date(current));
-                current.setMonth(current.getMonth() + 1);
-            }
-
-            // Jika range bulan terlalu pendek, tampilkan minimal 2 bulan
-            if (monthsToShow.length === 1) {
-                let next = new Date(monthsToShow[0]);
-                next.setMonth(next.getMonth() + 1);
-                monthsToShow.push(next);
-            }
-
-            monthsToShow.forEach(monthDate => {
-                container.appendChild(generateMonthHTML(monthDate, proj));
-            });
-
+            while (current <= last) { monthsToShow.push(new Date(current)); current.setMonth(current.getMonth() + 1); }
+            if (monthsToShow.length === 1) { let next = new Date(monthsToShow[0]); next.setMonth(next.getMonth() + 1); monthsToShow.push(next); }
+            monthsToShow.forEach(monthDate => container.appendChild(generateMonthHTML(monthDate, proj)));
             document.getElementById('modalCalendar').classList.remove('hidden');
         };
 
         function generateMonthHTML(date, proj) {
-            const year = date.getFullYear();
-            const month = date.getMonth();
+            const year = date.getFullYear(), month = date.getMonth();
             const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-            
-            const firstDay = new Date(year, month, 1).getDay();
-            const daysInMonth = new Date(year, month + 1, 0).getDate();
-
+            const firstDay = new Date(year, month, 1).getDay(), daysInMonth = new Date(year, month + 1, 0).getDate();
             const monthEl = document.createElement('div');
-            monthEl.innerHTML = `
-                <h4 class="text-sm font-black text-slate-800 uppercase mb-4 tracking-tighter text-center">${monthNames[month]} ${year}</h4>
-                <div class="cal-grid">
-                    <div class="cal-header">M</div><div class="cal-header">S</div><div class="cal-header">S</div><div class="cal-header">R</div><div class="cal-header">K</div><div class="cal-header">J</div><div class="cal-header">S</div>
-                </div>
-            `;
+            monthEl.innerHTML = `<h4 class="text-sm font-black text-slate-800 uppercase mb-4 tracking-tighter text-center">${monthNames[month]} ${year}</h4><div class="cal-grid"><div class="cal-header">M</div><div class="cal-header">S</div><div class="cal-header">S</div><div class="cal-header">R</div><div class="cal-header">K</div><div class="cal-header">J</div><div class="cal-header">S</div></div>`;
             const grid = monthEl.querySelector('.cal-grid');
-
-            // Padding hari kosong
-            const adjustedFirstDay = firstDay === 0 ? 0 : firstDay; 
-            for (let i = 0; i < adjustedFirstDay; i++) {
-                grid.innerHTML += `<div class="bg-slate-50 min-h-[40px]"></div>`;
-            }
-
-            const projName = proj.name;
-
+            const adj = firstDay === 0 ? 0 : firstDay; 
+            for (let i = 0; i < adj; i++) grid.innerHTML += `<div class="bg-slate-50 min-h-[40px]"></div>`;
             for (let day = 1; day <= daysInMonth; day++) {
                 const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                
                 let overlays = '';
-                
-                // 1. Overlay Projek (Hitam Transparan)
-                if (proj.startDate && proj.endDate) {
-                    if (dayStr >= proj.startDate && dayStr <= proj.endDate) {
-                        overlays += `<div class="cal-event-bar bg-slate-900/10" style="z-index: 1;"></div>`;
-                    }
-                }
-
-                // 2. Overlay Tugas (Warna-warni)
-                if (proj.taskTimelines) {
-                    Object.keys(proj.taskTimelines).forEach(taskKey => {
-                        const timeline = proj.taskTimelines[taskKey];
-                        const taskInfo = PROGRESS_TASKS.find(t => t.key === taskKey);
-                        if (timeline && dayStr >= timeline.start && dayStr <= timeline.end) {
-                            overlays += `<div class="cal-event-bar" style="background-color: ${taskInfo.color}; z-index: 2; border-left: 2px solid ${taskInfo.color.replace('0.3', '0.6')};"></div>`;
-                        }
-                    });
-                }
-
-                grid.innerHTML += `
-                    <div class="cal-day" onclick="showDayLogs('${dayStr}', '${projName}')">
-                        <span class="cal-day-num">${day}</span>
-                        <div class="cal-overlay">${overlays}</div>
-                    </div>
-                `;
+                if (proj.startDate && proj.endDate && dayStr >= proj.startDate && dayStr <= proj.endDate) overlays += `<div class="cal-event-bar bg-slate-900/10" style="z-index: 1;"></div>`;
+                if (proj.taskTimelines) Object.keys(proj.taskTimelines).forEach(taskKey => {
+                    const timeline = proj.taskTimelines[taskKey], taskInfo = PROGRESS_TASKS.find(t => t.key === taskKey);
+                    if (timeline && dayStr >= timeline.start && dayStr <= timeline.end) overlays += `<div class="cal-event-bar" style="background-color: ${taskInfo.color}; z-index: 2; border-left: 2px solid ${taskInfo.color.replace('0.3', '0.6')};"></div>`;
+                });
+                grid.innerHTML += `<div class="cal-day" onclick="showDayLogs('${dayStr}', '${proj.name}')"><span class="cal-day-num">${day}</span><div class="cal-overlay">${overlays}</div></div>`;
             }
-
             return monthEl;
         }
 
         window.closeCalendar = () => document.getElementById('modalCalendar').classList.add('hidden');
-
-        // --- SISTEM DETAIL PANTUAN HARIAN ---
         window.showDayLogs = (dateStr, projName) => {
             const list = document.getElementById('dayLogsList');
-            const titleDate = document.getElementById('dayLogsDate');
-            titleDate.innerText = new Date(dateStr).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'});
-            
+            document.getElementById('dayLogsDate').innerText = new Date(dateStr).toLocaleDateString('id-ID', {day: '2-digit', month: 'long', year: 'numeric'});
             const filtered = logsData.filter(l => l.tanggal === dateStr && l.project_name === projName);
-            
-            list.innerHTML = filtered.length ? '' : '<p class="text-center py-20 text-[10px] opacity-30 font-bold italic uppercase tracking-widest">Tidak ada pantauan di tanggal ini</p>';
-            
+            list.innerHTML = filtered.length ? '' : '<p class="text-center py-20 text-[10px] opacity-30 font-bold italic uppercase tracking-widest">Tidak ada pantauan</p>';
             filtered.forEach(l => {
                 const timeStr = l.ts ? new Date(l.ts.seconds * 1000).toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'}) : '';
-                list.innerHTML += `
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                        <div class="flex justify-between items-center mb-3">
-                            <span class="text-[8px] font-black bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full uppercase">${l.username}</span>
-                            ${timeStr ? `<span class="text-[9px] text-slate-400 font-bold uppercase">Pukul ${timeStr}</span>` : ''}
-                        </div>
-                        <div class="log-content text-xs text-slate-600 leading-relaxed font-semibold">${l.pekerjaan || ""}</div>
-                    </div>
-                `;
+                list.innerHTML += `<div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100"><div class="flex justify-between items-center mb-3"><span class="text-[8px] font-black bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full uppercase">${l.username}</span>${timeStr ? `<span class="text-[9px] text-slate-400 font-bold uppercase">Pukul ${timeStr}</span>` : ''}</div><div class="log-content text-xs text-slate-600 leading-relaxed font-semibold">${l.pekerjaan || ""}</div></div>`;
             });
-            
             document.getElementById('modalDayLogs').classList.remove('hidden');
         };
-
         window.closeDayLogs = () => document.getElementById('modalDayLogs').classList.add('hidden');
 
-        // --- MANAJEMEN PROJEK ---
-        window.renderProjectList = () => {
-            const list = document.getElementById('projListSettings'); const pag = document.getElementById('projPagination'); if(!list) return;
-            const filtered = projectsData.filter(p => p.name.includes(projSearchQuery.toUpperCase())).sort((a,b) => (a.order || 0) - (b.order || 0));
-            const total = Math.ceil(filtered.length / projsPerPage) || 1;
-            const startIndex = (projsCurrentPage - 1) * projsPerPage;
-            list.innerHTML = '';
-            filtered.slice(startIndex, startIndex + projsPerPage).forEach(proj => {
-                const isOpen = openAdminProjName === proj.name;
-                const assigned = proj.assignedUsers || []; const progress = calculateProgress(proj.tasks);
-                let pills = ''; assigned.sort().forEach(uid => pills += `<div class="user-pill flex items-center gap-1 px-2 py-1 rounded-xl text-[9px] font-bold uppercase"><span>${uid}</span><button onclick="toggleUserAssignment('${proj.name}', '${uid}')" class="hover:text-red-500 font-black">×</button></div>`);
-                const available = usersData.filter(u => !assigned.includes(u.id)).sort((a,b) => a.id.localeCompare(b.id));
-                let opts = '<option value="" disabled selected>Pilih Anggota Tim...</option>'; available.forEach(u => opts += `<option value="${u.id}">${u.id.toUpperCase()}</option>`);
-                
-                list.innerHTML += `
-                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all ${proj.isFinished ? 'opacity-60' : ''}">
-                        <div class="p-5 cursor-pointer hover:bg-slate-50 transition-colors" onclick="toggleAdminAccordion(this, '${proj.name}')">
-                            <div class="flex justify-between items-start">
-                                <div class="flex-grow space-y-1">
-                                    <div class="flex items-center gap-2"><span class="text-xs font-extrabold uppercase text-slate-800">${proj.name}</span><span class="text-[9px] font-black text-blue-600">${Math.round(progress)}%</span></div>
-                                    <div class="text-[10px] text-slate-400 font-bold uppercase">${proj.startDate || '-'} &rarr; <span class="text-red-500">${proj.endDate || '-'}</span></div>
-                                    <div class="w-full bg-slate-100 h-1 rounded-full mt-2"><div class="bg-blue-600 h-full transition-all" style="width: ${progress}%"></div></div>
-                                </div>
-                                <svg class="w-4 h-4 text-slate-400 transition-transform arrow-icon ${isOpen ? 'rotate-180' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                            </div>
-                        </div>
-                        <div class="${isOpen ? '' : 'hidden'} px-5 pb-5 border-t border-slate-50 bg-slate-50/30 admin-accordion-body">
-                            <div class="flex justify-end gap-2 my-3"><button onclick="editProjectPrompt('${proj.name}', '${proj.startDate}', '${proj.endDate}')" class="text-blue-500 font-bold text-[9px] uppercase hover:underline">Edit Info</button><button onclick="deleteProject('${proj.name}')" class="text-red-400 font-bold text-[9px] uppercase hover:underline">Hapus Projek</button></div>
-                            <div class="bg-white p-3 rounded-xl border border-slate-100 shadow-sm">
-                                <p class="text-[9px] font-extrabold text-slate-400 uppercase mb-2">Tim Penanggung Jawab:</p>
-                                <div class="flex flex-wrap gap-1.5 mb-3">${pills || '<p class="text-[8px] italic text-slate-300">Belum ada tim</p>'}</div>
-                                <div class="flex gap-2"><select id="selAddUser_${proj.name.replace(/\s+/g, '_')}" class="flex-grow p-2 border rounded-xl text-[10px] font-bold bg-white outline-none">${opts}</select><button onclick="addUserToProject('${proj.name}')" class="bg-blue-600 text-white px-4 rounded-xl font-bold active:scale-90 transition-transform shadow-lg shadow-blue-100">+</button></div>
-                            </div>
-                        </div>
-                    </div>`;
-            });
-            pag.innerHTML = `<button onclick="changeProjPage(-1)" ${projsCurrentPage === 1 ? 'disabled' : ''} class="page-btn">Sebelumnya</button><span class="text-[10px] font-bold text-slate-400 uppercase">Hal ${projsCurrentPage} dari ${total}</span><button onclick="changeProjPage(1)" ${projsCurrentPage === total ? 'disabled' : ''} class="page-btn">Selanjutnya</button>`;
-        };
-
-        window.renderUserList = () => {
-            const list = document.getElementById('userListSettings'); const pag = document.getElementById('userPagination'); if(!list) return;
-            const sorted = usersData.sort((a,b) => a.id.localeCompare(b.id));
-            const total = Math.ceil(sorted.length / usersPerPage) || 1;
-            const startIndex = (usersCurrentPage - 1) * usersPerPage;
-            list.innerHTML = '';
-            sorted.slice(startIndex, startIndex + usersPerPage).forEach(u => {
-                list.innerHTML += `
-                    <div class="bg-white p-4 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm">
-                        <div class="flex-grow">
-                            <p class="text-xs font-extrabold uppercase text-slate-800">${u.id} <span class="text-[9px] text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full ml-1">${u.role}</span></p>
-                            <p class="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tighter italic">Password: <span class="text-slate-600 font-black">${u.password}</span></p>
-                        </div>
-                        <div class="flex gap-2">
-                            <button onclick="editUserPrompt('${u.id}', '${u.password}', '${u.role}')" class="text-[9px] font-bold text-blue-500 uppercase px-3 py-1.5 border border-blue-100 rounded-lg hover:bg-blue-50 transition-all">Edit</button>
-                            <button onclick="deleteUser('${u.id}')" class="text-[9px] font-bold text-red-500 uppercase px-3 py-1.5 border border-red-100 rounded-lg hover:bg-red-50 transition-all">Hapus</button>
-                        </div>
-                    </div>`;
-            });
-            pag.innerHTML = `<button onclick="changeUserPage(-1)" ${usersCurrentPage === 1 ? 'disabled' : ''} class="page-btn">Sebelumnya</button><span class="text-[10px] font-bold text-slate-400 uppercase">Hal ${usersCurrentPage} dari ${total}</span><button onclick="changeUserPage(1)" ${usersCurrentPage === total ? 'disabled' : ''} class="page-btn">Selanjutnya</button>`;
-        };
-
+        // OTHER HELPERS
         window.tab = (t) => {
             ['input','logs','admin_view','project_detail','projek','settings'].forEach(k => {
                 const v = document.getElementById('v_'+k), b = document.getElementById('t_'+k);
@@ -933,186 +935,45 @@
         window.handleImageUpload = (e) => {
             const file = e.target.files[0]; if(!file) return;
             const reader = new FileReader();
-            reader.onload = (ev) => {
-                document.getElementById('f_work_editor').focus();
-                document.execCommand('insertImage', false, ev.target.result);
-            };
+            reader.onload = (ev) => { document.getElementById('f_work_editor').focus(); document.execCommand('insertImage', false, ev.target.result); };
             reader.readAsDataURL(file);
         };
-
-        window.openZoomModal = (src) => {
-            const modal = document.getElementById('modalZoom');
-            const img = document.getElementById('zoomedImg');
-            img.src = src;
-            modal.classList.remove('hidden');
-        };
-        window.closeZoomModal = () => document.getElementById('modalZoom').classList.add('hidden');
-
-        document.addEventListener('click', (e) => {
-            const img = e.target.closest('.log-content img');
-            if (img) {
-                e.preventDefault(); e.stopPropagation();
-                openZoomModal(img.src);
-            }
-        });
-
         window.msg = (m) => { const t = document.getElementById('toast'); t.innerText = m; t.style.opacity = "1"; t.style.bottom = "40px"; setTimeout(() => { t.style.opacity = "0"; t.style.bottom = "10px"; }, 3000); };
-
         function calculateProgress(t = {}) { return (PROGRESS_TASKS.filter(x => t[x.key]).length / PROGRESS_TASKS.length) * 100; }
-
+        
         function renderInputDropdowns() {
             const fp = document.getElementById('f_proj'), flp = document.getElementById('flProj'), flu = document.getElementById('flUser');
             if(!fp || !flp) return;
-            fp.innerHTML = '<option value="" disabled selected>-- Pilih Projek --</option>';
-            flp.innerHTML = '<option value="ALL">SEMUA PROJEK</option>';
-            if(currentUser.role==='ADMIN' && flu) {
-                flu.innerHTML = '<option value="ALL">SEMUA TIM</option>';
-                usersData.sort((a,b)=>a.id.localeCompare(b.id)).forEach(u => flu.add(new Option(u.id.toUpperCase(), u.id)));
-            }
-            projectsData.forEach(p => {
-                if(currentUser.role==='ADMIN' || (p.assignedUsers||[]).includes(currentUser.username)) {
-                    fp.add(new Option(p.name, p.name)); flp.add(new Option(p.name, p.name));
-                }
-            });
+            fp.innerHTML = '<option value="" disabled selected>-- Pilih Projek --</option>'; flp.innerHTML = '<option value="ALL">SEMUA PROJEK</option>';
+            if(currentUser.role==='ADMIN' && flu) { flu.innerHTML = '<option value="ALL">SEMUA TIM</option>'; usersData.sort((a,b)=>a.id.localeCompare(b.id)).forEach(u => flu.add(new Option(u.id.toUpperCase(), u.id))); }
+            projectsData.forEach(p => { if(currentUser.role==='ADMIN' || (p.assignedUsers||[]).includes(currentUser.username)) { fp.add(new Option(p.name, p.name)); flp.add(new Option(p.name, p.name)); } });
         }
-
         function checkDeadlines() {
             const b = document.getElementById('notifCount'), l = document.getElementById('notifList'); if(!b || !currentUser) return;
             let c = 0, h = '';
             projectsData.forEach(p => {
                 if(p.isFinished) return;
-                const ass = p.assignedUsers || [];
-                if(currentUser.role==='ADMIN' || ass.includes(currentUser.username)) {
+                if(currentUser.role==='ADMIN' || (p.assignedUsers||[]).includes(currentUser.username)) {
                     const diff = Math.ceil((new Date(p.endDate) - new Date().setHours(0,0,0,0)) / 86400000);
-                    if(diff <= 3) {
-                        c++;
-                        const clr = diff <= 0 ? 'bg-black text-white' : 'bg-red-50 text-red-600 border-red-100';
-                        h += `<div class="p-3 rounded-xl border ${clr} text-[9px] uppercase font-black tracking-widest shadow-sm">${diff <= 0 ? 'OVERDUE' : diff+' HARI LAGI'}: ${p.name}</div>`;
-                    }
+                    if(diff <= 3) { c++; const clr = diff <= 0 ? 'bg-black text-white' : 'bg-red-50 text-red-600 border-red-100'; h += `<div class="p-3 rounded-xl border ${clr} text-[9px] uppercase font-black tracking-widest shadow-sm">${diff <= 0 ? 'OVERDUE' : diff+' HARI LAGI'}: ${p.name}</div>`; }
                 }
             });
-            b.innerText = c; b.classList.toggle('hidden', c===0);
-            l.innerHTML = h || '<p class="text-[9px] text-slate-300 text-center py-6 font-bold uppercase italic">Aman, No Deadlines</p>';
+            b.innerText = c; b.classList.toggle('hidden', c===0); l.innerHTML = h || '<p class="text-[9px] text-slate-300 text-center py-6 font-bold uppercase italic">Aman, No Deadlines</p>';
         }
 
-        document.getElementById('progressForm').onsubmit = async (e) => {
-            e.preventDefault(); 
-            const work = document.getElementById('f_work_editor').innerHTML;
-            if(!document.getElementById('f_proj').value) return msg("PILIH PROJEK!");
-            await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), { 
-                tanggal: document.getElementById('f_date').value, 
-                username: currentUser.username, 
-                project_name: document.getElementById('f_proj').value, 
-                pekerjaan: work, 
-                ts: serverTimestamp() 
-            });
-            document.getElementById('f_work_editor').innerHTML = ''; msg("✅ PROGRES DISIMPAN");
-        };
-
-        window.deleteLog = async (id) => { if(confirm("Hapus log ini?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'logs', id)); };
-        window.savePersonalNote = async () => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', currentUser.username), { privateNotes: document.getElementById('personalNoteEditor').innerHTML }); msg("✅ CATATAN DISIMPAN"); };
-        window.saveProjectNote = async (p, id) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { notes: document.getElementById(id).value }); msg("✅ CATATAN PROJEK DISIMPAN"); };
-        window.toggleFinishProject = async (p, c) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { isFinished: c }); msg(c ? "✅ PROJEK FINISH" : "🔄 PROJEK AKTIF"); };
-        
-        window.toggleTask = async (p, k, c) => { 
-            const proj = projectsData.find(x=>x.name===p); 
-            const tasks = {...(proj.tasks||{})}; 
-            const timelines = {...(proj.taskTimelines||{})};
-            const today = getLocalDateString();
-            
-            tasks[k] = c; 
-            
-            if (c === true) {
-                let startDate = proj.startDate || today;
-                const idx = PROGRESS_TASKS.findIndex(t => t.key === k);
-                if (idx > 0) {
-                    const prevTaskKey = PROGRESS_TASKS[idx - 1].key;
-                    if (timelines[prevTaskKey]) {
-                        const prevEnd = new Date(timelines[prevTaskKey].end);
-                        prevEnd.setDate(prevEnd.getDate() + 1);
-                        startDate = prevEnd.toISOString().split('T')[0];
-                    }
-                }
-                if (new Date(startDate) > new Date(today)) startDate = today;
-                timelines[k] = { start: startDate, end: today };
-                const taskLabel = PROGRESS_TASKS.find(t => t.key === k)?.label || k;
-                const autoWorkMsg = `✅ Progress <b>${taskLabel}</b> projek <b>${p}</b> telah selesai. <br><span style="font-size:10px; color:#64748b;">Timeline: ${formatDateShort(startDate)} — ${formatDateShort(today)}</span>`;
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), { tanggal: today, username: currentUser.username, project_name: p, pekerjaan: autoWorkMsg, ts: serverTimestamp() });
-            } else { delete timelines[k]; }
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { tasks, taskTimelines: timelines }); 
-            msg(c ? "✅ PROGRESS DICATAT" : "🔄 PROGRESS DIBUKA");
-        };
-
-        window.formatDoc = (cmd) => { document.execCommand(cmd, false, null); };
-        window.insertBullet = (id) => { const el = document.getElementById(id); el.focus(); document.execCommand('insertUnorderedList', false, null); };
         window.toggleAccordion = (btn, name) => { const body = btn.closest('.project-card').querySelector('.accordion-body'), icon = btn.querySelector('.arrow-icon'); const close = !body.classList.contains('hidden'); body.classList.toggle('hidden', close); icon.classList.toggle('rotate-180', !close); close ? openProjectAccordions.delete(name) : openProjectAccordions.add(name); };
         window.toggleNotifPanel = () => document.getElementById('notifPanel').classList.toggle('hidden');
         window.openStickyZoom = (p) => { const proj = projectsData.find(x=>x.name===p); document.getElementById('stickyProjName').innerText = p; document.getElementById('stickyZoomArea').value = proj.notes||""; document.getElementById('btnSaveStickyModal').onclick = () => { saveProjectNote(p, 'stickyZoomArea'); closeStickyModal(); }; document.getElementById('modalSticky').classList.remove('hidden'); };
         window.closeStickyModal = () => document.getElementById('modalSticky').classList.add('hidden');
-
-        window.toggleAdminAccordion = (header, name) => {
-            const body = header.closest('.rounded-2xl').querySelector('.admin-accordion-body');
-            const arrow = header.querySelector('.arrow-icon'); const isHidden = body.classList.contains('hidden');
-            body.classList.toggle('hidden', !isHidden); arrow.classList.toggle('rotate-180', isHidden);
-            openAdminProjName = isHidden ? name : null;
-        };
-        window.changeProjPage = (d) => { projsCurrentPage += d; renderProjectList(); };
-        window.changeUserPage = (d) => { usersCurrentPage += d; renderUserList(); };
-        window.handleProjSearch = () => { projSearchQuery = document.getElementById('searchProj').value.toUpperCase(); projsCurrentPage = 1; renderProjectList(); };
         
-        window.addNewProject = async () => {
-            const name = document.getElementById('nP').value.toUpperCase().trim();
-            const start = document.getElementById('nPStart').value; const end = document.getElementById('nPEnd').value;
-            if(!name) return msg("NAMA PROJEK KOSONG!");
-            if (isEditingProject) {
-                const old = editingProjectOldName;
-                if (name !== old) {
-                    const p = projectsData.find(x => x.name === old);
-                    await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { ...p, startDate: start, endDate: end });
-                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', old));
-                } else { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', old), { startDate: start, endDate: end }); }
-            } else { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { assignedUsers: [], startDate: start, endDate: end, tasks: {}, notes: "", isFinished: false, order: projectsData.length, taskTimelines: {} }); }
-            resetProjectForm(); msg("✅ DATA TERSIMPAN");
+        window.renderUserList = () => {
+            const list = document.getElementById('userListSettings'); if(!list) return;
+            const startIndex = (usersCurrentPage - 1) * usersPerPage;
+            list.innerHTML = '';
+            usersData.sort((a,b) => a.id.localeCompare(b.id)).slice(startIndex, startIndex + usersPerPage).forEach(u => {
+                list.innerHTML += `<div class="bg-white p-4 rounded-2xl border border-slate-200 flex justify-between items-center shadow-sm"><div class="flex-grow"><p class="text-xs font-extrabold uppercase text-slate-800">${u.id} <span class="text-[9px] text-blue-500 bg-blue-50 px-2 py-0.5 rounded-full ml-1">${u.role}</span></p><p class="text-[9px] font-bold text-slate-400 mt-1 uppercase tracking-tighter italic">Password: <span class="text-slate-600 font-black">${u.password}</span></p></div><div class="flex gap-2"><button onclick="editUserPrompt('${u.id}', '${u.password}', '${u.role}')" class="text-[9px] font-bold text-blue-500 uppercase px-3 py-1.5 border border-blue-100 rounded-lg hover:bg-blue-50 transition-all">Edit</button><button onclick="deleteUser('${u.id}')" class="text-[9px] font-bold text-red-500 uppercase px-3 py-1.5 border border-red-100 rounded-lg hover:bg-red-50 transition-all">Hapus</button></div></div>`;
+            });
         };
-        window.editProjectPrompt = (name, start, end) => {
-            isEditingProject = true; editingProjectOldName = name; document.getElementById('nP').value = name; document.getElementById('nPStart').value = start || ''; document.getElementById('nPEnd').value = end || '';
-            document.getElementById('btnAddNewProject').innerText = "Update Projek"; document.getElementById('btnCancelEditProj').classList.remove('hidden');
-            document.getElementById('projFormTitle').innerText = "Edit Projek: " + name;
-        };
-        window.resetProjectForm = () => {
-            isEditingProject = false; editingProjectOldName = ""; document.getElementById('nP').value = ''; document.getElementById('nPStart').value = ''; document.getElementById('nPEnd').value = '';
-            document.getElementById('btnAddNewProject').innerText = "Simpan Projek"; document.getElementById('btnCancelEditProj').classList.add('hidden');
-            document.getElementById('projFormTitle').innerText = "Tambah Projek Baru";
-        };
-        window.deleteProject = async (name) => { if(confirm("Hapus projek " + name + "?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name)); };
-        
-        window.addUserToProject = async (name) => {
-            const uid = document.getElementById(`selAddUser_${name.replace(/\s+/g, '_')}`).value; if(!uid) return;
-            const p = projectsData.find(x => x.name === name); let assigned = p.assignedUsers || []; assigned.push(uid);
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { assignedUsers: assigned });
-        };
-        window.toggleUserAssignment = async (name, uid) => {
-            const p = projectsData.find(x => x.name === name); let assigned = (p.assignedUsers || []).filter(x => x !== uid);
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { assignedUsers: assigned });
-        };
-
-        window.saveUser = async () => {
-            const u = document.getElementById('mU').value.trim().toLowerCase(); const p = document.getElementById('mP').value.trim(); const r = document.getElementById('mR').value;
-            if(!u || !p) return msg("ISI USER & PASS!");
-            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u), { password: p, role: r }, { merge: true });
-            resetUserForm(); msg("✅ AKUN DISIMPAN");
-        };
-        window.editUserPrompt = (u, p, r) => {
-            isEditingUser = true; document.getElementById('mU').value = u; document.getElementById('mU').disabled = true;
-            document.getElementById('mP').value = p; document.getElementById('mR').value = r;
-            document.getElementById('btnSaveUser').innerText = "Update Akun"; document.getElementById('btnCancelEdit').classList.remove('hidden');
-        };
-        window.resetUserForm = () => {
-            isEditingUser = false; document.getElementById('mU').value = ''; document.getElementById('mU').disabled = false;
-            document.getElementById('mP').value = ''; document.getElementById('mR').value = 'USER';
-            document.getElementById('btnSaveUser').innerText = "Simpan Akun"; document.getElementById('btnCancelEdit').classList.add('hidden');
-        };
-        window.deleteUser = async (u) => { if(u === 'admin') return msg("TIDAK BISA HAPUS ADMIN!"); if(confirm("Hapus akun " + u + "?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u)); };
 
         window.handleDragStart = (e, name) => { draggedProjectName = name; e.currentTarget.classList.add('dragging'); };
         window.handleDragOver = (e) => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); };
@@ -1122,11 +983,11 @@
             if (draggedProjectName === targetName) return;
             const fromIdx = projectsData.findIndex(p => p.name === draggedProjectName), toIdx = projectsData.findIndex(p => p.name === targetName);
             const reordered = [...projectsData]; const [item] = reordered.splice(fromIdx, 1); reordered.splice(toIdx, 0, item);
-            projectsData = reordered; renderSidebarDeadlines();
-            const batch = writeBatch(db);
-            reordered.forEach((p, i) => batch.update(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p.name), { order: i }));
+            const batch = writeBatch(db); reordered.forEach((p, i) => batch.update(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p.name), { order: i }));
             await batch.commit(); msg("✅ URUTAN DIPERBARUI");
         };
+
+        window.addEventListener('resize', renderMeetings);
     </script>
 </body>
 </html>
