@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WORKSPACE Tracker - Stable V1 (Fixed Zoom)</title>
+    <title>WORKSPACE Tracker - Stable V1 (Thumbnail Mode)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
@@ -45,19 +45,35 @@
 
         .badge-notes { background-color: #facc15; color: #713f12; font-size: 7px; font-weight: 900; padding: 2px 6px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.05em; box-shadow: 0 2px 4px rgba(234, 179, 8, 0.2); }
         
-        /* CSS KHUSUS GAMBAR DI LAPORAN */
-        .log-content img, #f_work_editor img { 
+        /* CSS GAMBAR DI EDITOR (TETAP BESAR) */
+        #f_work_editor img { 
             max-width: 100%; 
             height: auto; 
             border-radius: 1rem; 
             border: 1px solid #e2e8f0; 
             margin: 12px 0; 
             display: block; 
+        }
+
+        /* CSS GAMBAR DI PANTAUAN (JADI THUMBNAIL) */
+        .log-content img { 
+            width: 140px; 
+            height: 140px; 
+            object-fit: cover;
+            border-radius: 1rem; 
+            border: 1px solid #e2e8f0; 
+            margin: 8px 4px; 
+            display: inline-block; 
             cursor: zoom-in; 
             transition: all 0.2s;
             box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            vertical-align: top;
         }
-        .log-content img:hover { transform: scale(1.01); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+        .log-content img:hover { 
+            transform: scale(1.05); 
+            box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); 
+            border-color: #2563eb;
+        }
 
         .dragging { opacity: 0.5; border: 2px dashed #3b82f6; }
         .drag-over { border-top: 4px solid #3b82f6 !important; }
@@ -519,7 +535,7 @@
         };
         window.closeZoomModal = () => document.getElementById('modalZoom').classList.add('hidden');
 
-        // FIXED ZOOM IMAGE DELEGATION
+        // FIXED ZOOM IMAGE DELEGATION (UNTUK THUMBNAIL)
         document.addEventListener('click', (e) => {
             const img = e.target.closest('.log-content img');
             if (img) {
