@@ -303,9 +303,9 @@
     <div id="modalCalendar" class="hidden fixed inset-0 z-[120] modal-overlay flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div class="p-6 border-b flex justify-between items-center bg-slate-50">
-                <div>
-                    <h3 id="calProjName" class="text-sm font-black text-slate-800 uppercase tracking-widest leading-none mb-1">Timeline Projek</h3>
-                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Visualisasi Jadwal & Progres</p>
+                <div class="flex flex-col">
+                    <h3 id="calProjName" class="text-sm font-black text-slate-800 uppercase tracking-widest leading-none mb-1 flex items-center gap-2">Timeline Projek</h3>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Visualisasi Jadwal & Progres Keseluruhan</p>
                 </div>
                 <button onclick="closeCalendar()" class="bg-slate-200 p-2 rounded-full hover:bg-slate-300 transition-colors">
                     <svg class="h-5 w-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -730,16 +730,38 @@
             const proj = projectsData.find(p => p.name === projName);
             if (!proj) return;
 
-            document.getElementById('calProjName').innerText = "Timeline: " + projName;
+            // Update Header dengan Nama dan Badge Tanggal (Gambar 1)
+            document.getElementById('calProjName').innerHTML = `
+                Timeline: ${projName} 
+                <span class="ml-2 text-[10px] text-blue-500 font-bold bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-100 shadow-sm">
+                    ${formatDateShort(proj.startDate)} — ${formatDateShort(proj.endDate)}
+                </span>
+            `;
+
             const container = document.getElementById('calContainer');
             container.innerHTML = '';
 
-            // Tentukan bulan mulai dan bulan setelahnya
+            // LOGIKA DINAMIS: Ambil semua bulan dari Start Date sampai End Date
             const startD = proj.startDate ? new Date(proj.startDate) : new Date();
-            const monthsToShow = [
-                new Date(startD.getFullYear(), startD.getMonth(), 1),
-                new Date(startD.getFullYear(), startD.getMonth() + 1, 1)
-            ];
+            const endD = proj.endDate ? new Date(proj.endDate) : new Date(startD.getFullYear(), startD.getMonth() + 1, 1);
+            
+            const monthsToShow = [];
+            // Buat iterator bulan
+            let current = new Date(startD.getFullYear(), startD.getMonth(), 1);
+            // Akhir iterator adalah bulan dari End Date
+            const last = new Date(endD.getFullYear(), endD.getMonth(), 1);
+
+            while (current <= last) {
+                monthsToShow.push(new Date(current));
+                current.setMonth(current.getMonth() + 1);
+            }
+
+            // Jika range bulan terlalu pendek, tampilkan minimal 2 bulan
+            if (monthsToShow.length === 1) {
+                let next = new Date(monthsToShow[0]);
+                next.setMonth(next.getMonth() + 1);
+                monthsToShow.push(next);
+            }
 
             monthsToShow.forEach(monthDate => {
                 container.appendChild(generateMonthHTML(monthDate, proj));
@@ -774,8 +796,6 @@
             const projName = proj.name;
 
             for (let day = 1; day <= daysInMonth; day++) {
-                // Perbaikan: Buat string tanggal lokal manual (YYYY-MM-DD)
-                // Menghindari offset UTC yang menyebabkan tanggal bergeser 1 hari
                 const dayStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 
                 let overlays = '';
