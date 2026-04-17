@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WORKSPACE Tracker - Master Stable Version 9.0</title>
+    <title>WORKSPACE Tracker - Master Stable Version 9.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
@@ -374,7 +374,9 @@
         }
         function listenUsers() {
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
-                usersData = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderUserList();
+                usersData = snap.docs.map(d => ({ id: d.id, ...d.data() })); 
+                renderUserList();
+                renderFilterDropdowns(); // Update dropdown filter Admin
             }, (err) => console.error(err));
         }
 
@@ -445,12 +447,16 @@
         // --- PANTAUAN LOGS RENDERING (ZEBRA STRIPPING) ---
         window.renderLogs = () => {
             const list = document.getElementById('logList'); if(!list) return;
-            const fP = document.getElementById('flProj').value, fU = (currentUser.role === 'ADMIN') ? document.getElementById('flUser').value : 'ALL';
+            const userSelect = document.getElementById('flUser');
+            
+            const fU = (currentUser.role === 'ADMIN') ? (userSelect ? userSelect.value : 'ALL') : currentUser.username;
+            const fP = document.getElementById('flProj').value;
             const fK = document.getElementById('searchLog').value.toLowerCase();
             const sD = document.getElementById('flStartDate').value, eD = document.getElementById('flEndDate').value;
 
             const filtered = logsData.filter(l => {
-                const matchProj = fP === 'ALL' || l.project_name === fP, matchUser = fU === 'ALL' || l.username === fU;
+                const matchProj = fP === 'ALL' || l.project_name === fP;
+                const matchUser = fU === 'ALL' || fU === "" || l.username === fU; // Tambahkan "" agar tidak filter kosong
                 const matchKey = (l.pekerjaan || "").toLowerCase().includes(fK) || (l.username || "").toLowerCase().includes(fK);
                 const matchDate = (!sD || l.tanggal >= sD) && (!eD || l.tanggal <= eD);
                 return matchProj && matchUser && matchKey && matchDate;
@@ -656,6 +662,17 @@
             });
             document.getElementById('userPagination').innerHTML = `<button onclick="changeUserPage(-1)" ${usersCurrentPage===1?'disabled':''} class="page-btn">Prev</button><span class="text-[10px] font-black uppercase text-slate-400 tracking-widest">Hal ${usersCurrentPage} / ${total}</span><button onclick="changeUserPage(1)" ${usersCurrentPage===total?'disabled':''} class="page-btn">Next</button>`;
         };
+
+        // Fungsi khusus untuk mengisi dropdown filter di tab Pantauan
+        function renderFilterDropdowns() {
+            const flu = document.getElementById('flUser');
+            if(!flu || currentUser.role !== 'ADMIN') return;
+            
+            flu.innerHTML = '<option value="ALL">SEMUA USER</option>';
+            usersData.forEach(u => {
+                flu.add(new Option(u.id.toUpperCase(), u.id));
+            });
+        }
 
         window.addUserToProject = async (p, u) => { const proj = projectsData.find(x => x.name === p); let ass = proj.assignedUsers || []; if(!ass.includes(u)) { ass.push(u); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { assignedUsers: ass }); } };
         window.toggleUserAssignment = async (p, u) => { const proj = projectsData.find(x => x.name === p); let ass = (proj.assignedUsers || []).filter(x => x !== u); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { assignedUsers: ass }); };
