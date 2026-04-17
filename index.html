@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WORKSPACE Tracker - Admin Priority View</title>
+    <title>WORKSPACE Tracker - Auto Timeline Enabled</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
@@ -60,6 +60,9 @@
 
         .btn-open-project { border: 1px solid #2563eb; color: #2563eb; padding: 6px 16px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; transition: all 0.2s; }
         .btn-open-project:hover { background: #2563eb; color: white; }
+
+        /* Timeline style */
+        .timeline-date { font-size: 9px; font-weight: 800; color: #2563eb; margin-top: 1px; display: block; letter-spacing: -0.02em; }
     </style>
 </head>
 <body class="pb-10">
@@ -336,6 +339,13 @@
             return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         };
 
+        const formatDateShort = (dateStr) => {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            const months = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+            return `${d.getDate()} ${months[d.getMonth()]}`;
+        };
+
         const init = async () => {
             const savedUser = localStorage.getItem('ws_user');
             if (savedUser) currentUser = JSON.parse(savedUser);
@@ -382,7 +392,7 @@
                 document.getElementById('t_admin_view').classList.remove('hidden');
                 document.getElementById('t_projek').classList.remove('hidden');
                 document.getElementById('t_settings').classList.remove('hidden');
-                tab('admin_view'); // Perubahan: Default Admin ke tab Admin
+                tab('admin_view');
             } else {
                 tab('input');
             }
@@ -391,14 +401,12 @@
 
         window.logout = () => { if (confirm("Keluar dari aplikasi?")) { localStorage.removeItem('ws_user'); location.reload(); } };
 
-        // --- MANAJEMEN LISTENERS ---
         function listenProjects() {
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'projects'), (snap) => {
                 projectsData = snap.docs.map(d => ({ name: d.id, ...d.data() })).sort((a, b) => (a.order || 0) - (b.order || 0));
                 renderProjectList(); renderInputDropdowns(); renderSidebarDeadlines(); checkDeadlines();
                 if(currentUser && currentUser.role === 'ADMIN') {
                     renderAdminDashboard();
-                    // Update detail view if currently open
                     const detailVisible = !document.getElementById('v_project_detail').classList.contains('hidden');
                     if(detailVisible) {
                         const activeProj = document.getElementById('projectDetailContent').getAttribute('data-active-proj');
@@ -407,11 +415,13 @@
                 }
             });
         }
+
         function listenUsers() {
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'users'), (snap) => {
                 usersData = snap.docs.map(d => ({ id: d.id, ...d.data() })); renderUserList();
             });
         }
+
         function listenLogs() {
             onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), (snap) => {
                 logsData = snap.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => {
@@ -423,7 +433,6 @@
             });
         }
 
-        // --- UI & RENDERING ---
         window.renderLogs = () => {
             const list = document.getElementById('logList'); if(!list) return;
             const fP = document.getElementById('flProj').value; 
@@ -467,7 +476,6 @@
             });
         };
 
-        // --- NEW ADMIN DASHBOARD RENDERING ---
         window.renderAdminDashboard = () => {
             const ongoingList = document.getElementById('adminOngoingList');
             const finishList = document.getElementById('adminFinishList');
@@ -481,7 +489,6 @@
                 projects.forEach(proj => {
                     const progress = calculateProgress(proj.tasks);
                     const deadlineStr = proj.endDate ? new Date(proj.endDate).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) : 'No Deadline';
-                    const safeName = proj.name.replace(/\s+/g, '_');
                     
                     container.innerHTML += `
                         <div class="card p-5 shadow-sm border-slate-100 flex flex-col transition-all hover:shadow-md ${proj.isFinished ? 'bg-slate-50 opacity-80' : 'bg-white'}">
@@ -505,9 +512,7 @@
                                 <div class="flex-grow bg-slate-100 h-1.5 rounded-full overflow-hidden">
                                     <div class="${proj.isFinished ? 'bg-green-500' : 'bg-blue-600'} h-full transition-all duration-500" style="width: ${progress}%"></div>
                                 </div>
-                                <button onclick="viewProjectDetail('${proj.name}')" class="btn-open-project">
-                                    Open Project
-                                </button>
+                                <button onclick="viewProjectDetail('${proj.name}')" class="btn-open-project">Open Project</button>
                             </div>
                         </div>`;
                 });
@@ -517,7 +522,6 @@
             renderCards(finishes, finishList);
         };
 
-        // NEW: Function to View Specific Project Detail
         window.viewProjectDetail = (projName) => {
             const proj = projectsData.find(p => p.name === projName);
             if(!proj) return;
@@ -531,10 +535,16 @@
             let checklistHtml = '';
             PROGRESS_TASKS.forEach(t => {
                 const isChecked = proj.tasks && proj.tasks[t.key];
+                const timeline = proj.taskTimelines && proj.taskTimelines[t.key];
+                const timelineText = timeline ? `${formatDateShort(timeline.start)} — ${formatDateShort(timeline.end)}` : '';
+                
                 checklistHtml += `
-                    <div class="flex items-center gap-3 p-3 bg-white border border-slate-100 rounded-xl">
-                        <input type="checkbox" id="det_task_${safeName}_${t.key}" class="task-checkbox w-4 h-4 rounded border-slate-300" ${isChecked ? 'checked' : ''} onchange="toggleTask('${proj.name}', '${t.key}', this.checked)">
-                        <label for="det_task_${safeName}_${t.key}" class="text-xs font-bold uppercase ${proj.isFinished ? 'text-slate-400 line-through' : 'text-slate-600'} cursor-pointer">${t.label}</label>
+                    <div class="flex flex-col p-3 bg-white border border-slate-100 rounded-xl">
+                        <div class="flex items-center gap-3">
+                            <input type="checkbox" id="det_task_${safeName}_${t.key}" class="task-checkbox w-4 h-4 rounded border-slate-300" ${isChecked ? 'checked' : ''} onchange="toggleTask('${proj.name}', '${t.key}', this.checked)">
+                            <label for="det_task_${safeName}_${t.key}" class="text-xs font-bold uppercase ${proj.isFinished ? 'text-slate-400 line-through' : 'text-slate-600'} cursor-pointer leading-tight">${t.label}</label>
+                        </div>
+                        ${timelineText ? `<span class="timeline-date ml-7">${timelineText}</span>` : ''}
                     </div>`;
             });
 
@@ -550,40 +560,28 @@
                             <p class="text-[9px] font-bold text-slate-400 uppercase">Overall Progress</p>
                         </div>
                     </div>
-
                     <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
                         <div class="${proj.isFinished ? 'bg-green-500' : 'bg-blue-600'} h-full transition-all duration-700" style="width: ${progress}%"></div>
                     </div>
-
                     <div class="space-y-4">
-                        <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                            <span class="w-2 h-2 bg-blue-600 rounded-full"></span> 
-                            Checklist Progress
-                        </h3>
+                        <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-blue-600 rounded-full"></span> Checklist Progress</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             ${checklistHtml}
                         </div>
                     </div>
-
                     <div class="space-y-4">
-                        <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2">
-                            <span class="w-2 h-2 bg-yellow-500 rounded-full"></span> 
-                            Catatan Projek
-                        </h3>
+                        <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-yellow-500 rounded-full"></span> Catatan Projek</h3>
                         <div class="sticky-note">
                             <button onclick="openStickyZoom('${proj.name}')" class="absolute top-2 right-2 p-1.5 bg-white/50 hover:bg-white rounded-lg shadow-sm text-yellow-900 transition-all z-10">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg>
                             </button>
                             <textarea id="det_note_${safeName}" class="sticky-note-textarea !min-h-[150px]" placeholder="Tulis catatan projek di sini...">${proj.notes || ""}</textarea>
                             <div class="flex justify-end mt-4">
-                                <button onclick="saveProjectNote('${proj.name}', 'det_note_${safeName}')" class="bg-yellow-400 text-yellow-900 px-8 py-3 rounded-xl font-black text-[10px] uppercase shadow-md active:scale-95 transition-all">
-                                    Simpan Perubahan
-                                </button>
+                                <button onclick="saveProjectNote('${proj.name}', 'det_note_${safeName}')" class="bg-yellow-400 text-yellow-900 px-8 py-3 rounded-xl font-black text-[10px] uppercase shadow-md active:scale-95 transition-all">Simpan Perubahan</button>
                             </div>
                         </div>
                     </div>
                 </div>`;
-            
             tab('project_detail');
         };
 
@@ -595,17 +593,30 @@
                 const deadlineStr = proj.endDate ? new Date(proj.endDate).toLocaleDateString('id-ID', {day:'2-digit', month:'short', year:'numeric'}) : 'No Deadline';
                 const progress = calculateProgress(proj.tasks); const isFinished = proj.isFinished || false; const safeName = proj.name.replace(/\s+/g, '_');
                 const isOpen = openProjectAccordions.has(proj.name);
+                
                 let dateBoxClass = "bg-white border-slate-200 text-slate-800"; 
                 if (proj.endDate) {
                     const diff = Math.ceil((new Date(proj.endDate) - new Date().setHours(0,0,0,0)) / 86400000);
                     if (diff <= 0) dateBoxClass = "bg-black text-white border-black";
                     else if (diff <= 3) dateBoxClass = "bg-red-500 text-white border-red-500 shadow-lg shadow-red-100";
                 }
+                
                 let checklistHtml = '';
                 PROGRESS_TASKS.forEach(t => {
                     const isChecked = proj.tasks && proj.tasks[t.key];
-                    checklistHtml += `<div class="flex items-center gap-2 py-0.5"><input type="checkbox" id="task_${safeName}_${t.key}" class="task-checkbox w-3.5 h-3.5 rounded-lg border-slate-300" ${isChecked ? 'checked' : ''} onchange="toggleTask('${proj.name}', '${t.key}', this.checked)"><label for="task_${safeName}_${t.key}" class="text-[8.5px] font-bold uppercase ${isFinished ? 'text-slate-400 line-through' : 'text-slate-500'} cursor-pointer">${t.label}</label></div>`;
+                    const timeline = proj.taskTimelines && proj.taskTimelines[t.key];
+                    const timelineText = timeline ? `${formatDateShort(timeline.start)} — ${formatDateShort(timeline.end)}` : '';
+                    
+                    checklistHtml += `
+                        <div class="flex flex-col py-1">
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="task_${safeName}_${t.key}" class="task-checkbox w-3.5 h-3.5 rounded-lg border-slate-300" ${isChecked ? 'checked' : ''} onchange="toggleTask('${proj.name}', '${t.key}', this.checked)">
+                                <label for="task_${safeName}_${t.key}" class="text-[8.5px] font-bold uppercase ${isFinished ? 'text-slate-400 line-through' : 'text-slate-500'} cursor-pointer">${t.label}</label>
+                            </div>
+                            ${timelineText ? `<span class="timeline-date ml-5.5" style="margin-left: 1.4rem;">${timelineText}</span>` : ''}
+                        </div>`;
                 });
+
                 sideList.innerHTML += `
                     <div class="project-card rounded-2xl border ${isFinished ? 'bg-slate-800 border-slate-700' : 'bg-white border-slate-100 shadow-sm'} overflow-hidden transition-all cursor-move" draggable="true" data-name="${proj.name}" ondragstart="handleDragStart(event, '${proj.name}')" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, '${proj.name}')">
                         <div class="p-4">
@@ -629,7 +640,7 @@
                             </div>
                         </div>
                         <div class="${isOpen ? '' : 'hidden'} px-4 pb-4 border-t ${isFinished ? 'border-slate-700 bg-slate-800/50' : 'border-slate-50'} mt-1 accordion-body">
-                             <div class="grid grid-cols-2 gap-x-2 bg-slate-50/50 p-2.5 rounded-xl my-4">${checklistHtml}</div>
+                             <div class="grid grid-cols-1 gap-y-1 bg-slate-50/50 p-2.5 rounded-xl my-4">${checklistHtml}</div>
                              <div class="sticky-note">
                                 <button onclick="openStickyZoom('${proj.name}')" class="absolute top-2 right-2 p-1.5 bg-white/50 hover:bg-white rounded-lg shadow-sm text-yellow-900 transition-all z-10"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg></button>
                                 <textarea id="note_${safeName}" class="sticky-note-textarea" placeholder="Catatan projek...">${proj.notes || ""}</textarea>
@@ -643,7 +654,6 @@
             });
         };
 
-        // --- ADMIN RENDERING FUNCTIONS ---
         window.renderProjectList = () => {
             const list = document.getElementById('projListSettings'); const pag = document.getElementById('projPagination'); if(!list) return;
             const filtered = projectsData.filter(p => p.name.includes(projSearchQuery.toUpperCase())).sort((a,b) => (a.order || 0) - (b.order || 0));
@@ -704,7 +714,6 @@
             pag.innerHTML = `<button onclick="changeUserPage(-1)" ${usersCurrentPage === 1 ? 'disabled' : ''} class="page-btn">Sebelumnya</button><span class="text-[10px] font-bold text-slate-400 uppercase">Hal ${usersCurrentPage} dari ${total}</span><button onclick="changeUserPage(1)" ${usersCurrentPage === total ? 'disabled' : ''} class="page-btn">Selanjutnya</button>`;
         };
 
-        // --- CORE FUNCTIONS ---
         window.tab = (t) => {
             ['input','logs','admin_view','project_detail','projek','settings'].forEach(k => {
                 const v = document.getElementById('v_'+k), b = document.getElementById('t_'+k);
@@ -736,8 +745,7 @@
         document.addEventListener('click', (e) => {
             const img = e.target.closest('.log-content img');
             if (img) {
-                e.preventDefault();
-                e.stopPropagation();
+                e.preventDefault(); e.stopPropagation();
                 openZoomModal(img.src);
             }
         });
@@ -781,7 +789,6 @@
             l.innerHTML = h || '<p class="text-[9px] text-slate-300 text-center py-6 font-bold uppercase italic">Aman, No Deadlines</p>';
         }
 
-        // --- CRUD ACTIONS ---
         document.getElementById('progressForm').onsubmit = async (e) => {
             e.preventDefault(); 
             const work = document.getElementById('f_work_editor').innerHTML;
@@ -801,23 +808,55 @@
         window.saveProjectNote = async (p, id) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { notes: document.getElementById(id).value }); msg("✅ CATATAN PROJEK DISIMPAN"); };
         window.toggleFinishProject = async (p, c) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { isFinished: c }); msg(c ? "✅ PROJEK FINISH" : "🔄 PROJEK AKTIF"); };
         
+        // --- LOGIKA TIMELINE OTOMATIS ---
         window.toggleTask = async (p, k, c) => { 
             const proj = projectsData.find(x=>x.name===p); 
             const tasks = {...(proj.tasks||{})}; 
-            tasks[k]=c; 
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { tasks }); 
+            const timelines = {...(proj.taskTimelines||{})};
+            const today = getLocalDateString();
+            
+            tasks[k] = c; 
+            
             if (c === true) {
+                // Tentukan Tanggal Mulai
+                let startDate = proj.startDate || today;
+                const idx = PROGRESS_TASKS.findIndex(t => t.key === k);
+                if (idx > 0) {
+                    // Cek tugas sebelumnya
+                    const prevTaskKey = PROGRESS_TASKS[idx - 1].key;
+                    if (timelines[prevTaskKey]) {
+                        // Mulai 1 hari setelah tugas sebelumnya selesai
+                        const prevEnd = new Date(timelines[prevTaskKey].end);
+                        prevEnd.setDate(prevEnd.getDate() + 1);
+                        startDate = prevEnd.toISOString().split('T')[0];
+                    }
+                }
+                
+                // Pastikan startDate tidak melewati hari ini
+                if (new Date(startDate) > new Date(today)) startDate = today;
+                
+                timelines[k] = { start: startDate, end: today };
+
+                // Auto Log ke Pantauan
                 const taskLabel = PROGRESS_TASKS.find(t => t.key === k)?.label || k;
-                const autoWorkMsg = `✅ Progress <b>${taskLabel}</b> projek <b>${p}</b> telah selesai.`;
+                const autoWorkMsg = `✅ Progress <b>${taskLabel}</b> projek <b>${p}</b> telah selesai. <br><span style="font-size:10px; color:#64748b;">Timeline: ${formatDateShort(startDate)} — ${formatDateShort(today)}</span>`;
+                
                 await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), { 
-                    tanggal: getLocalDateString(), 
+                    tanggal: today, 
                     username: currentUser.username, 
                     project_name: p, 
                     pekerjaan: autoWorkMsg, 
                     ts: serverTimestamp() 
                 });
-                msg(`✅ PROGRESS ${taskLabel.toUpperCase()} DICATAT`);
+            } else {
+                delete timelines[k];
             }
+            
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { 
+                tasks, 
+                taskTimelines: timelines 
+            }); 
+            msg(c ? "✅ PROGRESS DICATAT" : "🔄 PROGRESS DIBUKA");
         };
 
         window.formatDoc = (cmd) => { document.execCommand(cmd, false, null); };
@@ -827,7 +866,6 @@
         window.openStickyZoom = (p) => { const proj = projectsData.find(x=>x.name===p); document.getElementById('stickyProjName').innerText = p; document.getElementById('stickyZoomArea').value = proj.notes||""; document.getElementById('btnSaveStickyModal').onclick = () => { saveProjectNote(p, 'stickyZoomArea'); closeStickyModal(); }; document.getElementById('modalSticky').classList.remove('hidden'); };
         window.closeStickyModal = () => document.getElementById('modalSticky').classList.add('hidden');
 
-        // --- ADMIN HELPERS ---
         window.toggleAdminAccordion = (header, name) => {
             const body = header.closest('.rounded-2xl').querySelector('.admin-accordion-body');
             const arrow = header.querySelector('.arrow-icon'); const isHidden = body.classList.contains('hidden');
@@ -849,7 +887,7 @@
                     await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { ...p, startDate: start, endDate: end });
                     await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', old));
                 } else { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', old), { startDate: start, endDate: end }); }
-            } else { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { assignedUsers: [], startDate: start, endDate: end, tasks: {}, notes: "", isFinished: false, order: projectsData.length }); }
+            } else { await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name), { assignedUsers: [], startDate: start, endDate: end, tasks: {}, notes: "", isFinished: false, order: projectsData.length, taskTimelines: {} }); }
             resetProjectForm(); msg("✅ DATA TERSIMPAN");
         };
         window.editProjectPrompt = (name, start, end) => {
@@ -892,7 +930,6 @@
         };
         window.deleteUser = async (u) => { if(u === 'admin') return msg("TIDAK BISA HAPUS ADMIN!"); if(confirm("Hapus akun " + u + "?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u)); };
 
-        // --- DRAG & DROP URUTAN ---
         window.handleDragStart = (e, name) => { draggedProjectName = name; e.currentTarget.classList.add('dragging'); };
         window.handleDragOver = (e) => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); };
         window.handleDragLeave = (e) => e.currentTarget.classList.remove('drag-over');
@@ -906,7 +943,6 @@
             reordered.forEach((p, i) => batch.update(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p.name), { order: i }));
             await batch.commit(); msg("✅ URUTAN DIPERBARUI");
         };
-
     </script>
 </body>
 </html>
