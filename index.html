@@ -41,8 +41,28 @@
 
         /* Checklist & Editor */
         .task-checkbox:checked + label { color: #2563eb; font-weight: 800; text-decoration: line-through; opacity: 0.6; }
-        .sticky-note { background-color: #fef9c3; border-left: 6px solid #facc15; border-radius: 1rem; padding: 1.25rem; position: relative; }
-        .sticky-note-textarea { background: transparent; border: none; outline: none; width: 100%; font-size: 13px; font-weight: 600; color: #854d0e; resize: none; line-height: 1.5; min-height: 150px; }
+        
+        /* STICKY NOTE STYLES (Update Gambar 3) */
+        .sticky-note { 
+            background-color: #fef9c3; 
+            border-left: 6px solid #facc15; 
+            border-radius: 1rem; 
+            padding: 1.25rem; 
+            position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        .sticky-note-textarea { 
+            background: transparent; 
+            border: none; 
+            outline: none; 
+            width: 100%; 
+            font-size: 13px; 
+            font-weight: 600; 
+            color: #854d0e; 
+            resize: none; 
+            line-height: 1.5; 
+            min-height: 120px; 
+        }
 
         /* Switch Toggle */
         .switch-finish { position: relative; display: inline-block; width: 44px; height: 22px; }
@@ -64,14 +84,14 @@
         #f_work_editor img { max-width: 100%; height: auto; border-radius: 1rem; border: 1px solid #e2e8f0; margin: 12px 0; display: block; }
 
         .log-content img { width: 140px; height: 140px; object-fit: cover; border-radius: 1rem; border: 1px solid #e2e8f0; margin: 8px 4px; display: inline-block; cursor: zoom-in; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); vertical-align: top; }
-        .log-content img:hover { transform: scale(1.05); }
-
+        
         .dragging { opacity: 0.5; border: 2px dashed #3b82f6; }
         .drag-over { border-top: 4px solid #3b82f6 !important; }
         
         .user-pill { background: #eff6ff; color: #1e40af; border: 1px solid #dbeafe; }
-        .page-btn { padding: 0.5rem 1rem; border-radius: 0.75rem; background: white; border: 1px solid #e2e8f0; font-size: 0.75rem; font-weight: 700; color: #64748b; transition: all 0.2s; }
+        .page-btn { padding: 0.5rem 1rem; border-radius: 0.75rem; background: white; border: 1px solid #e2e8f0; font-size: 0.75rem; font-weight: 700; color: #64748b; transition: all 0.2s; cursor: pointer; }
         .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+        .page-btn:not(:disabled):hover { border-color: #2563eb; color: #2563eb; }
 
         .btn-open-project { border: 1px solid #2563eb; color: #2563eb; padding: 6px 16px; border-radius: 12px; font-size: 11px; font-weight: 700; text-transform: uppercase; transition: all 0.2s; }
         .btn-open-project:hover { background: #2563eb; color: white; }
@@ -309,6 +329,7 @@
                             </div>
                         </div>
                         <div class="relative mb-8">
+                            <!-- SEARCH FIELD (Gambar 1 Fix) -->
                             <input type="text" id="searchProj" oninput="handleProjSearch()" placeholder="Cari nama projek..." class="w-full p-5 pl-14 border rounded-[1.5rem] text-xs outline-none bg-white border-slate-200 font-bold focus:ring-4 focus:ring-blue-50 transition-all"><svg class="w-6 h-6 absolute left-5 top-4.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </div>
                         <div id="projListSettings" class="space-y-4 mb-8"></div>
@@ -365,7 +386,7 @@
         </div>
     </div>
 
-    <!-- MODAL: STICKY ZOOM -->
+    <!-- MODAL: STICKY ZOOM (Gambar 3 Fix) -->
     <div id="modalSticky" class="hidden fixed inset-0 z-[130] modal-overlay flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border-4 border-white">
             <div class="p-8 bg-yellow-400 flex justify-between items-center text-yellow-900 font-black uppercase text-xs tracking-widest">
@@ -375,8 +396,12 @@
                 </div>
                 <button onclick="closeStickyModal()" class="bg-yellow-500/50 p-3 rounded-2xl hover:bg-yellow-600/50 transition-all">&times;</button>
             </div>
-            <div class="p-8 bg-yellow-50 flex-grow shadow-inner"><textarea id="stickyZoomArea" class="w-full h-[55vh] bg-transparent border-none outline-none font-bold text-slate-800 leading-relaxed text-base p-2 no-scrollbar"></textarea></div>
-            <div class="p-6 bg-white border-t flex justify-end"><button id="btnSaveStickyModal" class="bg-yellow-400 text-yellow-900 px-12 py-4 rounded-full font-black text-xs uppercase shadow-xl hover:shadow-yellow-100 active:scale-95 transition-all tracking-widest italic">Simpan & Tutup</button></div>
+            <div class="p-8 bg-yellow-50 flex-grow shadow-inner">
+                <textarea id="stickyZoomArea" class="w-full h-[55vh] bg-transparent border-none outline-none font-bold text-slate-800 leading-relaxed text-base p-2 no-scrollbar"></textarea>
+            </div>
+            <div class="p-6 bg-white border-t flex justify-end">
+                <button id="btnSaveStickyModal" class="bg-yellow-400 text-yellow-900 px-12 py-4 rounded-full font-black text-xs uppercase shadow-xl hover:shadow-yellow-100 active:scale-95 transition-all tracking-widest italic">Simpan & Tutup</button>
+            </div>
         </div>
     </div>
 
@@ -572,21 +597,16 @@
         }
 
         function updateStats() {
-            if(currentUser.role !== 'ADMIN') return;
+            if(!currentUser || currentUser.role !== 'ADMIN') return;
             const total = projectsData.length;
             const fin = projectsData.filter(x => x.isFinished).length;
             const ong = total - fin;
             const usr = usersData.length;
             
-            const animateValue = (id, val) => {
-                const el = document.getElementById(id);
-                if(!el) return;
-                el.innerText = val;
-            };
-            animateValue('st_total', total);
-            animateValue('st_fin', fin);
-            animateValue('st_ong', ong);
-            animateValue('st_user', usr);
+            if(document.getElementById('st_total')) document.getElementById('st_total').innerText = total;
+            if(document.getElementById('st_fin')) document.getElementById('st_fin').innerText = fin;
+            if(document.getElementById('st_ong')) document.getElementById('st_ong').innerText = ong;
+            if(document.getElementById('st_user')) document.getElementById('st_user').innerText = usr;
         }
 
         window.renderLogs = () => {
@@ -697,6 +717,10 @@
                         <div class="space-y-8">
                             <h3 class="text-xs font-black text-slate-900 uppercase tracking-widest italic flex items-center gap-3"><span class="w-10 h-1 bg-yellow-400 rounded-full"></span> Catatan Projek</h3>
                             <div class="sticky-note group h-full flex flex-col">
+                                <!-- ZOOM BUTTON (Gambar 3 Fix) -->
+                                <button onclick="openStickyZoom('${proj.name}')" class="absolute top-4 right-4 p-2 bg-white/50 hover:bg-white rounded-xl shadow-sm text-yellow-900 transition-all z-10">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" stroke-width="2.5"/></svg>
+                                </button>
                                 <textarea id="det_note_${safeName}" class="sticky-note-textarea flex-grow" placeholder="Tulis instruksi / revisi projek di sini...">${proj.notes || ""}</textarea>
                                 <div class="flex justify-end pt-4"><button onclick="saveProjectNote('${proj.name}', 'det_note_${safeName}')" class="bg-yellow-400 text-yellow-900 px-10 py-4 rounded-2xl font-black text-[10px] uppercase shadow-xl hover:shadow-yellow-100 active:scale-95 transition-all italic">Simpan Revisi</button></div>
                             </div>
@@ -704,7 +728,6 @@
                     </div>
                     <div class="pt-4 border-t border-slate-100 flex gap-4">
                          <button onclick="openCalendar('${proj.name}')" class="flex-1 py-5 bg-slate-900 text-white rounded-[1.5rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all italic">Tampilkan Kalender Timeline</button>
-                         <button onclick="openStickyZoom('${proj.name}')" class="p-5 bg-white border border-slate-200 text-slate-800 rounded-2xl shadow-xl hover:bg-slate-50 transition-all"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" stroke-width="2"/></svg></button>
                     </div>
                 </div>`;
             tab('project_detail');
@@ -738,9 +761,12 @@
                             <div class="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-2xl">
                                 ${PROGRESS_TASKS.map(t => `<div class="flex items-center gap-2 py-1"><input type="checkbox" id="sid_${safeName}_${t.key}" class="w-4 h-4 rounded cursor-pointer" ${proj.tasks?.[t.key] ? 'checked' : ''} onchange="toggleTask('${proj.name}', '${t.key}', this.checked)"><label for="sid_${safeName}_${t.key}" class="text-[8px] font-black uppercase text-slate-500 cursor-pointer italic">${t.label}</label></div>`).join('')}
                             </div>
-                            <div class="sticky-yellow relative group">
-                                <textarea onblur="saveProjectNote('${proj.name}', 'note_${safeName}')" id="note_${safeName}" class="sticky-input !min-h-[100px] text-[11px]" placeholder="Revisi / Instruksi...">${proj.notes || ""}</textarea>
-                                <span class="absolute bottom-2 right-4 text-[7px] font-black text-yellow-800/30 uppercase italic">Project Notes</span>
+                            <!-- STICKY NOTE UI (Gambar 3 Fix) -->
+                            <div class="sticky-note relative group">
+                                <button onclick="openStickyZoom('${proj.name}')" class="absolute top-2 right-2 p-1.5 bg-white/50 hover:bg-white rounded-lg shadow-sm text-yellow-900 transition-all z-10">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" stroke-width="2.5"/></svg>
+                                </button>
+                                <textarea onblur="saveProjectNote('${proj.name}', 'note_${safeName}')" id="note_${safeName}" class="sticky-note-textarea !min-h-[100px] text-[11px]" placeholder="Revisi / Instruksi...">${proj.notes || ""}</textarea>
                             </div>
                         </div>
                     </div>`;
@@ -913,26 +939,31 @@
             msg(c ? "✅ PROGRESS DICATAT" : "🔄 PROGRESS DIBUKA");
         };
 
-        // ADMIN MANAGEMENT
-        window.addNewProject = async () => {
-            const n = document.getElementById('nP').value.toUpperCase().trim(), s = document.getElementById('nPStart').value, e = document.getElementById('nPEnd').value;
-            if(!n) return msg("NAMA PROJEK KOSONG!");
-            const ref = doc(db, 'artifacts', appId, 'public', 'data', 'projects', n);
-            if (isEditingProject) {
-                if (n !== editingProjectOldName) {
-                    const oldP = projectsData.find(x => x.name === editingProjectOldName);
-                    await setDoc(ref, { ...oldP, startDate: s, endDate: e });
-                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', editingProjectOldName));
-                } else { await updateDoc(ref, { startDate: s, endDate: e }); }
-            } else { await setDoc(ref, { assignedUsers: [], startDate: s, endDate: e, tasks: {}, notes: "", isFinished: false, order: projectsData.length, taskTimelines: {} }); }
-            resetProjectForm(); msg("✅ DATABASE DIPERBARUI");
+        // --- MASTER TAB FIX (Gambar 1) ---
+        window.handleProjSearch = () => {
+            projSearchQuery = document.getElementById('searchProj').value.toUpperCase();
+            projsCurrentPage = 1; // Reset to page 1 on search
+            renderProjectList();
+        };
+
+        window.changeProjPage = (dir) => {
+            const filtered = projectsData.filter(p => p.name.includes(projSearchQuery));
+            const totalPages = Math.ceil(filtered.length / projsPerPage);
+            const nextPage = projsCurrentPage + dir;
+            if (nextPage >= 1 && nextPage <= totalPages) {
+                projsCurrentPage = nextPage;
+                renderProjectList();
+            }
         };
 
         window.renderProjectList = () => {
             const l = document.getElementById('projListSettings'); if(!l) return;
             const filtered = projectsData.filter(p => p.name.includes(projSearchQuery.toUpperCase()));
+            const totalPages = Math.ceil(filtered.length / projsPerPage) || 1;
+            
             l.innerHTML = '';
-            filtered.slice((projsCurrentPage-1)*projsPerPage, projsCurrentPage*projsPerPage).forEach(p => {
+            const startIndex = (projsCurrentPage - 1) * projsPerPage;
+            filtered.slice(startIndex, startIndex + projsPerPage).forEach(p => {
                 const isOpen = openAdminProjName === p.name;
                 const assigned = p.assignedUsers || [];
                 l.innerHTML += `
@@ -954,19 +985,56 @@
                         </div>
                     </div>`;
             });
-            document.getElementById('projPagination').innerHTML = `<button onclick="projsCurrentPage = Math.max(1, projsCurrentPage-1); renderProjectList();" ${projsCurrentPage===1?'disabled':''} class="page-btn">← Prev</button><span class="text-[10px] font-black uppercase text-slate-300 italic">Page ${projsCurrentPage}</span><button onclick="projsCurrentPage++; renderProjectList();" class="page-btn">Next →</button>`;
+            
+            // PAGINATION (Gambar 1 Fix)
+            document.getElementById('projPagination').innerHTML = `
+                <button onclick="changeProjPage(-1)" ${projsCurrentPage===1?'disabled':''} class="page-btn">← Prev</button>
+                <span class="text-[10px] font-black uppercase text-slate-300 italic">Page ${projsCurrentPage} of ${totalPages}</span>
+                <button onclick="changeProjPage(1)" ${projsCurrentPage===totalPages?'disabled':''} class="page-btn">Next →</button>`;
+        };
+
+        // --- ANGGOTA TAB FIX (Gambar 2) ---
+        window.changeUserPage = (dir) => {
+            const totalPages = Math.ceil(usersData.length / usersPerPage) || 1;
+            const nextPage = usersCurrentPage + dir;
+            if (nextPage >= 1 && nextPage <= totalPages) {
+                usersCurrentPage = nextPage;
+                renderUserList();
+            }
         };
 
         window.renderUserList = () => {
             const l = document.getElementById('userListSettings'); if(!l) return;
+            const sorted = usersData.sort((a,b) => a.id.localeCompare(b.id));
+            const totalPages = Math.ceil(sorted.length / usersPerPage) || 1;
+            
             l.innerHTML = '';
-            usersData.slice((usersCurrentPage-1)*usersPerPage, usersCurrentPage*usersPerPage).forEach(u => {
+            const startIndex = (usersCurrentPage - 1) * usersPerPage;
+            sorted.slice(startIndex, startIndex + usersPerPage).forEach(u => {
                 l.innerHTML += `<div class="bg-white p-5 rounded-3xl border border-slate-200 flex justify-between items-center shadow-sm hover:border-slate-900 transition-all"><div><p class="text-xs font-black uppercase text-slate-800 italic">${u.id} <span class="text-[9px] bg-blue-50 text-blue-600 px-3 py-1 rounded-lg ml-2">${u.role}</span></p><p class="text-[9px] font-bold text-slate-300 mt-1 uppercase italic">Pass: <span class="text-slate-600 font-black">${u.password}</span></p></div><div class="flex gap-2"><button onclick="editUserPrompt('${u.id}','${u.password}','${u.role}')" class="text-[9px] font-black text-slate-400 hover:text-blue-600 uppercase italic">Edit</button><button onclick="deleteUser('${u.id}')" class="text-[9px] font-black text-slate-400 hover:text-red-500 uppercase italic">Hapus</button></div></div>`;
             });
-            document.getElementById('userPagination').innerHTML = `<button onclick="usersCurrentPage=Math.max(1,usersCurrentPage-1);renderUserList();" ${usersCurrentPage===1?'disabled':''} class="page-btn">← Prev</button><span class="text-[10px] font-black uppercase text-slate-300 italic">Page ${usersCurrentPage}</span><button onclick="usersCurrentPage++;renderUserList();" class="page-btn">Next →</button>`;
+
+            // PAGINATION (Gambar 2 Fix)
+            document.getElementById('userPagination').innerHTML = `
+                <button onclick="changeUserPage(-1)" ${usersCurrentPage===1?'disabled':''} class="page-btn">← Prev</button>
+                <span class="text-[10px] font-black uppercase text-slate-300 italic">Page ${usersCurrentPage} of ${totalPages}</span>
+                <button onclick="changeUserPage(1)" ${usersCurrentPage===totalPages?'disabled':''} class="page-btn">Next →</button>`;
         };
 
-        // DRAG & DROP URUTAN
+        window.addNewProject = async () => {
+            const n = document.getElementById('nP').value.toUpperCase().trim(), s = document.getElementById('nPStart').value, e = document.getElementById('nPEnd').value;
+            if(!n) return msg("NAMA PROJEK KOSONG!");
+            const ref = doc(db, 'artifacts', appId, 'public', 'data', 'projects', n);
+            if (isEditingProject) {
+                if (n !== editingProjectOldName) {
+                    const oldP = projectsData.find(x => x.name === editingProjectOldName);
+                    await setDoc(ref, { ...oldP, startDate: s, endDate: e });
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', editingProjectOldName));
+                } else { await updateDoc(ref, { startDate: s, endDate: e }); }
+            } else { await setDoc(ref, { assignedUsers: [], startDate: s, endDate: e, tasks: {}, notes: "", isFinished: false, order: projectsData.length, taskTimelines: {} }); }
+            resetProjectForm(); msg("✅ DATABASE DIPERBARUI");
+        };
+
         window.handleDragStart = (e, name) => { draggedProjectName = name; e.currentTarget.classList.add('dragging'); };
         window.handleDragOver = (e) => { e.preventDefault(); e.currentTarget.classList.add('drag-over'); };
         window.handleDrop = async (e, target) => {
@@ -1017,7 +1085,6 @@
             l.innerHTML = h || '<p class="text-[9px] text-slate-300 text-center py-12 font-black uppercase italic tracking-widest opacity-20">Aman, No Deadlines</p>';
         };
 
-        // UTILITAS MODAL
         window.closeZoomModal = () => document.getElementById('modalZoom').classList.add('hidden');
         window.closeStickyModal = () => document.getElementById('modalSticky').classList.add('hidden');
         window.closeCalendar = () => document.getElementById('modalCalendar').classList.add('hidden');
@@ -1025,7 +1092,19 @@
         window.toggleNotifPanel = () => document.getElementById('notifPanel').classList.toggle('hidden');
         window.toggleAccordion = (btn, name) => { openProjectAccordions.has(name) ? openProjectAccordions.delete(name) : openProjectAccordions.add(name); renderSidebarDeadlines(); };
         window.toggleAdminAccordion = (h, name) => { openAdminProjName = (openAdminProjName === name ? null : name); renderProjectList(); };
-        window.openStickyZoom = (p) => { const proj = projectsData.find(x=>x.name===p); document.getElementById('stickyProjName').innerText = p; document.getElementById('stickyZoomArea').value = proj.notes||""; document.getElementById('btnSaveStickyModal').onclick = () => { saveProjectNote(p, 'stickyZoomArea'); closeStickyModal(); }; document.getElementById('modalSticky').classList.remove('hidden'); };
+        
+        // OPEN STICKY ZOOM (Gambar 3 Fix)
+        window.openStickyZoom = (p) => { 
+            const proj = projectsData.find(x=>x.name===p); 
+            if(!proj) return;
+            document.getElementById('stickyProjName').innerText = p; 
+            document.getElementById('stickyZoomArea').value = proj.notes || ""; 
+            document.getElementById('btnSaveStickyModal').onclick = () => { 
+                saveProjectNote(p, 'stickyZoomArea'); 
+                closeStickyModal(); 
+            }; 
+            document.getElementById('modalSticky').classList.remove('hidden'); 
+        };
         
         window.formatDoc = (cmd) => document.execCommand(cmd, false, null);
         window.insertBullet = (id) => { const el = document.getElementById(id); el.focus(); document.execCommand('insertUnorderedList', false, null); };
