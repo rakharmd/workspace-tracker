@@ -351,6 +351,7 @@
                                 <input type="text" id="mP" placeholder="Password Akses" class="p-5 border rounded-2xl text-sm outline-none bg-white font-bold italic border-slate-200">
                             </div>
                             <select id="mR" class="w-full p-5 border rounded-2xl text-[10px] font-black outline-none bg-white uppercase tracking-widest italic border-slate-200"><option value="USER">TIM TEKNIS (USER)</option><option value="ADMIN">ADMINISTRATOR (FULL)</option></select>
+                            <input type="text" id="mTgId" placeholder="ID Telegram (Contoh: 123456789)" class="w-full p-5 border rounded-2xl text-sm outline-none bg-white font-bold italic border-slate-200">
                             <div class="flex gap-4 pt-4">
                                 <button id="btnCancelEdit" onclick="resetUserForm()" class="hidden flex-1 bg-white border border-slate-200 text-slate-400 font-black py-4 rounded-2xl text-[10px] uppercase tracking-widest italic shadow-sm transition-all">Batal</button>
                                 <button onclick="saveUser()" id="btnSaveUser" class="flex-[2] bg-slate-900 text-white font-black py-5 rounded-2xl text-[10px] uppercase tracking-[0.2em] shadow-2xl active:scale-95 transition-all italic">Simpan Akun Anggota</button>
@@ -1151,7 +1152,7 @@
             l.innerHTML = '';
             const startIndex = (usersCurrentPage - 1) * usersPerPage;
             sorted.slice(startIndex, startIndex + usersPerPage).forEach(u => {
-                l.innerHTML += `<div class="bg-white p-5 rounded-3xl border border-slate-200 flex justify-between items-center shadow-sm hover:border-slate-900 transition-all"><div><p class="text-xs font-black uppercase text-slate-800 italic">${u.id} <span class="text-[9px] bg-blue-50 text-blue-600 px-3 py-1 rounded-lg ml-2">${u.role}</span></p><p class="text-[9px] font-bold text-slate-300 mt-1 uppercase italic">Pass: <span class="text-slate-600 font-black">${u.password}</span></p></div><div class="flex gap-2"><button onclick="editUserPrompt('${u.id}','${u.password}','${u.role}')" class="text-[9px] font-black text-slate-400 hover:text-blue-600 uppercase italic">Edit</button><button onclick="deleteUser('${u.id}')" class="text-[9px] font-black text-slate-400 hover:text-red-500 uppercase italic">Hapus</button></div></div>`;
+                l.innerHTML += `<div class="bg-white p-5 rounded-3xl border border-slate-200 flex justify-between items-center shadow-sm hover:border-slate-900 transition-all"><div><p class="text-xs font-black uppercase text-slate-800 italic">${u.id} <span class="text-[9px] bg-blue-50 text-blue-600 px-3 py-1 rounded-lg ml-2">${u.role}</span></p><p class="text-[9px] font-bold text-slate-300 mt-1 uppercase italic">Pass: <span class="text-slate-600 font-black">${u.password}</span> ${u.telegram_id ? `| TG: <span class="text-blue-500 font-black">${u.telegram_id}</span>` : ''}</p></div><div class="flex gap-2"><button onclick="editUserPrompt('${u.id}','${u.password}','${u.role}','${u.telegram_id || ''}')" class="text-[9px] font-black text-slate-400 hover:text-blue-600 uppercase italic">Edit</button><button onclick="deleteUser('${u.id}')" class="text-[9px] font-black text-slate-400 hover:text-red-500 uppercase italic">Hapus</button></div></div>`;
             });
             document.getElementById('userPagination').innerHTML = `
                 <button onclick="changeUserPage(-1)" ${usersCurrentPage===1?'disabled':''} class="page-btn">← Prev</button>
@@ -1248,9 +1249,42 @@
         window.deleteProject = async (name) => { if(confirm("Hapus projek "+name+"?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name)); };
         window.editProjectPrompt = (name, s, e) => { isEditingProject=true; editingProjectOldName=name; document.getElementById('nP').value=name; document.getElementById('nPStart').value=s||''; document.getElementById('nPEnd').value=e||''; document.getElementById('btnAddNewProject').innerText="Update Projek"; document.getElementById('btnCancelEditProj').classList.remove('hidden'); tab('projek'); };
         window.resetProjectForm = () => { isEditingProject=false; document.getElementById('nP').value=''; document.getElementById('nPStart').value=''; document.getElementById('nPEnd').value=''; document.getElementById('btnAddNewProject').innerText="Simpan Projek Baru"; document.getElementById('btnCancelEditProj').classList.add('hidden'); };
-        window.saveUser = async () => { const u = document.getElementById('mU').value.trim().toLowerCase(), p = document.getElementById('mP').value.trim(), r = document.getElementById('mR').value; if(!u || !p) return msg("ISI USER & PASS!"); await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u), { password: p, role: r }, { merge: true }); resetUserForm(); msg("✅ AKUN DISIMPAN"); };
-        window.editUserPrompt = (u, p, r) => { isEditingUser=true; document.getElementById('mU').value=u; document.getElementById('mU').disabled=true; document.getElementById('mP').value=p; document.getElementById('mR').value=r; document.getElementById('btnSaveUser').innerText="Update Akun"; document.getElementById('btnCancelEdit').classList.remove('hidden'); };
-        window.resetUserForm = () => { isEditingUser=false; document.getElementById('mU').value=''; document.getElementById('mU').disabled=false; document.getElementById('mP').value=''; document.getElementById('mR').value='USER'; document.getElementById('btnSaveUser').innerText="Simpan Akun Anggota"; document.getElementById('btnCancelEdit').classList.add('hidden'); };
+        
+        // FUNGSI SAVE USER DIMODIFIKASI UNTUK TELEGRAM ID
+        window.saveUser = async () => { 
+            const u = document.getElementById('mU').value.trim().toLowerCase(), 
+                  p = document.getElementById('mP').value.trim(), 
+                  r = document.getElementById('mR').value,
+                  tg = document.getElementById('mTgId').value.trim(); 
+            if(!u || !p) return msg("ISI USER & PASS!"); 
+            await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u), { password: p, role: r, telegram_id: tg }, { merge: true }); 
+            resetUserForm(); 
+            msg("✅ AKUN DISIMPAN"); 
+        };
+        
+        // FUNGSI EDIT USER DIMODIFIKASI UNTUK TELEGRAM ID
+        window.editUserPrompt = (u, p, r, tg) => { 
+            isEditingUser=true; 
+            document.getElementById('mU').value=u; 
+            document.getElementById('mU').disabled=true; 
+            document.getElementById('mP').value=p; 
+            document.getElementById('mR').value=r; 
+            document.getElementById('mTgId').value = tg !== 'undefined' ? tg : '';
+            document.getElementById('btnSaveUser').innerText="Update Akun"; 
+            document.getElementById('btnCancelEdit').classList.remove('hidden'); 
+        };
+        
+        window.resetUserForm = () => { 
+            isEditingUser=false; 
+            document.getElementById('mU').value=''; 
+            document.getElementById('mU').disabled=false; 
+            document.getElementById('mP').value=''; 
+            document.getElementById('mR').value='USER'; 
+            document.getElementById('mTgId').value='';
+            document.getElementById('btnSaveUser').innerText="Simpan Akun Anggota"; 
+            document.getElementById('btnCancelEdit').classList.add('hidden'); 
+        };
+        
         window.deleteUser = async (u) => { if(u==='admin') return msg("TIDAK BISA HAPUS ADMIN!"); if(confirm("Hapus akun "+u+"?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u)); };
         window.addUserToProject = async (n) => { const uid = document.getElementById(`selAddUser_${n.replace(/\s+/g,'_')}`).value; if(!uid) return; const p = projectsData.find(x=>x.name===n); let ass = p.assignedUsers||[]; if(!ass.includes(uid)) ass.push(uid); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', n), { assignedUsers: ass }); };
         window.toggleUserAssignment = async (n, uid) => { const p = projectsData.find(x=>x.name===n); let ass = (p.assignedUsers||[]).filter(x=>x!==uid); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', n), { assignedUsers: ass }); };
