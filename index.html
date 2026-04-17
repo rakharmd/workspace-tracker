@@ -90,12 +90,11 @@
 
         .timeline-date { font-size: 9px; font-weight: 800; color: #2563eb; margin-top: 1px; display: block; letter-spacing: -0.02em; }
 
-        /* FIX 2: Floating Meeting - lebih kecil */
         .floating-meeting {
             position: fixed;
             left: 1rem;
             top: 140px;
-            width: 220px; /* diperkecil dari 300px */
+            width: 220px;
             z-index: 40;
             transition: all 0.5s ease;
         }
@@ -103,7 +102,6 @@
             .floating-meeting { position: relative; left: 0; top: 0; width: 100%; margin-bottom: 2rem; z-index: 10; }
         }
 
-        /* FIX 3: Calendar - lebih simpel */
         .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 0.75rem; overflow: hidden; }
         .cal-day { background: white; min-height: 32px; padding: 2px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; cursor: pointer; transition: background 0.2s; }
         .cal-day:hover { background: #eff6ff; }
@@ -113,7 +111,6 @@
         .cal-overlay { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; display: flex; }
         .cal-event-dot { flex: 1; height: 4px; }
 
-        /* FIX 1: Search panel - compact */
         .search-panel { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; padding: 0.75rem 1rem; }
     </style>
 </head>
@@ -133,10 +130,8 @@
         </div>
     </div>
 
-    <!-- MAIN APP CONTAINER -->
+    <!-- MAIN APP -->
     <div id="mainApp" class="hidden opacity-0 transition-opacity duration-700">
-        
-        <!-- FIX 2: FLOATING MEETING PANEL - diperkecil -->
         <div id="floatingMeeting" class="floating-meeting">
             <div class="card p-4 shadow-xl bg-white/95 backdrop-blur border-blue-100 h-[460px] flex flex-col">
                 <div class="flex justify-between items-center mb-4">
@@ -152,7 +147,6 @@
         </div>
 
         <div class="max-w-4xl mx-auto px-4 lg:px-0">
-            <!-- HEADER -->
             <header class="py-8 flex justify-between items-center sticky top-0 z-50 bg-[#f8fafc]/80 backdrop-blur-md -mx-4 px-8 md:mx-0 md:px-0">
                 <div class="flex items-center gap-4">
                     <div class="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shadow-blue-100">
@@ -178,7 +172,6 @@
                 </div>
             </header>
 
-            <!-- NAVIGATION -->
             <nav class="flex bg-white/60 backdrop-blur-xl border border-slate-200 rounded-[2.5rem] px-4 sticky top-[108px] z-40 mb-8 shadow-sm no-scrollbar overflow-x-auto">
                 <button onclick="tab('input')" id="t_input" class="flex-1 min-w-[100px] py-5 text-[11px] font-black tab-active uppercase tracking-widest italic transition-all">Input</button>
                 <button onclick="tab('logs')" id="t_logs" class="flex-1 min-w-[100px] py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest italic transition-all">Pantauan</button>
@@ -203,7 +196,6 @@
                                         <select id="f_proj" required class="w-full p-5 border rounded-2xl bg-white font-bold text-slate-700 text-sm outline-none border-slate-200 focus:ring-4 focus:ring-blue-50 transition-all"></select>
                                     </div>
                                 </div>
-                                
                                 <div class="space-y-2">
                                     <label class="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest italic">Detail Pekerjaan & Dokumentasi</label>
                                     <div class="editor-container shadow-inner">
@@ -218,7 +210,6 @@
                                         <div id="f_work_editor" contenteditable="true" class="editor-content w-full focus:bg-slate-50/30 transition-all" placeholder="Tuliskan progres kerja hari ini..."></div>
                                     </div>
                                 </div>
-                                
                                 <button type="submit" id="btnSubmitLog" class="w-full bg-blue-600 text-white font-black py-5 rounded-[1.5rem] shadow-2xl shadow-blue-200 uppercase text-xs tracking-[0.2em] active:scale-95 transition-all">Simpan Laporan Harian</button>
                             </form>
                         </div>
@@ -248,10 +239,8 @@
                 </section>
 
                 <!-- VIEW: PANTAUAN LOGS -->
-                <!-- FIX 1: Search panel lebih compact + tambah filter tanggal -->
                 <section id="v_logs" class="hidden space-y-4 max-w-2xl mx-auto">
                     <div class="card px-4 py-3 sticky top-[210px] z-30 shadow-lg border-slate-100 bg-white/95 backdrop-blur-md">
-                        <!-- Row 1: Search + tanggal range -->
                         <div class="flex gap-2 mb-2">
                             <div class="relative flex-1">
                                 <input type="text" id="searchLog" oninput="renderLogs()" placeholder="Cari laporan..." class="w-full py-3 pl-9 pr-3 border rounded-xl text-xs outline-none bg-slate-50 border-slate-200 font-bold focus:ring-2 focus:ring-blue-100 transition-all">
@@ -259,7 +248,6 @@
                             </div>
                             <button onclick="clearDateFilter()" id="btnClearDate" class="hidden text-[9px] font-black text-red-400 bg-red-50 px-3 rounded-xl border border-red-100 uppercase italic transition-all hover:bg-red-100">✕ Reset</button>
                         </div>
-                        <!-- Row 2: Filter dropdowns + date range -->
                         <div class="flex gap-2 flex-wrap">
                             <select id="flUser" onchange="renderLogs()" class="py-2 px-3 border rounded-xl text-[9px] font-black bg-white outline-none border-slate-200 uppercase italic tracking-wide flex-1 min-w-[100px]"></select>
                             <select id="flProj" onchange="renderLogs()" class="py-2 px-3 border rounded-xl text-[9px] font-black bg-white outline-none border-slate-200 uppercase italic tracking-wide flex-1 min-w-[110px]"></select>
@@ -293,14 +281,12 @@
                             <h2 id="st_user" class="text-4xl font-black text-white tracking-tighter">0</h2>
                         </div>
                     </div>
-
                     <div>
                         <h3 class="text-2xl font-black text-slate-900 uppercase mb-8 tracking-tighter italic flex items-center gap-4">
                             <span class="w-10 h-1.5 bg-blue-600 rounded-full"></span> Projek On-Going
                         </h3>
                         <div id="adminOngoingList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
                     </div>
-                    
                     <div class="opacity-50 grayscale hover:grayscale-0 transition-all duration-500">
                         <h3 class="text-xl font-black text-slate-500 uppercase mb-8 tracking-tighter italic">Arsip Finish Project</h3>
                         <div id="adminFinishList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div>
@@ -365,7 +351,7 @@
         </div>
     </div>
 
-    <!-- MODAL: ADD MEETING -->
+    <!-- MODALS & TOAST -->
     <div id="modalMeeting" class="hidden fixed inset-0 z-[100] modal-overlay flex items-center justify-center p-4">
         <div class="card bg-white w-full max-w-md p-10 shadow-2xl border-4 border-white">
             <h3 class="text-2xl font-black text-slate-900 uppercase italic tracking-tighter mb-8 flex items-center gap-3 underline decoration-blue-600 decoration-4 underline-offset-4">Jadwalkan Meeting</h3>
@@ -384,14 +370,12 @@
         </div>
     </div>
 
-    <!-- MODAL: ZOOM IMAGE -->
     <div id="modalZoom" class="hidden fixed inset-0 z-[150] modal-overlay flex items-center justify-center p-4 cursor-zoom-out" onclick="closeZoomModal()">
         <div class="relative max-w-5xl w-full h-full flex items-center justify-center pointer-events-none">
             <img id="zoomedImg" src="" class="max-w-full max-h-full rounded-[2.5rem] shadow-2xl object-contain bg-white p-3 pointer-events-auto transition-all duration-500">
         </div>
     </div>
 
-    <!-- MODAL: STICKY ZOOM -->
     <div id="modalSticky" class="hidden fixed inset-0 z-[130] modal-overlay flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border-4 border-white">
             <div class="p-8 bg-yellow-400 flex justify-between items-center text-yellow-900 font-black uppercase text-xs tracking-widest">
@@ -410,17 +394,14 @@
         </div>
     </div>
 
-    <!-- FIX 3: MODAL CALENDAR TIMELINE - simpel + extended sampai desember -->
     <div id="modalCalendar" class="hidden fixed inset-0 z-[120] modal-overlay flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-4xl rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[92vh] border-2 border-slate-100">
-            <!-- Header simpel -->
             <div class="px-8 py-5 border-b flex justify-between items-center bg-white">
                 <div>
                     <h3 id="calProjName" class="text-base font-black text-slate-900 uppercase tracking-tight italic">Timeline</h3>
                     <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Klik tanggal untuk audit harian</p>
                 </div>
                 <div class="flex items-center gap-3">
-                    <!-- Nav tahun -->
                     <div class="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
                         <button id="calPrevYear" onclick="calNavYear(-1)" class="text-slate-400 hover:text-slate-700 font-black text-sm transition-all">‹</button>
                         <span id="calYearLabel" class="text-[11px] font-black text-slate-700 uppercase tracking-widest w-10 text-center">2026</span>
@@ -429,16 +410,13 @@
                     <button onclick="closeCalendar()" class="w-10 h-10 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 transition-all font-black flex items-center justify-center">&times;</button>
                 </div>
             </div>
-            <!-- Legend compact -->
             <div class="px-8 py-3 border-b bg-slate-50 flex flex-wrap gap-3" id="calLegend"></div>
-            <!-- Calendar grid -->
             <div class="p-6 overflow-y-auto flex-grow no-scrollbar">
                 <div id="calContainer" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
             </div>
         </div>
     </div>
 
-    <!-- MODAL: DAY LOGS -->
     <div id="modalDayLogs" class="hidden fixed inset-0 z-[140] modal-overlay flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[80vh] border-4 border-white">
             <div class="p-8 border-b flex justify-between items-center bg-blue-600 text-white shadow-lg">
@@ -452,7 +430,6 @@
         </div>
     </div>
 
-    <!-- TOAST -->
     <div id="toast" class="fixed bottom-12 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-10 py-5 rounded-3xl shadow-2xl opacity-0 text-[10px] font-black uppercase tracking-[0.2em] italic text-center"></div>
 
     <script type="module">
@@ -485,8 +462,6 @@
         let openAdminProjName = null;
         let openProjectAccordions = new Set();
         let draggedProjectName = null;
-
-        // FIX 3: Calendar state - track current year displayed
         let calCurrentYear = new Date().getFullYear();
         let calCurrentProjName = null;
 
@@ -550,6 +525,40 @@
                 localStorage.setItem('ws_user_final_v2', JSON.stringify(currentUser));
                 startApp();
             } else { msg("❌ LOGIN GAGAL"); btn.disabled = false; btn.innerText = "Masuk Sekarang"; }
+        };
+
+        // FIX: PENANGAN SIMPAN LAPORAN HARIAN
+        document.getElementById('progressForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSubmitLog');
+            const project = document.getElementById('f_proj').value;
+            const tanggal = document.getElementById('f_date').value;
+            const pekerjaan = document.getElementById('f_work_editor').innerHTML;
+
+            if(!project) return msg("⚠️ PILIH PROJEK DULU!");
+            if(pekerjaan.trim() === "" || pekerjaan === "<br>") return msg("⚠️ ISI DETAIL PEKERJAAN!");
+
+            btn.disabled = true;
+            btn.innerText = "MENYIMPAN...";
+
+            try {
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), {
+                    tanggal: tanggal,
+                    project_name: project,
+                    pekerjaan: pekerjaan,
+                    username: currentUser.username,
+                    ts: serverTimestamp()
+                });
+                
+                document.getElementById('f_work_editor').innerHTML = "";
+                msg("✅ LAPORAN TERSIMPAN");
+                tab('logs'); // Pindah ke tab pantauan setelah simpan
+            } catch (err) {
+                msg("❌ GAGAL MENYIMPAN");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Simpan Laporan Harian";
+            }
         };
 
         function startApp() {
@@ -619,14 +628,12 @@
             const fin = projectsData.filter(x => x.isFinished).length;
             const ong = total - fin;
             const usr = usersData.length;
-            
             if(document.getElementById('st_total')) document.getElementById('st_total').innerText = total;
             if(document.getElementById('st_fin')) document.getElementById('st_fin').innerText = fin;
             if(document.getElementById('st_ong')) document.getElementById('st_ong').innerText = ong;
             if(document.getElementById('st_user')) document.getElementById('st_user').innerText = usr;
         }
 
-        // FIX 1: renderLogs dengan filter tanggal
         window.renderLogs = () => {
             const list = document.getElementById('logList'); if(!list) return;
             const fP = document.getElementById('flProj').value; 
@@ -635,7 +642,6 @@
             const fFrom = document.getElementById('flDateFrom').value;
             const fTo = document.getElementById('flDateTo').value;
 
-            // Show/hide clear button
             const clearBtn = document.getElementById('btnClearDate');
             if(clearBtn) clearBtn.classList.toggle('hidden', !fFrom && !fTo);
 
@@ -682,10 +688,8 @@
             const ongList = document.getElementById('adminOngoingList');
             const finList = document.getElementById('adminFinishList');
             if(!ongList || !finList) return;
-
             const ongoings = projectsData.filter(p => !p.isFinished);
             const finishes = projectsData.filter(p => p.isFinished);
-
             const renderCards = (projects, container) => {
                 container.innerHTML = projects.length ? '' : '<p class="text-center py-10 opacity-20 italic font-black uppercase tracking-widest text-[10px]">Kosong</p>';
                 projects.forEach(proj => {
@@ -727,7 +731,6 @@
                 const timeline = proj.taskTimelines && proj.taskTimelines[t.key];
                 checklistHtml += `<div class="p-5 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between"><div class="flex items-center gap-4"><input type="checkbox" id="det_task_${safeName}_${t.key}" class="task-checkbox w-5 h-5 rounded-lg border-slate-300" ${isChecked ? 'checked' : ''} onchange="toggleTask('${proj.name}', '${t.key}', this.checked)"><label for="det_task_${safeName}_${t.key}" class="text-xs font-black uppercase text-slate-800 cursor-pointer italic leading-none">${t.label}</label></div>${timeline ? `<span class="text-[9px] font-black text-blue-500 italic">${formatDateShort(timeline.start)} — ${formatDateShort(timeline.end)}</span>` : ''}</div>`;
             });
-
             container.innerHTML = `
                 <div class="card p-12 bg-white shadow-2xl border-blue-50 space-y-12">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
@@ -773,7 +776,6 @@
                 const progress = calculateProgress(proj.tasks);
                 const isOpen = openProjectAccordions.has(proj.name);
                 const safeName = proj.name.replace(/\s+/g, '_');
-                
                 sideList.innerHTML += `
                     <div class="card p-5 border-blue-50/50 shadow-lg group ${proj.isFinished ? 'opacity-50' : 'bg-white'}" draggable="true" ondragstart="handleDragStart(event, '${proj.name}')" ondragover="handleDragOver(event)" ondrop="handleDrop(event, '${proj.name}')">
                         <div class="flex justify-between items-start mb-3">
@@ -861,26 +863,19 @@
 
         window.deleteMeeting = async (id) => { if(confirm("Hapus jadwal meeting?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'meetings', id)); };
 
-        // FIX 3: CALENDAR - Simplified, shows full year, nav between years
         window.openCalendar = (projName) => {
             const proj = projectsData.find(p => p.name === projName);
             if (!proj) return;
             calCurrentProjName = projName;
-            // Default: show year of project start, or current year
             calCurrentYear = proj.startDate ? new Date(proj.startDate).getFullYear() : new Date().getFullYear();
-            
             const shortRange = [];
             if(proj.startDate) shortRange.push(formatDateShort(proj.startDate));
             if(proj.endDate) shortRange.push(formatDateShort(proj.endDate));
-            
             document.getElementById('calProjName').innerHTML = `${projName}${shortRange.length ? ' <span class="text-[9px] text-blue-500 font-bold bg-blue-50 px-2 py-1 rounded-lg ml-2">' + shortRange.join(' — ') + '</span>' : ''}`;
-            
-            // Legend
             const legend = document.getElementById('calLegend');
             legend.innerHTML = PROGRESS_TASKS.map(t => 
                 `<div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-md" style="background:${t.color};opacity:0.7"></div><span class="text-[8px] font-black uppercase text-slate-500 italic">${t.label}</span></div>`
             ).join('');
-            
             renderCalendarYear();
             document.getElementById('modalCalendar').classList.remove('hidden');
         };
@@ -907,26 +902,19 @@
             const first = new Date(y, m, 1).getDay();
             const total = new Date(y, m + 1, 0).getDate();
             const todayStr = getLocalDateString();
-            
             const wrap = document.createElement('div');
             wrap.className = "space-y-1";
-            
-            // Month label compact
             wrap.innerHTML = `<div class="text-[9px] font-black text-center uppercase tracking-widest text-slate-500 py-1.5 bg-slate-50 rounded-lg border border-slate-100">${names[m]} ${y}</div>
             <div class="cal-grid">
                 <div class="cal-header">M</div><div class="cal-header">S</div><div class="cal-header">S</div>
                 <div class="cal-header">R</div><div class="cal-header">K</div><div class="cal-header">J</div><div class="cal-header">S</div>
             </div>`;
-            
             const grid = wrap.querySelector('.cal-grid');
             for (let i = 0; i < first; i++) grid.innerHTML += `<div class="bg-slate-50/50" style="min-height:32px"></div>`;
-            
             for (let day = 1; day <= total; day++) {
                 const ds = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
                 const isToday = ds === todayStr;
                 const inRange = proj.startDate && proj.endDate && ds >= proj.startDate && ds <= proj.endDate;
-                
-                // Collect task colors for bottom bar
                 let taskColors = [];
                 if(proj.taskTimelines) {
                     Object.keys(proj.taskTimelines).forEach(k => {
@@ -934,10 +922,8 @@
                         if(t && ds >= t.start && ds <= t.end) taskColors.push(info.color);
                     });
                 }
-                
                 const rangeBg = inRange ? 'background:rgba(219,234,254,0.5)' : '';
                 const todayStyle = isToday ? 'outline:2px solid #2563eb;outline-offset:-2px;' : '';
-                
                 grid.innerHTML += `<div class="cal-day" style="${rangeBg};${todayStyle}" onclick="showDayLogs('${ds}', '${calCurrentProjName}')">
                     <span class="cal-day-num ${isToday ? 'text-blue-600 font-black' : ''}">${day}</span>
                     ${taskColors.length ? `<div class="cal-overlay">${taskColors.map(c=>`<div class="cal-event-dot" style="background:${c};opacity:0.8"></div>`).join('')}</div>` : ''}
@@ -1026,7 +1012,6 @@
             const l = document.getElementById('projListSettings'); if(!l) return;
             const filtered = projectsData.filter(p => p.name.includes(projSearchQuery.toUpperCase()));
             const totalPages = Math.ceil(filtered.length / projsPerPage) || 1;
-            
             l.innerHTML = '';
             const startIndex = (projsCurrentPage - 1) * projsPerPage;
             filtered.slice(startIndex, startIndex + projsPerPage).forEach(p => {
@@ -1051,7 +1036,6 @@
                         </div>
                     </div>`;
             });
-            
             document.getElementById('projPagination').innerHTML = `
                 <button onclick="changeProjPage(-1)" ${projsCurrentPage===1?'disabled':''} class="page-btn">← Prev</button>
                 <span class="text-[10px] font-black uppercase text-slate-300 italic">Page ${projsCurrentPage} of ${totalPages}</span>
@@ -1071,13 +1055,11 @@
             const l = document.getElementById('userListSettings'); if(!l) return;
             const sorted = usersData.sort((a,b) => a.id.localeCompare(b.id));
             const totalPages = Math.ceil(sorted.length / usersPerPage) || 1;
-            
             l.innerHTML = '';
             const startIndex = (usersCurrentPage - 1) * usersPerPage;
             sorted.slice(startIndex, startIndex + usersPerPage).forEach(u => {
                 l.innerHTML += `<div class="bg-white p-5 rounded-3xl border border-slate-200 flex justify-between items-center shadow-sm hover:border-slate-900 transition-all"><div><p class="text-xs font-black uppercase text-slate-800 italic">${u.id} <span class="text-[9px] bg-blue-50 text-blue-600 px-3 py-1 rounded-lg ml-2">${u.role}</span></p><p class="text-[9px] font-bold text-slate-300 mt-1 uppercase italic">Pass: <span class="text-slate-600 font-black">${u.password}</span></p></div><div class="flex gap-2"><button onclick="editUserPrompt('${u.id}','${u.password}','${u.role}')" class="text-[9px] font-black text-slate-400 hover:text-blue-600 uppercase italic">Edit</button><button onclick="deleteUser('${u.id}')" class="text-[9px] font-black text-slate-400 hover:text-red-500 uppercase italic">Hapus</button></div></div>`;
             });
-
             document.getElementById('userPagination').innerHTML = `
                 <button onclick="changeUserPage(-1)" ${usersCurrentPage===1?'disabled':''} class="page-btn">← Prev</button>
                 <span class="text-[10px] font-black uppercase text-slate-300 italic">Page ${usersCurrentPage} of ${totalPages}</span>
@@ -1170,16 +1152,13 @@
         
         window.formatDoc = (cmd) => document.execCommand(cmd, false, null);
         window.insertBullet = (id) => { const el = document.getElementById(id); el.focus(); document.execCommand('insertUnorderedList', false, null); };
-
         window.deleteProject = async (name) => { if(confirm("Hapus projek "+name+"?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', name)); };
         window.editProjectPrompt = (name, s, e) => { isEditingProject=true; editingProjectOldName=name; document.getElementById('nP').value=name; document.getElementById('nPStart').value=s||''; document.getElementById('nPEnd').value=e||''; document.getElementById('btnAddNewProject').innerText="Update Projek"; document.getElementById('btnCancelEditProj').classList.remove('hidden'); tab('projek'); };
         window.resetProjectForm = () => { isEditingProject=false; document.getElementById('nP').value=''; document.getElementById('nPStart').value=''; document.getElementById('nPEnd').value=''; document.getElementById('btnAddNewProject').innerText="Simpan Projek Baru"; document.getElementById('btnCancelEditProj').classList.add('hidden'); };
-        
         window.saveUser = async () => { const u = document.getElementById('mU').value.trim().toLowerCase(), p = document.getElementById('mP').value.trim(), r = document.getElementById('mR').value; if(!u || !p) return msg("ISI USER & PASS!"); await setDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u), { password: p, role: r }, { merge: true }); resetUserForm(); msg("✅ AKUN DISIMPAN"); };
         window.editUserPrompt = (u, p, r) => { isEditingUser=true; document.getElementById('mU').value=u; document.getElementById('mU').disabled=true; document.getElementById('mP').value=p; document.getElementById('mR').value=r; document.getElementById('btnSaveUser').innerText="Update Akun"; document.getElementById('btnCancelEdit').classList.remove('hidden'); };
         window.resetUserForm = () => { isEditingUser=false; document.getElementById('mU').value=''; document.getElementById('mU').disabled=false; document.getElementById('mP').value=''; document.getElementById('mR').value='USER'; document.getElementById('btnSaveUser').innerText="Simpan Akun Anggota"; document.getElementById('btnCancelEdit').classList.add('hidden'); };
         window.deleteUser = async (u) => { if(u==='admin') return msg("TIDAK BISA HAPUS ADMIN!"); if(confirm("Hapus akun "+u+"?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', u)); };
-        
         window.addUserToProject = async (n) => { const uid = document.getElementById(`selAddUser_${n.replace(/\s+/g,'_')}`).value; if(!uid) return; const p = projectsData.find(x=>x.name===n); let ass = p.assignedUsers||[]; if(!ass.includes(uid)) ass.push(uid); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', n), { assignedUsers: ass }); };
         window.toggleUserAssignment = async (n, uid) => { const p = projectsData.find(x=>x.name===n); let ass = (p.assignedUsers||[]).filter(x=>x!==uid); await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', n), { assignedUsers: ass }); };
 
@@ -1187,7 +1166,6 @@
             const img = e.target.closest('.log-content img');
             if (img) { e.preventDefault(); document.getElementById('zoomedImg').src = img.src; document.getElementById('modalZoom').classList.remove('hidden'); }
         });
-
     </script>
 </body>
 </html>
