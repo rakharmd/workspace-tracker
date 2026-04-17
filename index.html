@@ -15,23 +15,18 @@
             scroll-behavior: smooth;
         }
 
-        /* Tampilan Tab Aktif */
         .tab-active { color: #2563eb; border-bottom: 3px solid #2563eb; }
         
-        /* Kartu & Elemen UI */
         .card { border-radius: 1.5rem; border: 1px solid #e2e8f0; background: white; }
         .glass-card { background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border: 1px solid rgba(226, 232, 240, 0.8); border-radius: 2rem; }
         
-        /* Animasi & Toast */
         #toast { transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; z-index: 200; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         
-        /* Tombol Utama */
         .btn-primary { background-color: #0f172a; color: white; transition: all 0.2s; }
         .btn-primary:active { transform: scale(0.95); }
         .modal-overlay { background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); }
         
-        /* Animasi Badge Notifikasi */
         @keyframes pulse-red {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
             70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
@@ -39,10 +34,8 @@
         }
         .notif-badge-active { animation: pulse-red 2s infinite; }
 
-        /* Checklist & Editor */
         .task-checkbox:checked + label { color: #2563eb; font-weight: 800; text-decoration: line-through; opacity: 0.6; }
         
-        /* STICKY NOTE STYLES (Update Gambar 3) */
         .sticky-note { 
             background-color: #fef9c3; 
             border-left: 6px solid #facc15; 
@@ -64,7 +57,6 @@
             min-height: 120px; 
         }
 
-        /* Switch Toggle */
         .switch-finish { position: relative; display: inline-block; width: 44px; height: 22px; }
         .switch-finish input { opacity: 0; width: 0; height: 0; }
         .slider-finish { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e2e8f0; transition: .4s; border-radius: 34px; }
@@ -98,12 +90,12 @@
 
         .timeline-date { font-size: 9px; font-weight: 800; color: #2563eb; margin-top: 1px; display: block; letter-spacing: -0.02em; }
 
-        /* Panel Floating Meeting */
+        /* FIX 2: Floating Meeting - lebih kecil */
         .floating-meeting {
             position: fixed;
-            left: 2rem;
+            left: 1rem;
             top: 140px;
-            width: 300px;
+            width: 220px; /* diperkecil dari 300px */
             z-index: 40;
             transition: all 0.5s ease;
         }
@@ -111,14 +103,18 @@
             .floating-meeting { position: relative; left: 0; top: 0; width: 100%; margin-bottom: 2rem; z-index: 10; }
         }
 
-        /* Calendar Styles */
-        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #e2e8f0; border: 1px solid #e2e8f0; border-radius: 0.5rem; overflow: hidden; }
-        .cal-day { background: white; min-height: 40px; padding: 4px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; cursor: pointer; transition: background 0.2s; }
-        .cal-day:hover { background: #f1f5f9; }
-        .cal-header { background: #f8fafc; font-size: 8px; font-weight: 900; color: #64748b; text-align: center; padding: 6px 0; text-transform: uppercase; }
-        .cal-day-num { font-size: 10px; font-weight: 700; color: #1e293b; z-index: 10; }
-        .cal-overlay { position: absolute; left: 0; right: 0; height: 100%; pointer-events: none; z-index: 5; }
-        .cal-event-bar { height: 100%; width: 100%; position: absolute; }
+        /* FIX 3: Calendar - lebih simpel */
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 0.75rem; overflow: hidden; }
+        .cal-day { background: white; min-height: 32px; padding: 2px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; cursor: pointer; transition: background 0.2s; }
+        .cal-day:hover { background: #eff6ff; }
+        .cal-header { background: #f8fafc; font-size: 7px; font-weight: 900; color: #94a3b8; text-align: center; padding: 4px 0; text-transform: uppercase; }
+        .cal-day-num { font-size: 9px; font-weight: 700; color: #475569; z-index: 10; line-height: 1; margin-top: 2px; }
+        .cal-day.today .cal-day-num { color: #2563eb; font-weight: 900; }
+        .cal-overlay { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; display: flex; }
+        .cal-event-dot { flex: 1; height: 4px; }
+
+        /* FIX 1: Search panel - compact */
+        .search-panel { background: white; border: 1px solid #e2e8f0; border-radius: 1.25rem; padding: 0.75rem 1rem; }
     </style>
 </head>
 <body class="pb-24">
@@ -140,17 +136,17 @@
     <!-- MAIN APP CONTAINER -->
     <div id="mainApp" class="hidden opacity-0 transition-opacity duration-700">
         
-        <!-- FLOATING MEETING PANEL -->
+        <!-- FIX 2: FLOATING MEETING PANEL - diperkecil -->
         <div id="floatingMeeting" class="floating-meeting">
-            <div class="card p-6 shadow-2xl bg-white/95 backdrop-blur border-blue-100 h-[500px] flex flex-col">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-[11px] font-black text-slate-800 uppercase tracking-[0.2em] italic flex items-center gap-3">
-                        <span class="w-2.5 h-2.5 bg-blue-600 rounded-full animate-ping"></span> Jadwal Meeting
+            <div class="card p-4 shadow-xl bg-white/95 backdrop-blur border-blue-100 h-[460px] flex flex-col">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-[9px] font-black text-slate-800 uppercase tracking-[0.15em] italic flex items-center gap-2">
+                        <span class="w-2 h-2 bg-blue-600 rounded-full animate-ping"></span> Meeting
                     </h3>
-                    <button onclick="openMeetingModal()" class="w-9 h-9 bg-blue-600 text-white rounded-2xl flex items-center justify-center font-black shadow-lg hover:scale-110 active:scale-90 transition-all">+</button>
+                    <button onclick="openMeetingModal()" class="w-7 h-7 bg-blue-600 text-white rounded-xl flex items-center justify-center font-black shadow-lg hover:scale-110 active:scale-90 transition-all text-sm">+</button>
                 </div>
-                <div id="meetingList" class="flex-grow overflow-y-auto pr-1 space-y-4 no-scrollbar">
-                    <div class="py-24 text-center opacity-30 italic text-[10px] font-black uppercase tracking-widest">Antrian Kosong</div>
+                <div id="meetingList" class="flex-grow overflow-y-auto pr-1 space-y-2 no-scrollbar">
+                    <div class="py-16 text-center opacity-30 italic text-[9px] font-black uppercase tracking-widest">Kosong</div>
                 </div>
             </div>
         </div>
@@ -252,23 +248,33 @@
                 </section>
 
                 <!-- VIEW: PANTAUAN LOGS -->
-                <section id="v_logs" class="hidden space-y-6 max-w-2xl mx-auto">
-                    <div class="card p-8 space-y-4 sticky top-[210px] z-30 shadow-2xl border-blue-100 bg-white/95 backdrop-blur-md">
-                        <div class="relative">
-                            <input type="text" id="searchLog" oninput="renderLogs()" placeholder="Cari isi laporan kerja..." class="w-full p-5 pl-14 border rounded-2xl text-sm outline-none bg-slate-50 border-slate-200 font-bold focus:ring-4 focus:ring-blue-50 transition-all">
-                            <svg class="w-6 h-6 absolute left-5 top-4.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <!-- FIX 1: Search panel lebih compact + tambah filter tanggal -->
+                <section id="v_logs" class="hidden space-y-4 max-w-2xl mx-auto">
+                    <div class="card px-4 py-3 sticky top-[210px] z-30 shadow-lg border-slate-100 bg-white/95 backdrop-blur-md">
+                        <!-- Row 1: Search + tanggal range -->
+                        <div class="flex gap-2 mb-2">
+                            <div class="relative flex-1">
+                                <input type="text" id="searchLog" oninput="renderLogs()" placeholder="Cari laporan..." class="w-full py-3 pl-9 pr-3 border rounded-xl text-xs outline-none bg-slate-50 border-slate-200 font-bold focus:ring-2 focus:ring-blue-100 transition-all">
+                                <svg class="w-4 h-4 absolute left-3 top-3 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                            </div>
+                            <button onclick="clearDateFilter()" id="btnClearDate" class="hidden text-[9px] font-black text-red-400 bg-red-50 px-3 rounded-xl border border-red-100 uppercase italic transition-all hover:bg-red-100">✕ Reset</button>
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <select id="flUser" onchange="renderLogs()" class="p-4 border rounded-2xl text-[10px] font-black bg-white outline-none border-slate-200 uppercase italic tracking-widest"></select>
-                            <select id="flProj" onchange="renderLogs()" class="p-4 border rounded-2xl text-[10px] font-black bg-white outline-none border-slate-200 uppercase italic tracking-widest"></select>
+                        <!-- Row 2: Filter dropdowns + date range -->
+                        <div class="flex gap-2 flex-wrap">
+                            <select id="flUser" onchange="renderLogs()" class="py-2 px-3 border rounded-xl text-[9px] font-black bg-white outline-none border-slate-200 uppercase italic tracking-wide flex-1 min-w-[100px]"></select>
+                            <select id="flProj" onchange="renderLogs()" class="py-2 px-3 border rounded-xl text-[9px] font-black bg-white outline-none border-slate-200 uppercase italic tracking-wide flex-1 min-w-[110px]"></select>
+                            <div class="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-2 py-1">
+                                <input type="date" id="flDateFrom" onchange="renderLogs()" class="text-[9px] font-bold bg-transparent outline-none text-slate-600 w-[100px]" title="Dari tanggal">
+                                <span class="text-[9px] text-slate-300 font-black">—</span>
+                                <input type="date" id="flDateTo" onchange="renderLogs()" class="text-[9px] font-bold bg-transparent outline-none text-slate-600 w-[100px]" title="Sampai tanggal">
+                            </div>
                         </div>
                     </div>
-                    <div id="logList" class="space-y-6 pt-4"></div>
+                    <div id="logList" class="space-y-4 pt-2"></div>
                 </section>
 
-                <!-- VIEW: ADMIN DASHBOARD (STATS + VISUAL) -->
+                <!-- VIEW: ADMIN DASHBOARD -->
                 <section id="v_admin_view" class="hidden space-y-12 max-w-5xl mx-auto">
-                    <!-- Stat Cards (Gambar 2) -->
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
                         <div class="card p-8 bg-blue-50/50 border-blue-100 shadow-sm">
                             <p class="text-[10px] font-black text-blue-600 uppercase tracking-widest mb-1 italic">Total Projek</p>
@@ -329,7 +335,6 @@
                             </div>
                         </div>
                         <div class="relative mb-8">
-                            <!-- SEARCH FIELD (Gambar 1 Fix) -->
                             <input type="text" id="searchProj" oninput="handleProjSearch()" placeholder="Cari nama projek..." class="w-full p-5 pl-14 border rounded-[1.5rem] text-xs outline-none bg-white border-slate-200 font-bold focus:ring-4 focus:ring-blue-50 transition-all"><svg class="w-6 h-6 absolute left-5 top-4.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                         </div>
                         <div id="projListSettings" class="space-y-4 mb-8"></div>
@@ -386,7 +391,7 @@
         </div>
     </div>
 
-    <!-- MODAL: STICKY ZOOM (Gambar 3 Fix) -->
+    <!-- MODAL: STICKY ZOOM -->
     <div id="modalSticky" class="hidden fixed inset-0 z-[130] modal-overlay flex items-center justify-center p-4">
         <div class="bg-white w-full max-w-2xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border-4 border-white">
             <div class="p-8 bg-yellow-400 flex justify-between items-center text-yellow-900 font-black uppercase text-xs tracking-widest">
@@ -405,22 +410,30 @@
         </div>
     </div>
 
-    <!-- MODAL: CALENDAR TIMELINE -->
+    <!-- FIX 3: MODAL CALENDAR TIMELINE - simpel + extended sampai desember -->
     <div id="modalCalendar" class="hidden fixed inset-0 z-[120] modal-overlay flex items-center justify-center p-4">
-        <div class="bg-white w-full max-w-5xl rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh] border-4 border-white">
-            <div class="p-8 border-b flex justify-between items-center bg-slate-50/50 backdrop-blur-md">
+        <div class="bg-white w-full max-w-4xl rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[92vh] border-2 border-slate-100">
+            <!-- Header simpel -->
+            <div class="px-8 py-5 border-b flex justify-between items-center bg-white">
                 <div>
-                    <h3 id="calProjName" class="text-xl font-black text-slate-900 uppercase tracking-tighter italic mb-1">Visual Timeline</h3>
-                    <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Klik tanggal untuk melihat audit harian</p>
+                    <h3 id="calProjName" class="text-base font-black text-slate-900 uppercase tracking-tight italic">Timeline</h3>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Klik tanggal untuk audit harian</p>
                 </div>
-                <button onclick="closeCalendar()" class="w-14 h-14 bg-slate-200 text-slate-600 rounded-2xl hover:bg-slate-300 transition-all font-black text-xl flex items-center justify-center">&times;</button>
+                <div class="flex items-center gap-3">
+                    <!-- Nav tahun -->
+                    <div class="flex items-center gap-2 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
+                        <button id="calPrevYear" onclick="calNavYear(-1)" class="text-slate-400 hover:text-slate-700 font-black text-sm transition-all">‹</button>
+                        <span id="calYearLabel" class="text-[11px] font-black text-slate-700 uppercase tracking-widest w-10 text-center">2026</span>
+                        <button id="calNextYear" onclick="calNavYear(1)" class="text-slate-400 hover:text-slate-700 font-black text-sm transition-all">›</button>
+                    </div>
+                    <button onclick="closeCalendar()" class="w-10 h-10 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-200 transition-all font-black flex items-center justify-center">&times;</button>
+                </div>
             </div>
-            <div class="p-10 overflow-y-auto flex-grow bg-slate-50/30 no-scrollbar">
-                <div id="calContainer" class="grid grid-cols-1 lg:grid-cols-2 gap-12"></div>
-                <div class="mt-12 p-8 bg-white rounded-[2.5rem] border border-slate-100 shadow-sm">
-                    <h4 class="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] mb-6 text-center italic">Keterangan Warna Progres</h4>
-                    <div id="calLegend" class="flex flex-wrap justify-center gap-6"></div>
-                </div>
+            <!-- Legend compact -->
+            <div class="px-8 py-3 border-b bg-slate-50 flex flex-wrap gap-3" id="calLegend"></div>
+            <!-- Calendar grid -->
+            <div class="p-6 overflow-y-auto flex-grow no-scrollbar">
+                <div id="calContainer" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div>
             </div>
         </div>
     </div>
@@ -444,7 +457,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, doc, getDoc, setDoc, updateDoc, deleteDoc, collection, onSnapshot, addDoc, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -472,6 +485,10 @@
         let openAdminProjName = null;
         let openProjectAccordions = new Set();
         let draggedProjectName = null;
+
+        // FIX 3: Calendar state - track current year displayed
+        let calCurrentYear = new Date().getFullYear();
+        let calCurrentProjName = null;
 
         const PROGRESS_TASKS = [
             { key: "drafting", label: "Drafting", color: "#3b82f6" }, 
@@ -609,18 +626,27 @@
             if(document.getElementById('st_user')) document.getElementById('st_user').innerText = usr;
         }
 
+        // FIX 1: renderLogs dengan filter tanggal
         window.renderLogs = () => {
             const list = document.getElementById('logList'); if(!list) return;
             const fP = document.getElementById('flProj').value; 
             const fU = (currentUser.role === 'ADMIN') ? document.getElementById('flUser').value : 'ALL';
             const fK = document.getElementById('searchLog').value.toLowerCase();
+            const fFrom = document.getElementById('flDateFrom').value;
+            const fTo = document.getElementById('flDateTo').value;
+
+            // Show/hide clear button
+            const clearBtn = document.getElementById('btnClearDate');
+            if(clearBtn) clearBtn.classList.toggle('hidden', !fFrom && !fTo);
 
             const filtered = logsData.filter(l => {
                 const matchProj = fP === 'ALL' || l.project_name === fP; 
                 const matchUser = fU === 'ALL' || l.username === fU;
                 const matchKey = (l.pekerjaan || "").toLowerCase().includes(fK) || (l.username || "").toLowerCase().includes(fK);
                 const roleGuard = currentUser.role === 'ADMIN' || l.username === currentUser.username;
-                return matchProj && matchUser && matchKey && roleGuard;
+                const matchFrom = !fFrom || l.tanggal >= fFrom;
+                const matchTo = !fTo || l.tanggal <= fTo;
+                return matchProj && matchUser && matchKey && roleGuard && matchFrom && matchTo;
             });
 
             list.innerHTML = filtered.length ? '' : '<div class="py-32 text-center opacity-10 text-xl font-black uppercase tracking-[0.5em] italic">Belum ada laporan</div>';
@@ -644,6 +670,12 @@
                         <div class="log-content text-[13px] text-slate-600 leading-relaxed font-semibold italic pl-6 border-l-4 border-slate-100">${l.pekerjaan || ""}</div>
                     </div>`;
             });
+        };
+
+        window.clearDateFilter = () => {
+            document.getElementById('flDateFrom').value = '';
+            document.getElementById('flDateTo').value = '';
+            renderLogs();
         };
 
         window.renderAdminDashboard = () => {
@@ -717,7 +749,6 @@
                         <div class="space-y-8">
                             <h3 class="text-xs font-black text-slate-900 uppercase tracking-widest italic flex items-center gap-3"><span class="w-10 h-1 bg-yellow-400 rounded-full"></span> Catatan Projek</h3>
                             <div class="sticky-note group h-full flex flex-col">
-                                <!-- ZOOM BUTTON (Gambar 3 Fix) -->
                                 <button onclick="openStickyZoom('${proj.name}')" class="absolute top-4 right-4 p-2 bg-white/50 hover:bg-white rounded-xl shadow-sm text-yellow-900 transition-all z-10">
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" stroke-width="2.5"/></svg>
                                 </button>
@@ -761,7 +792,6 @@
                             <div class="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-2xl">
                                 ${PROGRESS_TASKS.map(t => `<div class="flex items-center gap-2 py-1"><input type="checkbox" id="sid_${safeName}_${t.key}" class="w-4 h-4 rounded cursor-pointer" ${proj.tasks?.[t.key] ? 'checked' : ''} onchange="toggleTask('${proj.name}', '${t.key}', this.checked)"><label for="sid_${safeName}_${t.key}" class="text-[8px] font-black uppercase text-slate-500 cursor-pointer italic">${t.label}</label></div>`).join('')}
                             </div>
-                            <!-- STICKY NOTE UI (Gambar 3 Fix) -->
                             <div class="sticky-note relative group">
                                 <button onclick="openStickyZoom('${proj.name}')" class="absolute top-2 right-2 p-1.5 bg-white/50 hover:bg-white rounded-lg shadow-sm text-yellow-900 transition-all z-10">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" stroke-width="2.5"/></svg>
@@ -778,23 +808,23 @@
             const now = new Date().toISOString().split('T')[0];
             const upcoming = meetingsData.filter(m => m.date >= now);
             if(upcoming.length === 0) {
-                list.innerHTML = `<div class="py-24 text-center opacity-20 italic text-[10px] font-black uppercase tracking-widest">Antrian Kosong</div>`;
+                list.innerHTML = `<div class="py-16 text-center opacity-20 italic text-[9px] font-black uppercase tracking-widest">Kosong</div>`;
                 return;
             }
             list.innerHTML = '';
             upcoming.forEach(m => {
                 const today = m.date === now;
                 list.innerHTML += `
-                    <div class="p-5 bg-white border border-slate-100 rounded-[2rem] shadow-sm relative group hover:border-blue-400 transition-all">
-                        <p class="text-[8px] font-black text-blue-600 uppercase tracking-widest italic mb-2">${m.project}</p>
-                        <h5 class="text-[11px] font-black text-slate-800 leading-tight mb-4">${m.title}</h5>
-                        <div class="flex items-center gap-3">
-                            <span class="px-3 py-1 rounded-full text-[8px] font-black ${today ? 'bg-red-100 text-red-500 animate-pulse' : 'bg-slate-100 text-slate-400'} uppercase italic">
+                    <div class="p-3 bg-white border border-slate-100 rounded-2xl shadow-sm relative group hover:border-blue-400 transition-all">
+                        <p class="text-[7px] font-black text-blue-600 uppercase tracking-widest italic mb-1">${m.project}</p>
+                        <h5 class="text-[10px] font-black text-slate-800 leading-tight mb-2">${m.title}</h5>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 rounded-full text-[7px] font-black ${today ? 'bg-red-100 text-red-500 animate-pulse' : 'bg-slate-100 text-slate-400'} uppercase italic">
                                 ${today ? 'HARI INI' : formatDateShort(m.date)}
                             </span>
-                            <span class="text-[10px] font-bold text-slate-300 italic">@ ${m.time} WIB</span>
+                            <span class="text-[9px] font-bold text-slate-300 italic">@ ${m.time}</span>
                         </div>
-                        <button onclick="deleteMeeting('${m.id}')" class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 font-black text-lg transition-all">&times;</button>
+                        <button onclick="deleteMeeting('${m.id}')" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 font-black transition-all text-sm">&times;</button>
                     </div>`;
             });
         };
@@ -831,49 +861,87 @@
 
         window.deleteMeeting = async (id) => { if(confirm("Hapus jadwal meeting?")) await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'meetings', id)); };
 
-        // SISTEM KALENDER TIMELINE (DINAMIS)
+        // FIX 3: CALENDAR - Simplified, shows full year, nav between years
         window.openCalendar = (projName) => {
             const proj = projectsData.find(p => p.name === projName);
             if (!proj) return;
-            document.getElementById('calProjName').innerHTML = `Timeline: ${projName} <span class="ml-4 text-[10px] text-blue-500 font-black bg-blue-50 px-3 py-1.5 rounded-xl border border-blue-100 italic">${formatDateShort(proj.startDate)} — ${formatDateShort(proj.endDate)}</span>`;
-            const container = document.getElementById('calContainer'); container.innerHTML = '';
-            const legend = document.getElementById('calLegend'); legend.innerHTML = '';
-            PROGRESS_TASKS.forEach(t => {
-                legend.innerHTML += `<div class="flex items-center gap-2"><div class="w-4 h-4 rounded-lg" style="background: ${t.color}; opacity: 0.5;"></div><span class="text-[9px] font-black uppercase text-slate-500 italic">${t.label}</span></div>`;
-            });
-
-            const startD = proj.startDate ? new Date(proj.startDate) : new Date();
-            const endD = proj.endDate ? new Date(proj.endDate) : new Date(startD.getFullYear(), startD.getMonth() + 2, 0);
-            let current = new Date(startD.getFullYear(), startD.getMonth(), 1);
-            const last = new Date(endD.getFullYear(), endD.getMonth(), 1);
-            while (current <= last) {
-                container.appendChild(generateMonthHTML(new Date(current), proj));
-                current.setMonth(current.getMonth() + 1);
-            }
+            calCurrentProjName = projName;
+            // Default: show year of project start, or current year
+            calCurrentYear = proj.startDate ? new Date(proj.startDate).getFullYear() : new Date().getFullYear();
+            
+            const shortRange = [];
+            if(proj.startDate) shortRange.push(formatDateShort(proj.startDate));
+            if(proj.endDate) shortRange.push(formatDateShort(proj.endDate));
+            
+            document.getElementById('calProjName').innerHTML = `${projName}${shortRange.length ? ' <span class="text-[9px] text-blue-500 font-bold bg-blue-50 px-2 py-1 rounded-lg ml-2">' + shortRange.join(' — ') + '</span>' : ''}`;
+            
+            // Legend
+            const legend = document.getElementById('calLegend');
+            legend.innerHTML = PROGRESS_TASKS.map(t => 
+                `<div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded-md" style="background:${t.color};opacity:0.7"></div><span class="text-[8px] font-black uppercase text-slate-500 italic">${t.label}</span></div>`
+            ).join('');
+            
+            renderCalendarYear();
             document.getElementById('modalCalendar').classList.remove('hidden');
+        };
+
+        function renderCalendarYear() {
+            const proj = projectsData.find(p => p.name === calCurrentProjName);
+            if(!proj) return;
+            document.getElementById('calYearLabel').innerText = calCurrentYear;
+            const container = document.getElementById('calContainer');
+            container.innerHTML = '';
+            for(let m = 0; m < 12; m++) {
+                container.appendChild(generateMonthHTML(new Date(calCurrentYear, m, 1), proj));
+            }
+        }
+
+        window.calNavYear = (dir) => {
+            calCurrentYear += dir;
+            renderCalendarYear();
         };
 
         function generateMonthHTML(date, proj) {
             const y = date.getFullYear(), m = date.getMonth();
-            const names = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            const names = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
             const first = new Date(y, m, 1).getDay();
             const total = new Date(y, m + 1, 0).getDate();
+            const todayStr = getLocalDateString();
+            
             const wrap = document.createElement('div');
-            wrap.className = "space-y-4";
-            wrap.innerHTML = `<h5 class="text-xs font-black text-center uppercase tracking-widest italic bg-white py-4 rounded-2xl shadow-sm border border-slate-100">${names[m]} ${y}</h5><div class="cal-grid"><div class="cal-header">M</div><div class="cal-header">S</div><div class="cal-header">S</div><div class="cal-header">R</div><div class="cal-header">K</div><div class="cal-header">J</div><div class="cal-header">S</div></div>`;
+            wrap.className = "space-y-1";
+            
+            // Month label compact
+            wrap.innerHTML = `<div class="text-[9px] font-black text-center uppercase tracking-widest text-slate-500 py-1.5 bg-slate-50 rounded-lg border border-slate-100">${names[m]} ${y}</div>
+            <div class="cal-grid">
+                <div class="cal-header">M</div><div class="cal-header">S</div><div class="cal-header">S</div>
+                <div class="cal-header">R</div><div class="cal-header">K</div><div class="cal-header">J</div><div class="cal-header">S</div>
+            </div>`;
+            
             const grid = wrap.querySelector('.cal-grid');
-            for (let i = 0; i < first; i++) grid.innerHTML += `<div class="bg-slate-50/50"></div>`;
+            for (let i = 0; i < first; i++) grid.innerHTML += `<div class="bg-slate-50/50" style="min-height:32px"></div>`;
+            
             for (let day = 1; day <= total; day++) {
                 const ds = `${y}-${String(m + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-                let overlays = '';
-                if (proj.startDate && proj.endDate && ds >= proj.startDate && ds <= proj.endDate) overlays += `<div class="cal-event-bar bg-slate-900/10"></div>`;
-                if (proj.taskTimelines) {
+                const isToday = ds === todayStr;
+                const inRange = proj.startDate && proj.endDate && ds >= proj.startDate && ds <= proj.endDate;
+                
+                // Collect task colors for bottom bar
+                let taskColors = [];
+                if(proj.taskTimelines) {
                     Object.keys(proj.taskTimelines).forEach(k => {
                         const t = proj.taskTimelines[k], info = PROGRESS_TASKS.find(x => x.key === k);
-                        if (t && ds >= t.start && ds <= t.end) overlays += `<div class="cal-event-bar" style="background-color: ${info.color}; opacity: 0.5;"></div>`;
+                        if(t && ds >= t.start && ds <= t.end) taskColors.push(info.color);
                     });
                 }
-                grid.innerHTML += `<div class="cal-day" onclick="showDayLogs('${ds}', '${proj.name}')"><span class="cal-day-num">${day}</span><div class="cal-overlay">${overlays}</div></div>`;
+                
+                const rangeBg = inRange ? 'background:rgba(219,234,254,0.5)' : '';
+                const todayStyle = isToday ? 'outline:2px solid #2563eb;outline-offset:-2px;' : '';
+                
+                grid.innerHTML += `<div class="cal-day" style="${rangeBg};${todayStyle}" onclick="showDayLogs('${ds}', '${calCurrentProjName}')">
+                    <span class="cal-day-num ${isToday ? 'text-blue-600 font-black' : ''}">${day}</span>
+                    ${taskColors.length ? `<div class="cal-overlay">${taskColors.map(c=>`<div class="cal-event-dot" style="background:${c};opacity:0.8"></div>`).join('')}</div>` : ''}
+                </div>`;
             }
             return wrap;
         }
@@ -890,7 +958,6 @@
             document.getElementById('modalDayLogs').classList.remove('hidden');
         };
 
-        // MANAJEMEN FOTO & EDITOR
         window.triggerImageInput = () => document.getElementById('imageInput').click();
         window.handleImageUpload = (e) => {
             const file = e.target.files[0]; if(!file) return;
@@ -939,10 +1006,9 @@
             msg(c ? "✅ PROGRESS DICATAT" : "🔄 PROGRESS DIBUKA");
         };
 
-        // --- MASTER TAB FIX (Gambar 1) ---
         window.handleProjSearch = () => {
             projSearchQuery = document.getElementById('searchProj').value.toUpperCase();
-            projsCurrentPage = 1; // Reset to page 1 on search
+            projsCurrentPage = 1;
             renderProjectList();
         };
 
@@ -986,14 +1052,12 @@
                     </div>`;
             });
             
-            // PAGINATION (Gambar 1 Fix)
             document.getElementById('projPagination').innerHTML = `
                 <button onclick="changeProjPage(-1)" ${projsCurrentPage===1?'disabled':''} class="page-btn">← Prev</button>
                 <span class="text-[10px] font-black uppercase text-slate-300 italic">Page ${projsCurrentPage} of ${totalPages}</span>
                 <button onclick="changeProjPage(1)" ${projsCurrentPage===totalPages?'disabled':''} class="page-btn">Next →</button>`;
         };
 
-        // --- ANGGOTA TAB FIX (Gambar 2) ---
         window.changeUserPage = (dir) => {
             const totalPages = Math.ceil(usersData.length / usersPerPage) || 1;
             const nextPage = usersCurrentPage + dir;
@@ -1014,7 +1078,6 @@
                 l.innerHTML += `<div class="bg-white p-5 rounded-3xl border border-slate-200 flex justify-between items-center shadow-sm hover:border-slate-900 transition-all"><div><p class="text-xs font-black uppercase text-slate-800 italic">${u.id} <span class="text-[9px] bg-blue-50 text-blue-600 px-3 py-1 rounded-lg ml-2">${u.role}</span></p><p class="text-[9px] font-bold text-slate-300 mt-1 uppercase italic">Pass: <span class="text-slate-600 font-black">${u.password}</span></p></div><div class="flex gap-2"><button onclick="editUserPrompt('${u.id}','${u.password}','${u.role}')" class="text-[9px] font-black text-slate-400 hover:text-blue-600 uppercase italic">Edit</button><button onclick="deleteUser('${u.id}')" class="text-[9px] font-black text-slate-400 hover:text-red-500 uppercase italic">Hapus</button></div></div>`;
             });
 
-            // PAGINATION (Gambar 2 Fix)
             document.getElementById('userPagination').innerHTML = `
                 <button onclick="changeUserPage(-1)" ${usersCurrentPage===1?'disabled':''} class="page-btn">← Prev</button>
                 <span class="text-[10px] font-black uppercase text-slate-300 italic">Page ${usersCurrentPage} of ${totalPages}</span>
@@ -1093,7 +1156,6 @@
         window.toggleAccordion = (btn, name) => { openProjectAccordions.has(name) ? openProjectAccordions.delete(name) : openProjectAccordions.add(name); renderSidebarDeadlines(); };
         window.toggleAdminAccordion = (h, name) => { openAdminProjName = (openAdminProjName === name ? null : name); renderProjectList(); };
         
-        // OPEN STICKY ZOOM (Gambar 3 Fix)
         window.openStickyZoom = (p) => { 
             const proj = projectsData.find(x=>x.name===p); 
             if(!proj) return;
