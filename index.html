@@ -63,6 +63,14 @@
 
         /* Timeline style */
         .timeline-date { font-size: 9px; font-weight: 800; color: #2563eb; margin-top: 1px; display: block; letter-spacing: -0.02em; }
+
+        /* Calendar Styles */
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #e2e8f0; border: 1px solid #e2e8f0; border-radius: 0.5rem; overflow: hidden; }
+        .cal-day { background: white; min-height: 40px; padding: 4px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+        .cal-header { background: #f8fafc; font-size: 8px; font-weight: 900; color: #64748b; text-align: center; padding: 6px 0; text-transform: uppercase; }
+        .cal-day-num { font-size: 10px; font-weight: 700; color: #1e293b; z-index: 10; }
+        .cal-overlay { position: absolute; left: 0; right: 0; height: 100%; pointer-events: none; z-index: 5; }
+        .cal-event-bar { height: 100%; width: 100%; position: absolute; }
     </style>
 </head>
 <body class="pb-10">
@@ -290,6 +298,39 @@
         </div>
     </div>
 
+    <!-- MODAL KALENDER TIMELINE -->
+    <div id="modalCalendar" class="hidden fixed inset-0 z-[120] modal-overlay flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="p-6 border-b flex justify-between items-center bg-slate-50">
+                <div>
+                    <h3 id="calProjName" class="text-sm font-black text-slate-800 uppercase tracking-widest leading-none mb-1">Timeline Projek</h3>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Visualisasi Jadwal & Progres</p>
+                </div>
+                <button onclick="closeCalendar()" class="bg-slate-200 p-2 rounded-full hover:bg-slate-300 transition-colors">
+                    <svg class="h-5 w-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div class="p-6 overflow-y-auto flex-grow bg-slate-50/50">
+                <div id="calContainer" class="grid grid-cols-1 md:grid-cols-2 gap-8"></div>
+                
+                <div class="mt-8 p-4 bg-white rounded-2xl border border-slate-100 shadow-sm">
+                    <h4 class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-3">Keterangan Warna</h4>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-slate-900/10 border border-slate-900/20"></div><span class="text-[9px] font-bold text-slate-500 uppercase">Projek Timeline</span></div>
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-blue-500/30 border border-blue-500/40"></div><span class="text-[9px] font-bold text-slate-500 uppercase">Drafting</span></div>
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-emerald-500/30 border border-emerald-500/40"></div><span class="text-[9px] font-bold text-slate-500 uppercase">Layouting</span></div>
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-amber-500/30 border border-amber-500/40"></div><span class="text-[9px] font-bold text-slate-500 uppercase">Moodboard</span></div>
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-purple-500/30 border border-purple-500/40"></div><span class="text-[9px] font-bold text-slate-500 uppercase">Arsitektur</span></div>
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-pink-500/30 border border-pink-500/40"></div><span class="text-[9px] font-bold text-slate-500 uppercase">Interior</span></div>
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-cyan-500/30 border border-cyan-500/40"></div><span class="text-[9px] font-bold text-slate-500 uppercase">Gmbr Ars</span></div>
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-red-500/30 border border-red-500/40"></div><span class="text-[9px] font-bold text-slate-500 uppercase">Gmbr Elk</span></div>
+                        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded bg-slate-500/30 border border-slate-500/40"></div><span class="text-[9px] font-bold text-slate-500 uppercase">Gmbr Int</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- TOAST NOTIFICATION -->
     <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl opacity-0 z-[100] text-[10px] font-bold uppercase tracking-widest text-center"></div>
 
@@ -325,9 +366,14 @@
         let draggedProjectName = null;
 
         const PROGRESS_TASKS = [
-            { key: "drafting", label: "Drafting" }, { key: "layouting", label: "Layouting" }, { key: "moodboard", label: "Moodboard" },
-            { key: "design_ars", label: "Design Arsitektur" }, { key: "design_int", label: "Design Interior" }, { key: "gambar_ars", label: "Gmbr Kerja ARS" },
-            { key: "gambar_elk", label: "Gmbr Kerja ELK" }, { key: "gambar_int", label: "Gmbr Kerja INT" }
+            { key: "drafting", label: "Drafting", color: "rgba(37, 99, 235, 0.3)" }, 
+            { key: "layouting", label: "Layouting", color: "rgba(16, 185, 129, 0.3)" }, 
+            { key: "moodboard", label: "Moodboard", color: "rgba(245, 158, 11, 0.3)" },
+            { key: "design_ars", label: "Design Arsitektur", color: "rgba(139, 92, 246, 0.3)" }, 
+            { key: "design_int", label: "Design Interior", color: "rgba(236, 72, 153, 0.3)" }, 
+            { key: "gambar_ars", label: "Gmbr Kerja ARS", color: "rgba(6, 182, 212, 0.3)" },
+            { key: "gambar_elk", label: "Gmbr Kerja ELK", color: "rgba(239, 68, 68, 0.3)" }, 
+            { key: "gambar_int", label: "Gmbr Kerja INT", color: "rgba(107, 114, 128, 0.3)" }
         ];
 
         let usersCurrentPage = 1, usersPerPage = 5;
@@ -568,6 +614,9 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             ${checklistHtml}
                         </div>
+                        <div class="pt-2">
+                            <button onclick="openCalendar('${proj.name}')" class="w-full py-3.5 border-2 border-slate-900 text-slate-900 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-900 hover:text-white transition-all">Tampilkan Dalam Kalender</button>
+                        </div>
                     </div>
                     <div class="space-y-4">
                         <h3 class="text-xs font-black text-slate-800 uppercase tracking-widest flex items-center gap-2"><span class="w-2 h-2 bg-yellow-500 rounded-full"></span> Catatan Projek</h3>
@@ -641,6 +690,11 @@
                         </div>
                         <div class="${isOpen ? '' : 'hidden'} px-4 pb-4 border-t ${isFinished ? 'border-slate-700 bg-slate-800/50' : 'border-slate-50'} mt-1 accordion-body">
                              <div class="grid grid-cols-1 gap-y-1 bg-slate-50/50 p-2.5 rounded-xl my-4">${checklistHtml}</div>
+                             
+                             <div class="mb-4">
+                                <button onclick="openCalendar('${proj.name}')" class="w-full py-2.5 bg-slate-100 text-slate-800 rounded-xl text-[9px] font-black uppercase tracking-widest border border-slate-200">Kalender Timeline</button>
+                             </div>
+
                              <div class="sticky-note">
                                 <button onclick="openStickyZoom('${proj.name}')" class="absolute top-2 right-2 p-1.5 bg-white/50 hover:bg-white rounded-lg shadow-sm text-yellow-900 transition-all z-10"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/></svg></button>
                                 <textarea id="note_${safeName}" class="sticky-note-textarea" placeholder="Catatan projek...">${proj.notes || ""}</textarea>
@@ -653,6 +707,91 @@
                     </div>`;
             });
         };
+
+        // --- SISTEM KALENDER TIMELINE ---
+        window.openCalendar = (projName) => {
+            const proj = projectsData.find(p => p.name === projName);
+            if (!proj) return;
+
+            document.getElementById('calProjName').innerText = "Timeline: " + projName;
+            const container = document.getElementById('calContainer');
+            container.innerHTML = '';
+
+            // Tentukan bulan mulai dan bulan setelahnya
+            const startD = proj.startDate ? new Date(proj.startDate) : new Date();
+            const monthsToShow = [
+                new Date(startD.getFullYear(), startD.getMonth(), 1),
+                new Date(startD.getFullYear(), startD.getMonth() + 1, 1)
+            ];
+
+            monthsToShow.forEach(monthDate => {
+                container.appendChild(generateMonthHTML(monthDate, proj));
+            });
+
+            document.getElementById('modalCalendar').classList.remove('hidden');
+        };
+
+        function generateMonthHTML(date, proj) {
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+            const monthEl = document.createElement('div');
+            monthEl.innerHTML = `
+                <h4 class="text-sm font-black text-slate-800 uppercase mb-4 tracking-tighter text-center">${monthNames[month]} ${year}</h4>
+                <div class="cal-grid">
+                    <div class="cal-header">M</div><div class="cal-header">S</div><div class="cal-header">S</div><div class="cal-header">R</div><div class="cal-header">K</div><div class="cal-header">J</div><div class="cal-header">S</div>
+                </div>
+            `;
+            const grid = monthEl.querySelector('.cal-grid');
+
+            // Padding hari kosong
+            const adjustedFirstDay = firstDay === 0 ? 0 : firstDay; 
+            for (let i = 0; i < adjustedFirstDay; i++) {
+                grid.innerHTML += `<div class="bg-slate-50 min-h-[40px]"></div>`;
+            }
+
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayDate = new Date(year, month, day);
+                const dayStr = dayDate.toISOString().split('T')[0];
+                
+                let overlays = '';
+                
+                // 1. Overlay Projek (Hitam Transparan)
+                if (proj.startDate && proj.endDate) {
+                    if (dayStr >= proj.startDate && dayStr <= proj.endDate) {
+                        overlays += `<div class="cal-event-bar bg-slate-900/10" style="z-index: 1;"></div>`;
+                    }
+                }
+
+                // 2. Overlay Tugas (Warna-warni)
+                if (proj.taskTimelines) {
+                    Object.keys(proj.taskTimelines).forEach(taskKey => {
+                        const timeline = proj.taskTimelines[taskKey];
+                        const taskInfo = PROGRESS_TASKS.find(t => t.key === taskKey);
+                        if (timeline && dayStr >= timeline.start && dayStr <= timeline.end) {
+                            overlays += `<div class="cal-event-bar" style="background-color: ${taskInfo.color}; z-index: 2; border-left: 2px solid ${taskInfo.color.replace('0.3', '0.6')};"></div>`;
+                        }
+                    });
+                }
+
+                grid.innerHTML += `
+                    <div class="cal-day">
+                        <span class="cal-day-num">${day}</span>
+                        <div class="cal-overlay">${overlays}</div>
+                    </div>
+                `;
+            }
+
+            return monthEl;
+        }
+
+        window.closeCalendar = () => document.getElementById('modalCalendar').classList.add('hidden');
+
+        // --- SEMUA LOGIKA LAIN TETAP SAMA ---
 
         window.renderProjectList = () => {
             const list = document.getElementById('projListSettings'); const pag = document.getElementById('projPagination'); if(!list) return;
@@ -808,7 +947,6 @@
         window.saveProjectNote = async (p, id) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { notes: document.getElementById(id).value }); msg("✅ CATATAN PROJEK DISIMPAN"); };
         window.toggleFinishProject = async (p, c) => { await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { isFinished: c }); msg(c ? "✅ PROJEK FINISH" : "🔄 PROJEK AKTIF"); };
         
-        // --- LOGIKA TIMELINE OTOMATIS ---
         window.toggleTask = async (p, k, c) => { 
             const proj = projectsData.find(x=>x.name===p); 
             const tasks = {...(proj.tasks||{})}; 
@@ -818,44 +956,23 @@
             tasks[k] = c; 
             
             if (c === true) {
-                // Tentukan Tanggal Mulai
                 let startDate = proj.startDate || today;
                 const idx = PROGRESS_TASKS.findIndex(t => t.key === k);
                 if (idx > 0) {
-                    // Cek tugas sebelumnya
                     const prevTaskKey = PROGRESS_TASKS[idx - 1].key;
                     if (timelines[prevTaskKey]) {
-                        // Mulai 1 hari setelah tugas sebelumnya selesai
                         const prevEnd = new Date(timelines[prevTaskKey].end);
                         prevEnd.setDate(prevEnd.getDate() + 1);
                         startDate = prevEnd.toISOString().split('T')[0];
                     }
                 }
-                
-                // Pastikan startDate tidak melewati hari ini
                 if (new Date(startDate) > new Date(today)) startDate = today;
-                
                 timelines[k] = { start: startDate, end: today };
-
-                // Auto Log ke Pantauan
                 const taskLabel = PROGRESS_TASKS.find(t => t.key === k)?.label || k;
                 const autoWorkMsg = `✅ Progress <b>${taskLabel}</b> projek <b>${p}</b> telah selesai. <br><span style="font-size:10px; color:#64748b;">Timeline: ${formatDateShort(startDate)} — ${formatDateShort(today)}</span>`;
-                
-                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), { 
-                    tanggal: today, 
-                    username: currentUser.username, 
-                    project_name: p, 
-                    pekerjaan: autoWorkMsg, 
-                    ts: serverTimestamp() 
-                });
-            } else {
-                delete timelines[k];
-            }
-            
-            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { 
-                tasks, 
-                taskTimelines: timelines 
-            }); 
+                await addDoc(collection(db, 'artifacts', appId, 'public', 'data', 'logs'), { tanggal: today, username: currentUser.username, project_name: p, pekerjaan: autoWorkMsg, ts: serverTimestamp() });
+            } else { delete timelines[k]; }
+            await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p), { tasks, taskTimelines: timelines }); 
             msg(c ? "✅ PROGRESS DICATAT" : "🔄 PROGRESS DIBUKA");
         };
 
