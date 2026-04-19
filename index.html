@@ -173,6 +173,7 @@
             <nav class="flex bg-white/60 backdrop-blur-xl border border-slate-200 rounded-[2.5rem] px-4 sticky top-[108px] z-40 mb-8 shadow-sm no-scrollbar overflow-x-auto">
                 <button onclick="tab('input')" id="t_input" class="flex-1 min-w-[100px] py-5 text-[11px] font-black tab-active uppercase tracking-widest italic transition-all">Input</button>
                 <button onclick="tab('logs')" id="t_logs" class="flex-1 min-w-[100px] py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest italic transition-all">Pantauan</button>
+                <button onclick="tab('profile')" id="t_profile" class="flex-1 min-w-[100px] py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest italic transition-all">Profil</button>
                 <button onclick="tab('admin_view')" id="t_admin_view" class="hidden flex-1 min-w-[100px] py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest italic transition-all">Dashboard</button>
                 <button onclick="tab('projek')" id="t_projek" class="hidden flex-1 min-w-[100px] py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest italic transition-all">Master</button>
                 <button onclick="tab('settings')" id="t_settings" class="hidden flex-1 min-w-[100px] py-5 text-[11px] font-black text-slate-400 uppercase tracking-widest italic transition-all">Anggota</button>
@@ -259,6 +260,34 @@
                         </div>
                     </div>
                     <div id="logList" class="space-y-4 pt-2"></div>
+                </section>
+
+                <section id="v_profile" class="hidden space-y-8 max-w-3xl mx-auto">
+                    <div class="card p-10 shadow-2xl border-white bg-white/80">
+                        <h3 class="text-xl font-black text-slate-900 uppercase mb-10 tracking-tighter italic flex items-center gap-4">
+                            <span class="w-3 h-3 bg-blue-600 rounded-full shadow-lg shadow-blue-100"></span> Pengaturan Profil
+                        </h3>
+                        <div class="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-200 space-y-6 shadow-inner">
+                            <p class="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] italic">Update Data Akun Pribadi</p>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="space-y-2">
+                                    <label class="text-[8px] font-black text-slate-400 ml-2 uppercase italic">Username</label>
+                                    <input type="text" id="profU" placeholder="Ubah Username" class="w-full p-5 border rounded-2xl text-sm outline-none bg-white font-bold italic border-slate-200 focus:ring-4 focus:ring-blue-50 transition-all">
+                                </div>
+                                <div class="space-y-2">
+                                    <label class="text-[8px] font-black text-slate-400 ml-2 uppercase italic">Password</label>
+                                    <input type="text" id="profP" placeholder="Masukkan Password Baru" class="w-full p-5 border rounded-2xl text-sm outline-none bg-white font-bold italic border-slate-200 focus:ring-4 focus:ring-blue-50 transition-all">
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-[8px] font-black text-slate-400 ml-2 uppercase italic">Telegram ID (Opsional)</label>
+                                <input type="text" id="profTg" placeholder="ID Telegram (Contoh: 123456789)" class="w-full p-5 border rounded-2xl text-sm outline-none bg-white font-bold italic border-slate-200 focus:ring-4 focus:ring-blue-50 transition-all">
+                            </div>
+                            <div class="flex pt-4">
+                                <button id="btnUpdateProf" onclick="updateSelfProfile()" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl text-[10px] uppercase tracking-[0.2em] shadow-2xl shadow-blue-200 active:scale-95 transition-all italic">Simpan Perubahan Profil</button>
+                            </div>
+                        </div>
+                    </div>
                 </section>
 
                 <section id="v_admin_view" class="hidden space-y-12 max-w-5xl mx-auto">
@@ -594,6 +623,11 @@
             document.getElementById('rDisp').innerText = currentUser.role;
             document.getElementById('f_date').value = getLocalDateString();
             
+            // Set User Profile Data
+            if (document.getElementById('profU')) document.getElementById('profU').value = currentUser.username;
+            if (document.getElementById('profP')) document.getElementById('profP').value = currentUser.password || '';
+            if (document.getElementById('profTg')) document.getElementById('profTg').value = currentUser.telegram_id || '';
+
             if (currentUser.privateNotes) document.getElementById('personalNoteEditor').innerHTML = currentUser.privateNotes;
             if (currentUser.role === 'ADMIN') {
                 ['admin_view','projek','settings'].forEach(id => document.getElementById('t_'+id).classList.remove('hidden'));
@@ -618,7 +652,6 @@
                         if(activeProj) viewProjectDetail(activeProj);
                     }
                 }
-                // Refresh list meeting karena filter bergantung pada penugasan projek
                 renderMeetings();
             });
         }
@@ -675,7 +708,6 @@
                 const matchUser = fU === 'ALL' || l.username === fU;
                 const matchKey = (l.pekerjaan || "").toLowerCase().includes(fK) || (l.username || "").toLowerCase().includes(fK);
                 
-                // PERBAIKAN: Jika user ini ter-assign di project, maka dia bisa melihat laporannya (walau laporan admin/user lain)
                 const proj = projectsData.find(p => p.name === l.project_name);
                 const isAssigned = proj && (proj.assignedUsers || []).includes(currentUser.username);
                 const roleGuard = currentUser.role === 'ADMIN' || l.username === currentUser.username || isAssigned;
@@ -881,10 +913,8 @@
             const list = document.getElementById('meetingList');
             const now = new Date().toISOString().split('T')[0];
             
-            // Filter berdasarkan tanggal dulu (hari ini atau ke depannya)
             let upcoming = meetingsData.filter(m => m.date >= now);
             
-            // Filter tambahan: Jika dia bukan ADMIN, dia hanya melihat meeting projek yang dia pegang
             if (currentUser && currentUser.role !== 'ADMIN') {
                 upcoming = upcoming.filter(m => {
                     const proj = projectsData.find(p => p.name === m.project);
@@ -915,7 +945,7 @@
         };
 
         window.tab = (t) => {
-            ['input','logs','admin_view','project_detail','projek','settings', 'team_stats'].forEach(k => {
+            ['input','logs','admin_view','project_detail','projek','settings', 'team_stats', 'profile'].forEach(k => {
                 const v = document.getElementById('v_'+k), b = document.getElementById('t_'+k);
                 if(v) v.classList.toggle('hidden', k !== t);
                 if(b) { b.classList.toggle('tab-active', k === t); b.classList.toggle('text-slate-400', k !== t); }
@@ -927,7 +957,6 @@
             const sel = document.getElementById('meet_proj');
             sel.innerHTML = '<option value="" disabled selected>Pilih Projek...</option>';
             
-            // Filter agar user hanya bisa membuat meeting untuk projek yang dia pegang (kecuali ADMIN)
             projectsData.forEach(p => {
                 if (currentUser.role === 'ADMIN' || (p.assignedUsers || []).includes(currentUser.username)) {
                     sel.add(new Option(p.name, p.name));
@@ -1250,7 +1279,6 @@
         window.editProjectPrompt = (name, s, e) => { isEditingProject=true; editingProjectOldName=name; document.getElementById('nP').value=name; document.getElementById('nPStart').value=s||''; document.getElementById('nPEnd').value=e||''; document.getElementById('btnAddNewProject').innerText="Update Projek"; document.getElementById('btnCancelEditProj').classList.remove('hidden'); tab('projek'); };
         window.resetProjectForm = () => { isEditingProject=false; document.getElementById('nP').value=''; document.getElementById('nPStart').value=''; document.getElementById('nPEnd').value=''; document.getElementById('btnAddNewProject').innerText="Simpan Projek Baru"; document.getElementById('btnCancelEditProj').classList.add('hidden'); };
         
-        // FUNGSI SAVE USER DIMODIFIKASI UNTUK TELEGRAM ID
         window.saveUser = async () => { 
             const u = document.getElementById('mU').value.trim().toLowerCase(), 
                   p = document.getElementById('mP').value.trim(), 
@@ -1262,7 +1290,6 @@
             msg("✅ AKUN DISIMPAN"); 
         };
         
-        // FUNGSI EDIT USER DIMODIFIKASI UNTUK TELEGRAM ID
         window.editUserPrompt = (u, p, r, tg) => { 
             isEditingUser=true; 
             document.getElementById('mU').value=u; 
@@ -1300,18 +1327,20 @@
             } else {
                 let html = '';
                 teamUsers.forEach(user => {
+                    // Hanya memunculkan list aktif untuk user tersebut (mengakomodir issue projek finish tetap terhitung)
                     const userProjects = projectsData.filter(p => (p.assignedUsers || []).includes(user.id));
-                    
+                    const activeProjects = userProjects.filter(p => !p.isFinished);
+
                     let projListHtml = '';
-                    if(userProjects.length > 0) {
-                        projListHtml = userProjects.map(p => `
+                    if(activeProjects.length > 0) {
+                        projListHtml = activeProjects.map(p => `
                             <div class="flex justify-between items-center bg-slate-50 p-3 rounded-[1rem] border border-slate-100 mb-2">
                                 <span class="text-[10px] font-black uppercase text-slate-700 italic truncate pr-2">${p.name}</span>
-                                <span class="text-[7px] px-2 py-1 rounded-md font-black uppercase tracking-widest italic shrink-0 ${p.isFinished ? 'bg-green-100 text-green-600' : 'bg-blue-100 text-blue-600'}">${p.isFinished ? 'Selesai' : 'Berjalan'}</span>
+                                <span class="text-[7px] px-2 py-1 rounded-md font-black uppercase tracking-widest italic shrink-0 bg-blue-100 text-blue-600">Berjalan</span>
                             </div>
                         `).join('');
                     } else {
-                        projListHtml = '<p class="text-[9px] italic text-slate-300 font-bold text-center py-4">Belum memegang projek</p>';
+                        projListHtml = '<p class="text-[9px] italic text-slate-300 font-bold text-center py-4">Belum ada projek aktif</p>';
                     }
 
                     html += `
@@ -1322,12 +1351,12 @@
                                     <span class="text-[8px] bg-slate-100 text-slate-500 px-2 py-1 rounded-full uppercase tracking-widest font-black italic mt-1 inline-block">TIM TEKNIS</span>
                                 </div>
                                 <div class="text-right bg-blue-50 px-4 py-2 rounded-2xl border border-blue-100">
-                                    <h5 class="text-2xl font-black text-blue-600 tracking-tighter">${userProjects.length}</h5>
-                                    <p class="text-[7px] text-blue-400 font-black uppercase tracking-widest italic">Projek</p>
+                                    <h5 class="text-2xl font-black text-blue-600 tracking-tighter">${activeProjects.length}</h5>
+                                    <p class="text-[7px] text-blue-400 font-black uppercase tracking-widest italic">Projek Aktif</p>
                                 </div>
                             </div>
                             <div class="flex-grow overflow-y-auto no-scrollbar max-h-[250px]">
-                                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest italic mb-3">Daftar Projek (${userProjects.length}):</p>
+                                <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest italic mb-3">Daftar Projek Aktif (${activeProjects.length}):</p>
                                 ${projListHtml}
                             </div>
                         </div>
@@ -1337,6 +1366,70 @@
             }
             
             tab('team_stats');
+        };
+
+        // Fungsi khusus untuk Tab Update Profile Personal
+        window.updateSelfProfile = async () => {
+            if(!currentUser) return;
+            const btn = document.getElementById('btnUpdateProf');
+            const oldU = currentUser.username;
+            const newU = document.getElementById('profU').value.trim().toLowerCase();
+            const newP = document.getElementById('profP').value.trim();
+            const newTg = document.getElementById('profTg').value.trim();
+
+            if (!newU || !newP) return msg("⚠️ USERNAME & PASSWORD WAJIB DIISI!");
+            if (newU === 'admin') return msg("⚠️ TIDAK BISA MENGGUNAKAN USERNAME ADMIN");
+
+            btn.disabled = true;
+            btn.innerText = "MENYIMPAN...";
+
+            try {
+                if (newU !== oldU && oldU !== 'admin') {
+                    // Mengecek apakah username baru sudah digunakan orang lain
+                    const newRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', newU);
+                    const snap = await getDoc(newRef);
+                    if (snap.exists()) {
+                        btn.disabled = false;
+                        btn.innerText = "Simpan Perubahan Profil";
+                        return msg("❌ USERNAME SUDAH TERPAKAI!");
+                    }
+
+                    // Buat document username baru & Hapus yang lama
+                    await setDoc(newRef, { password: newP, role: currentUser.role, telegram_id: newTg, privateNotes: currentUser.privateNotes || "" });
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', oldU));
+
+                    // Update otomatis assignment di seluruh project untuk menyesuaikan username baru
+                    const batch = writeBatch(db);
+                    projectsData.forEach((p) => {
+                        if (p.assignedUsers && p.assignedUsers.includes(oldU)) {
+                            const newAssigned = p.assignedUsers.map(u => u === oldU ? newU : u);
+                            batch.update(doc(db, 'artifacts', appId, 'public', 'data', 'projects', p.name), { assignedUsers: newAssigned });
+                        }
+                    });
+                    await batch.commit();
+
+                    currentUser.username = newU;
+                } else if (oldU !== 'admin') {
+                    // Apabila cuma mengubah password atau telegram id (username tetap sama)
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', oldU), { password: newP, telegram_id: newTg });
+                } else if (oldU === 'admin') {
+                    // Admin hanya bisa update password & telegram di profile pribadinya sendiri
+                    await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', 'admin'), { password: newP });
+                    if(newU !== 'admin') msg("⚠️ ADMIN TIDAK BISA GANTI USERNAME. DATA LAIN DISIMPAN.");
+                }
+
+                currentUser.password = newP;
+                currentUser.telegram_id = newTg;
+                localStorage.setItem('ws_user_final_v2', JSON.stringify(currentUser));
+                document.getElementById('uDisp').innerText = currentUser.username.toUpperCase();
+                msg("✅ PROFIL BERHASIL DIUPDATE");
+            } catch (err) {
+                msg("❌ GAGAL UPDATE PROFIL");
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Simpan Perubahan Profil";
+            }
         };
 
         document.addEventListener('click', (e) => {
