@@ -90,18 +90,6 @@
 
         .timeline-date { font-size: 9px; font-weight: 800; color: #2563eb; margin-top: 1px; display: block; letter-spacing: -0.02em; }
 
-        .floating-meeting {
-            position: fixed;
-            left: 1rem;
-            top: 140px;
-            width: 220px;
-            z-index: 40;
-            transition: all 0.5s ease;
-        }
-        @media (max-width: 1280px) {
-            .floating-meeting { position: relative; left: 0; top: 0; width: 100%; margin-bottom: 2rem; z-index: 10; }
-        }
-
         .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 1px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 0.75rem; overflow: hidden; }
         .cal-day { background: white; min-height: 32px; padding: 2px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; cursor: pointer; transition: background 0.2s; }
         .cal-day:hover { background: #eff6ff; }
@@ -130,13 +118,23 @@
     </div>
 
     <div id="mainApp" class="hidden opacity-0 transition-opacity duration-700">
-        <div id="floatingMeeting" class="floating-meeting">
-            <div class="card p-4 shadow-xl bg-white/95 backdrop-blur border-blue-100 h-[460px] flex flex-col">
+        
+        <div id="floatingMeetingWrapper" class="fixed z-[70] left-4 bottom-6 xl:top-[140px] xl:bottom-auto xl:left-4 flex flex-col-reverse xl:flex-col gap-4 items-start pointer-events-none">
+            
+            <button onclick="toggleMobileMeeting()" class="xl:hidden pointer-events-auto w-14 h-14 bg-blue-600 text-white rounded-[1.25rem] shadow-xl flex items-center justify-center relative hover:scale-105 active:scale-95 transition-all border-2 border-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                <span id="mobileMeetBadge" class="hidden absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white text-[10px] font-black rounded-full flex items-center justify-center border-2 border-white shadow-md notif-badge-active">0</span>
+            </button>
+
+            <div id="floatingMeetingPanel" class="hidden xl:flex pointer-events-auto w-[260px] xl:w-[220px] card p-4 shadow-2xl xl:shadow-xl bg-white/95 backdrop-blur border-blue-100 h-[380px] xl:h-[460px] flex-col transition-all">
                 <div class="flex justify-between items-center mb-4">
                     <h3 class="text-[9px] font-black text-slate-800 uppercase tracking-[0.15em] italic flex items-center gap-2">
                         <span class="w-2 h-2 bg-blue-600 rounded-full animate-ping"></span> Meeting
                     </h3>
-                    <button onclick="openMeetingModal()" class="w-7 h-7 bg-blue-600 text-white rounded-xl flex items-center justify-center font-black shadow-lg hover:scale-110 active:scale-90 transition-all text-sm">+</button>
+                    <div class="flex items-center gap-2">
+                        <button onclick="openMeetingModal()" class="w-7 h-7 bg-blue-600 text-white rounded-xl flex items-center justify-center font-black shadow-lg hover:scale-110 active:scale-90 transition-all text-sm">+</button>
+                        <button onclick="toggleMobileMeeting()" class="xl:hidden w-7 h-7 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center font-black hover:bg-slate-200 active:scale-90 transition-all text-sm">&times;</button>
+                    </div>
                 </div>
                 <div id="meetingList" class="flex-grow overflow-y-auto pr-1 space-y-2 no-scrollbar">
                     <div class="py-16 text-center opacity-30 italic text-[9px] font-black uppercase tracking-widest">Kosong</div>
@@ -333,8 +331,7 @@
                         <h3 class="text-2xl font-black text-slate-900 uppercase italic tracking-tighter mb-8 flex items-center gap-4">
                             <span class="w-8 h-1.5 bg-blue-600 rounded-full"></span> Detail Beban Kerja Tim
                         </h3>
-                        <div id="teamStatsContent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            </div>
+                        <div id="teamStatsContent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
                     </div>
                 </section>
 
@@ -922,6 +919,17 @@
                 });
             }
 
+            // Update Badge Notifikasi Meeting di Mobile
+            const badge = document.getElementById('mobileMeetBadge');
+            if(badge) {
+                if(upcoming.length > 0) {
+                    badge.innerText = upcoming.length;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+
             if(upcoming.length === 0) {
                 list.innerHTML = `<div class="py-16 text-center opacity-20 italic text-[9px] font-black uppercase tracking-widest">Kosong</div>`;
                 return;
@@ -942,6 +950,13 @@
                         <button onclick="deleteMeeting('${m.id}')" class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-slate-300 hover:text-red-500 font-black transition-all text-sm">&times;</button>
                     </div>`;
             });
+        };
+
+        // Fungsi Toggle untuk memunculkan panel meeting pada versi Mobile
+        window.toggleMobileMeeting = () => {
+            const panel = document.getElementById('floatingMeetingPanel');
+            panel.classList.toggle('hidden');
+            panel.classList.toggle('flex');
         };
 
         window.tab = (t) => {
@@ -1327,7 +1342,6 @@
             } else {
                 let html = '';
                 teamUsers.forEach(user => {
-                    // Hanya memunculkan list aktif untuk user tersebut (mengakomodir issue projek finish tetap terhitung)
                     const userProjects = projectsData.filter(p => (p.assignedUsers || []).includes(user.id));
                     const activeProjects = userProjects.filter(p => !p.isFinished);
 
@@ -1368,7 +1382,6 @@
             tab('team_stats');
         };
 
-        // Fungsi khusus untuk Tab Update Profile Personal
         window.updateSelfProfile = async () => {
             if(!currentUser) return;
             const btn = document.getElementById('btnUpdateProf');
@@ -1385,7 +1398,6 @@
 
             try {
                 if (newU !== oldU && oldU !== 'admin') {
-                    // Mengecek apakah username baru sudah digunakan orang lain
                     const newRef = doc(db, 'artifacts', appId, 'public', 'data', 'users', newU);
                     const snap = await getDoc(newRef);
                     if (snap.exists()) {
@@ -1394,11 +1406,9 @@
                         return msg("❌ USERNAME SUDAH TERPAKAI!");
                     }
 
-                    // Buat document username baru & Hapus yang lama
                     await setDoc(newRef, { password: newP, role: currentUser.role, telegram_id: newTg, privateNotes: currentUser.privateNotes || "" });
                     await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', oldU));
 
-                    // Update otomatis assignment di seluruh project untuk menyesuaikan username baru
                     const batch = writeBatch(db);
                     projectsData.forEach((p) => {
                         if (p.assignedUsers && p.assignedUsers.includes(oldU)) {
@@ -1410,10 +1420,8 @@
 
                     currentUser.username = newU;
                 } else if (oldU !== 'admin') {
-                    // Apabila cuma mengubah password atau telegram id (username tetap sama)
                     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', oldU), { password: newP, telegram_id: newTg });
                 } else if (oldU === 'admin') {
-                    // Admin hanya bisa update password & telegram di profile pribadinya sendiri
                     await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'users', 'admin'), { password: newP });
                     if(newU !== 'admin') msg("⚠️ ADMIN TIDAK BISA GANTI USERNAME. DATA LAIN DISIMPAN.");
                 }
